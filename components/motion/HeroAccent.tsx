@@ -5,16 +5,22 @@ import { cn } from "@/lib/cn";
 import { usePrefersReducedMotion } from "./hooks";
 
 /**
- * Optional WebGL hero accent (PLAN §2 / §8): a slow, near-white domain-warped
- * fbm field with the faintest lime wash, drifting behind the hero headline.
+ * Interactive hero graphic (PLAN §2 / §8) — a drifting "connections" network of
+ * nodes joined by hairlines that light up and fan toward the cursor, with a few
+ * lime accent nodes. It literalises the hero headline ("Secure connections that
+ * grow with you") and gives the hero a live, tactile centrepiece.
  *
- * Deliberately dependency-free raw WebGL (no three.js/R3F) to protect the LCP
- * and bundle budget (PLAN §5 — Perf ≥ 90). It is:
+ * Dependency-free 2D canvas (no three.js/R3F) to protect the LCP + bundle budget
+ * (PLAN §5 — Perf ≥ 90). It is:
  *   • lazy — initialised on `requestIdleCallback`, never competing with first paint;
- *   • reduced-motion-gated — renders nothing, the static grain overlay stands in;
- *   • self-degrading — if WebGL is unavailable the canvas stays transparent;
- *   • frugal — DPR-capped, ~30fps, and paused when the tab is hidden or the hero
- *     scrolls out of view.
+ *   • reduced-motion-safe — draws ONE static constellation, no animation/cursor;
+ *   • self-degrading — if the 2D context is unavailable the canvas stays transparent;
+ *   • frugal — DPR-capped, ~40fps, O(n²) links over a small node set, and paused
+ *     when the tab is hidden or the hero scrolls out of view;
+ *   • pointer-gated — cursor interaction only on a fine pointer (desktop).
+ *
+ * Colours are read from the design tokens (`--ink`, `--accent`) at init, so the
+ * canvas never hardcodes a hex a token already covers (CLAUDE.md).
  */
 export function HeroAccent() {
   const reduced = usePrefersReducedMotion();
@@ -22,15 +28,13 @@ export function HeroAccent() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (reduced) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     let idleId = 0;
     let cleanup: (() => void) | undefined;
-
     const boot = () => {
-      cleanup = initShader(canvas, () => setReady(true));
+      cleanup = initNetwork(canvas, reduced, () => setReady(true));
     };
 
     const w = window as Window & {
@@ -50,9 +54,6 @@ export function HeroAccent() {
     };
   }, [reduced]);
 
-  // Under reduced motion the static grain overlay is the accent; render nothing.
-  if (reduced) return null;
-
   return (
     <canvas
       ref={canvasRef}
@@ -62,169 +63,226 @@ export function HeroAccent() {
   );
 }
 
-const VERT = `
-attribute vec2 a_pos;
-void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
-`;
-
-const FRAG = `
-precision mediump float;
-uniform vec2 u_res;
-uniform float u_time;
-
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  float a = hash(i);
-  float b = hash(i + vec2(1.0, 0.0));
-  float c = hash(i + vec2(0.0, 1.0));
-  float d = hash(i + vec2(1.0, 1.0));
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 5; i++) {
-    v += a * noise(p);
-    p *= 2.0;
-    a *= 0.5;
-  }
-  return v;
-}
-void main() {
-  vec2 uv = gl_FragCoord.xy / u_res.xy;
-  vec2 p = uv * vec2(u_res.x / u_res.y, 1.0) * 1.25;
-  float t = u_time * 0.025;
-
-  // domain warp for a slow, flowing mesh-gradient feel
-  vec2 q = vec2(fbm(p + vec2(0.0, t)), fbm(p + vec2(5.2, -t)));
-  float n = fbm(p * 1.3 + q * 1.5 + t);
-
-  // Soft near-white palette: a faint cool mint wash + a rationed lime bloom.
-  // Kept light so it never fights the dark (#0d0d0d) headline above it.
-  vec3 white = vec3(1.0);
-  vec3 cool = vec3(0.855, 0.898, 0.871); // faint mint-gray
-  vec3 lime = vec3(0.776, 0.984, 0.314); // ≈ #C6FB50
-  vec3 col = mix(white, cool, smoothstep(0.20, 0.90, n) * 0.75);
-  col = mix(col, lime, smoothstep(0.55, 1.0, q.x) * 0.16); // ≤16% lime bloom
-
-  // radial vignette fades the field into the page edges
-  float vig = smoothstep(1.25, 0.18, length(uv - 0.5));
-  gl_FragColor = vec4(col, vig * 0.9);
-}
-`;
-
-function compile(gl: WebGLRenderingContext, type: number, src: string) {
-  const sh = gl.createShader(type);
-  if (!sh) return null;
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    gl.deleteShader(sh);
-    return null;
-  }
-  return sh;
+interface Node {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  accent: boolean;
 }
 
-/** Sets up WebGL and a throttled, visibility-aware RAF loop. Returns a cleanup. */
-function initShader(canvas: HTMLCanvasElement, onReady: () => void): (() => void) | undefined {
-  const gl =
-    (canvas.getContext("webgl", { alpha: true, antialias: false, premultipliedAlpha: false }) as
-      | WebGLRenderingContext
-      | null) ||
-    (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
-  if (!gl) return undefined;
+function readToken(name: string, fallback: string) {
+  if (typeof window === "undefined") return fallback;
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
 
-  const vs = compile(gl, gl.VERTEX_SHADER, VERT);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
-  if (!vs || !fs) return undefined;
+/** "#0d0d0d" | "#c6fb50" → {r,g,b}. */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const m = hex.replace("#", "");
+  const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  const n = parseInt(full, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
 
-  const prog = gl.createProgram();
-  if (!prog) return undefined;
-  gl.attachShader(prog, vs);
-  gl.attachShader(prog, fs);
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return undefined;
-  gl.useProgram(prog);
+/**
+ * Sets up the connections network and a throttled, visibility-aware RAF loop.
+ * Returns a cleanup. When `reduced` is true it draws a single static frame.
+ */
+function initNetwork(
+  canvas: HTMLCanvasElement,
+  reduced: boolean,
+  onReady: () => void,
+): (() => void) | undefined {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return undefined;
 
-  const buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array([-1, -1, 3, -1, -1, 3]), // single oversized triangle
-    gl.STATIC_DRAW,
-  );
-  const aPos = gl.getAttribLocation(prog, "a_pos");
-  gl.enableVertexAttribArray(aPos);
-  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const ink = hexToRgb(readToken("--ink", "#0d0d0d"));
+  const lime = hexToRgb(readToken("--accent", "#c6fb50"));
+  const inkRGBA = (a: number) => `rgba(${ink.r},${ink.g},${ink.b},${a})`;
+  const limeRGBA = (a: number) => `rgba(${lime.r},${lime.g},${lime.b},${a})`;
 
-  const uRes = gl.getUniformLocation(prog, "u_res");
-  const uTime = gl.getUniformLocation(prog, "u_time");
+  const fine =
+    typeof window !== "undefined" && window.matchMedia("(any-pointer:fine)").matches;
 
-  const resize = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
-    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-      gl.viewport(0, 0, w, h);
-    }
-    gl.uniform2f(uRes, w, h);
+  const LINK_DIST = 142; // px between nodes to draw a link
+  const CURSOR_DIST = 220; // px around cursor to fan links + attract
+  let dpr = 1;
+  let w = 0;
+  let h = 0;
+  let nodes: Node[] = [];
+
+  const build = () => {
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    w = canvas.clientWidth;
+    h = canvas.clientHeight;
+    canvas.width = Math.max(1, Math.floor(w * dpr));
+    canvas.height = Math.max(1, Math.floor(h * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Density scales with area but is capped for perf; ~1 node / 15k px².
+    const count = Math.max(18, Math.min(72, Math.round((w * h) / 15000)));
+    nodes = Array.from({ length: count }, (_, i) => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      accent: i % 7 === 0, // ~1 in 7 nodes is a lime accent
+    }));
   };
-  resize();
-  window.addEventListener("resize", resize);
+  build();
+
+  const mouse = { x: 0, y: 0, active: false };
+  const onMove = (e: MouseEvent) => {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    mouse.active = x >= 0 && x <= w && y >= 0 && y <= h;
+    mouse.x = x;
+    mouse.y = y;
+  };
+  const onLeave = () => {
+    mouse.active = false;
+  };
+
+  const draw = () => {
+    ctx.clearRect(0, 0, w, h);
+
+    // node ↔ node links
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d < LINK_DIST) {
+          ctx.strokeStyle = inkRGBA((1 - d / LINK_DIST) * 0.26);
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // cursor → node links (brighter, lime) + a soft glow
+    if (mouse.active) {
+      const grad = ctx.createRadialGradient(
+        mouse.x, mouse.y, 0, mouse.x, mouse.y, CURSOR_DIST,
+      );
+      grad.addColorStop(0, limeRGBA(0.14));
+      grad.addColorStop(1, limeRGBA(0));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      for (const n of nodes) {
+        const d = Math.hypot(n.x - mouse.x, n.y - mouse.y);
+        if (d < CURSOR_DIST) {
+          const t = 1 - d / CURSOR_DIST;
+          ctx.strokeStyle = limeRGBA(t * 0.65);
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(mouse.x, mouse.y);
+          ctx.lineTo(n.x, n.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // nodes
+    for (const n of nodes) {
+      const near = mouse.active && Math.hypot(n.x - mouse.x, n.y - mouse.y) < CURSOR_DIST;
+      if (n.accent) {
+        ctx.fillStyle = limeRGBA(near ? 1 : 0.85);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, near ? 3 : 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = inkRGBA(near ? 0.7 : 0.45);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, near ? 2.2 : 1.9, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  };
+
+  const step = () => {
+    for (const n of nodes) {
+      // gentle attraction toward the cursor
+      if (mouse.active) {
+        const dx = mouse.x - n.x;
+        const dy = mouse.y - n.y;
+        const d = Math.hypot(dx, dy);
+        if (d < CURSOR_DIST && d > 0.5) {
+          const pull = (1 - d / CURSOR_DIST) * 0.045;
+          n.vx += (dx / d) * pull;
+          n.vy += (dy / d) * pull;
+        }
+      }
+      n.x += n.vx;
+      n.y += n.vy;
+      // friction keeps drift calm after cursor nudges
+      n.vx *= 0.99;
+      n.vy *= 0.99;
+      // keep a minimum drift so the field never freezes
+      if (Math.abs(n.vx) < 0.05) n.vx += (Math.random() - 0.5) * 0.05;
+      if (Math.abs(n.vy) < 0.05) n.vy += (Math.random() - 0.5) * 0.05;
+      // bounce off edges
+      if (n.x < 0) { n.x = 0; n.vx *= -1; }
+      else if (n.x > w) { n.x = w; n.vx *= -1; }
+      if (n.y < 0) { n.y = 0; n.vy *= -1; }
+      else if (n.y > h) { n.y = h; n.vy *= -1; }
+    }
+  };
+
+  // Reduced motion: one static frame, no listeners, no loop.
+  if (reduced) {
+    draw();
+    onReady();
+    const onResize = () => { build(); draw(); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }
 
   let raf = 0;
   let last = 0;
-  let start = 0;
-  let visible = !document.hidden;
+  let visible = document.visibilityState !== "hidden";
   let onScreen = true;
-  const FRAME = 1000 / 30; // cap at ~30fps
+  const FRAME = 1000 / 40; // ~40fps
 
   const render = (now: number) => {
     raf = requestAnimationFrame(render);
     if (!visible || !onScreen) return;
     if (now - last < FRAME) return;
     last = now;
-    if (!start) start = now;
-    resize();
-    gl.uniform1f(uTime, (now - start) / 1000);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    step();
+    draw();
   };
+  draw(); // paint an immediate first frame so the hero is never blank at load
   raf = requestAnimationFrame(render);
   onReady();
 
-  const onVisibility = () => {
-    visible = !document.hidden;
-  };
+  const onResize = () => build();
+  window.addEventListener("resize", onResize);
+  if (fine) {
+    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mouseout", onLeave, { passive: true });
+  }
+  const onVisibility = () => { visible = !document.hidden; };
   document.addEventListener("visibilitychange", onVisibility);
-
-  // Pause work while the hero is scrolled off-screen.
   const io = new IntersectionObserver(
-    ([entry]) => {
-      onScreen = entry.isIntersecting;
-    },
+    ([entry]) => { onScreen = entry.isIntersecting; },
     { threshold: 0 },
   );
   io.observe(canvas);
 
   return () => {
     cancelAnimationFrame(raf);
-    window.removeEventListener("resize", resize);
+    window.removeEventListener("resize", onResize);
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseout", onLeave);
     document.removeEventListener("visibilitychange", onVisibility);
     io.disconnect();
-    gl.deleteProgram(prog);
-    gl.deleteShader(vs);
-    gl.deleteShader(fs);
-    gl.deleteBuffer(buf);
-    const lose = gl.getExtension("WEBGL_lose_context");
-    lose?.loseContext();
   };
 }
