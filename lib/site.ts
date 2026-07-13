@@ -67,11 +67,12 @@ export const SECTIONS = [
   { num: "06", id: "contact", label: "Contact" },
 ] as const;
 
-/** Top-level page nav (the only real nav on the source: Home/About/Services/Contact + CTA). */
+/** Top-level page nav (source had Home/About/Services/Contact; Banks added for the bank pages). */
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
+  { href: "/banks", label: "Banks" },
   { href: "/contact", label: "Contact" },
 ] as const;
 

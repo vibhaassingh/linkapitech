@@ -41,6 +41,7 @@ app/
     layout.tsx  page.tsx      homepage
   (site)/                    lightweight route group (CSS smooth scroll only)
     about  services  contact  terms  privacy  work  work/[slug]
+    banks  banks/[slug]       bank integration landing pages (Axis, IndusInd, HSBC)
   api/contact/route.ts       working form handler (replaces broken template endpoints)
   opengraph-image  icon  apple-icon  sitemap  robots
 components/
@@ -48,11 +49,12 @@ components/
   sections/ Hero, TrustLogos, SplitShell, WorksDeck, ServiceAccordion,
             ProcessStepper, Benefits, Testimonials, ContactSection, ContactForm,
             ContactDetails, Faq, LegalDoc
-  ui/       Button, Chip, MixedHeading, SectionEyebrow, Marquee, Counter, Field
+  ui/       Button, Chip, MixedHeading, SectionEyebrow, Marquee, Counter, Field, BankLogo
   motion/   SmoothScrollProvider, Preloader, Cursor, Reveal, VerticalCutReveal, hooks
 content/    services, process, benefits, testimonials, faq, cases, stats, clients,
-            home, about, legal   (typed data — the single source of truth for copy)
+            home, about, legal, banks   (typed data — the single source of truth for copy)
 lib/        site, metadata, analytics, jsonld, cn
+public/     assets/banks/     bank logos (axis.svg, indusind.svg, hsbc.svg)
 ```
 
 ## What's faithful to the reference
@@ -82,6 +84,11 @@ These are drafted on-brand and flagged as **code comments** (not user-facing):
   per-engagement narratives + real dates when available.
 - **Client logos** (`content/clients.ts`) render as text wordmarks; supply licensed
   vector logos and confirm the 4th mark (likely "Aditya Birla").
+- **Bank pages** (`content/banks.ts`, `/banks/[slug]`) — copy is deliberately
+  capability-framed (no partnership/endorsement claim) and stats are LinkAPI-wide,
+  not per-bank. Confirm the real relationship/partner tier per bank, and confirm
+  usage rights for the reproduced bank marks (Axis, IndusInd, HSBC logos in
+  `public/assets/banks/`).
 - **Testimonials** (`content/testimonials.ts`) need real company/role (+ LinkedIn);
   the "Tech Solutions" wrong-company bug is already fixed.
 - **FAQ** (`content/faq.ts`) is net-new draft copy — review before publishing.
