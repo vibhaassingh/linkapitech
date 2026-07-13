@@ -19,6 +19,15 @@ export const useLenis = () => useContext(LenisContext);
 let registered = false;
 
 /**
+ * Module-level handle to the live Lenis instance. Lets components rendered
+ * OUTSIDE this provider (e.g. the root-level `@modal` parallel slot, which is
+ * not a descendant of the marketing layout) freeze the smooth-scrolled
+ * background without needing the React context.
+ */
+let lenisSingleton: Lenis | null = null;
+export const getLenis = () => lenisSingleton;
+
+/**
  * Lenis + GSAP/ScrollTrigger provider (INTERACTIONS-AND-MOTION §1.1, §2).
  * Drives Lenis from `gsap.ticker` ONLY (avoids the source's double-RAF bug),
  * and disables smoothing entirely under reduced motion (native scroll instead).
@@ -41,6 +50,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       smoothWheel: true,
     });
     setLenis(l);
+    lenisSingleton = l;
 
     l.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => l.raf(time * 1000);
@@ -51,6 +61,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       gsap.ticker.remove(tick);
       l.destroy();
       setLenis(null);
+      lenisSingleton = null;
       ScrollTrigger.getAll().forEach((st) => st.kill());
     };
   }, [reduced]);

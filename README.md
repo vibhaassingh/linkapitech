@@ -41,15 +41,18 @@ app/
     layout.tsx  page.tsx      homepage
   (site)/                    lightweight route group (CSS smooth scroll only)
     about  services  contact  terms  privacy  work  work/[slug]
+  @modal/                    Works "quick view" parallel slot (Phase 8)
+    default.tsx  (.)work/[slug]/page.tsx   intercepts soft-nav to /work/[slug]
   api/contact/route.ts       working form handler (replaces broken template endpoints)
   opengraph-image  icon  apple-icon  sitemap  robots
 components/
   chrome/   SiteHeader, MobileMenu, FooterMarquee, SiteFooter
   sections/ Hero, TrustLogos, SplitShell, WorksDeck, ServiceAccordion,
             ProcessStepper, Benefits, Testimonials, ContactSection, ContactForm,
-            ContactDetails, Faq, LegalDoc
+            ContactDetails, Faq, LegalDoc, WorkQuickView
   ui/       Button, Chip, MixedHeading, SectionEyebrow, Marquee, Counter, Field
-  motion/   SmoothScrollProvider, Preloader, Cursor, Reveal, VerticalCutReveal, hooks
+  motion/   SmoothScrollProvider, Preloader, Cursor, Reveal, VerticalCutReveal,
+            HeroAccent, hooks
 content/    services, process, benefits, testimonials, faq, cases, stats, clients,
             home, about, legal   (typed data — the single source of truth for copy)
 lib/        site, metadata, analytics, jsonld, cn
@@ -90,7 +93,25 @@ These are drafted on-brand and flagged as **code comments** (not user-facing):
 - Social profile URLs are empty (`lib/site.ts`) — icons stay hidden until supplied.
 - Consider commissioning real photography and short benefit clips.
 
-## Optional / Phase 8 (not built)
+## Phase 8 — optional enhancements
 
-Blog, the Works "quick view" intercepting-route modal, the WebGL "Threads" hero
-accent, and the Thread-Nav drag scrubber — all reserved as optional polish.
+**Built:**
+
+- **Works "quick view" modal** — a root-level `@modal` parallel/intercepting route
+  (`app/@modal/(.)work/[slug]`). Clicking a Works card (homepage deck _or_ `/work`
+  index) soft-navigates to `/work/[slug]` and opens the case study as an overlay;
+  a hard load / refresh of that URL renders the standalone page instead. Escape,
+  backdrop, and close-button all `router.back()`; focus is trapped and restored;
+  background scroll is frozen via the Lenis singleton (`getLenis()`) + `overflow`
+  lock (the slot lives outside the marketing provider). "Open full page" is a plain
+  `<a>` (hard load) because the URL already equals the slug while the modal is open.
+  Entrance snaps under `prefers-reduced-motion`. See `components/sections/WorkQuickView.tsx`.
+- **WebGL hero accent** (`components/motion/HeroAccent.tsx`) — a slow, near-white
+  domain-warped fbm field with a rationed lime bloom behind the hero headline.
+  Deliberately **dependency-free raw WebGL** (no three.js/R3F) to protect the LCP
+  and bundle budget: idle-mounted (never competes with first paint), reduced-motion-
+  gated (renders nothing — the static grain stands in), self-degrading when WebGL is
+  unavailable, DPR-capped, ~30fps, and paused when the tab is hidden or the hero
+  scrolls off-screen.
+
+**Not built:** blog, and the Thread-Nav drag scrubber — reserved as optional polish.

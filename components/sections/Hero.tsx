@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
 import { VerticalCutReveal } from "@/components/motion/VerticalCutReveal";
+import { HeroAccent } from "@/components/motion/HeroAccent";
 import { TrustLogos } from "./TrustLogos";
 import { HERO } from "@/content/home";
 import { TRUST_LINE } from "@/content/stats";
@@ -16,9 +17,10 @@ export function Hero() {
       id="hero"
       className="relative flex flex-col items-center overflow-hidden px-6 pb-[clamp(72px,10vw,120px)] pt-[clamp(140px,18vw,240px)] text-center"
     >
+      <HeroAccent />
       <SpinBadge />
 
-      <div className="flex w-full max-w-[1200px] flex-col items-center">
+      <div className="relative z-10 flex w-full max-w-[1200px] flex-col items-center">
         <h1 className="font-sans font-medium leading-[1.02] tracking-[-0.035em] text-[clamp(36px,12vw,64px)] xs:text-[clamp(42px,11vw,80px)] md:text-[clamp(48px,9vw,96px)] lg:text-[clamp(56px,8.4vw,132px)]">
           <span className="block">
             <VerticalCutReveal text="Secure connections" mode="chars" stagger={28} from="140%" />

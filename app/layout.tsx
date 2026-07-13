@@ -32,13 +32,21 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   return (
     <html lang="en" className={`${onest.variable} ${instrumentSerif.variable}`}>
       <body className="font-sans antialiased">
         {/* Single global film-grain overlay (DESIGN-SYSTEM §1.4). */}
         <div className="grain-overlay" aria-hidden="true" />
         {children}
+        {/* Works "quick view" intercepting-route slot (PLAN §8). */}
+        {modal}
         <Analytics />
       </body>
     </html>
