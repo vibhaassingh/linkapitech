@@ -33,6 +33,7 @@ export default {
           DEFAULT: "var(--accent)",
           soft: "var(--accent-soft)",
           deep: "var(--accent-deep)",
+          tint: "var(--accent-tint)",
         },
         line: {
           DEFAULT: "var(--line)",
@@ -70,8 +71,8 @@ export default {
           to: { transform: "translateX(-50%)" },
         },
         livepulse: {
-          "0%": { boxShadow: "0 0 0 0 rgba(198,251,80,.5)" },
-          "80%, 100%": { boxShadow: "0 0 0 12px rgba(198,251,80,0)" },
+          "0%": { boxShadow: "0 0 0 0 rgba(74,37,69,.5)" },
+          "80%, 100%": { boxShadow: "0 0 0 12px rgba(74,37,69,0)" },
         },
         spin: {
           from: { transform: "rotate(0deg)" },

@@ -27,7 +27,7 @@ export function SiteFooter() {
               plain="Let's connect your"
               accent={
                 <>
-                  systems<span className="text-accent">.</span>
+                  systems<span className="text-accent-tint">.</span>
                 </>
               }
               className="mt-5 max-w-[16ch] text-[clamp(40px,5.6vw,92px)] leading-none tracking-tighter text-white"
@@ -44,7 +44,7 @@ export function SiteFooter() {
             </Button>
             <a
               href={`mailto:${CONTACT.primaryEmail}`}
-              className="text-sm text-white/70 hover:text-accent"
+              className="text-sm text-white/70 hover:text-accent-tint"
             >
               {CONTACT.primaryEmail}
             </a>
@@ -91,7 +91,7 @@ export function SiteFooter() {
         {/* Verify strip */}
         <div className="flex flex-col gap-3 border-b border-white/10 py-8 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <span className="inline-flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full border border-accent/40 text-accent">
+            <span className="grid h-7 w-7 place-items-center rounded-full border border-accent-tint/40 text-accent-tint">
               ✓
             </span>
             BFSI-grade delivery · 5000+ API implementations

@@ -41,7 +41,7 @@ export default function WorkIndexPage() {
               className="group block overflow-hidden rounded-[24px] border border-line"
             >
               <div className="relative aspect-[16/10] w-full" style={{ background: TONE_BG[c.tone] }}>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(198,251,80,.14),transparent_55%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(201,166,197,.16),transparent_55%)]" />
                 <span className="absolute left-5 top-5">
                   <Chip variant="glass">{c.industry}</Chip>
                 </span>

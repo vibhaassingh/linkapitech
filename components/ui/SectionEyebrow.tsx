@@ -19,7 +19,7 @@ export function SectionEyebrow({ num, label, end, className, dark }: Props) {
         className,
       )}
     >
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-pill bg-accent text-[11px] font-semibold text-ink">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-pill bg-accent text-[11px] font-semibold text-white">
         {num}
       </span>
       <span className="shrink-0">{label}</span>

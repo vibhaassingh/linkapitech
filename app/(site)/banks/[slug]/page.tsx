@@ -102,7 +102,7 @@ export default async function BankPage({ params }: { params: Promise<{ slug: str
               key={cap}
               className="flex items-start gap-3 border-t border-line py-4 text-[15px] text-ink-2"
             >
-              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent text-[11px] text-ink">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent text-[11px] text-white">
                 ✓
               </span>
               {cap}

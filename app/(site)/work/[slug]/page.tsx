@@ -65,7 +65,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
         className="relative mt-6 grid aspect-[1672/720] w-full place-items-center overflow-hidden rounded-[24px]"
         style={{ background: TONE_BG[c.tone] }}
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(198,251,80,.14),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(201,166,197,.16),transparent_55%)]" />
         <span className="absolute left-6 top-6">
           <Chip variant="glass">{c.industry}</Chip>
         </span>
@@ -115,7 +115,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
         <ul className="flex flex-col">
           {c.highlights.map((h) => (
             <li key={h} className="flex items-start gap-3 border-t border-line py-4 text-[15px] text-ink-2">
-              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent text-[11px] text-ink">
+              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent text-[11px] text-white">
                 ✓
               </span>
               {h}

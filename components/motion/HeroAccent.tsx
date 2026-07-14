@@ -77,7 +77,7 @@ function readToken(name: string, fallback: string) {
   return v || fallback;
 }
 
-/** "#0d0d0d" | "#c6fb50" → {r,g,b}. */
+/** "#0d0d0d" | "#4a2545" → {r,g,b}. */
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const m = hex.replace("#", "");
   const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
@@ -98,7 +98,7 @@ function initNetwork(
   if (!ctx) return undefined;
 
   const ink = hexToRgb(readToken("--ink", "#0d0d0d"));
-  const lime = hexToRgb(readToken("--accent", "#c6fb50"));
+  const lime = hexToRgb(readToken("--accent", "#4a2545"));
   const inkRGBA = (a: number) => `rgba(${ink.r},${ink.g},${ink.b},${a})`;
   const limeRGBA = (a: number) => `rgba(${lime.r},${lime.g},${lime.b},${a})`;
 

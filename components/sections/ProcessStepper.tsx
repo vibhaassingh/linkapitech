@@ -114,7 +114,7 @@ export function ProcessStepper({ standalone = false }: { standalone?: boolean })
             <span
               className={cn(
                 "grid h-8 w-8 place-items-center rounded-full border transition-colors duration-500",
-                complete ? "border-accent bg-accent text-ink" : "border-line text-ink-3",
+                complete ? "border-accent bg-accent text-white" : "border-line text-ink-3",
               )}
             >
               ✓

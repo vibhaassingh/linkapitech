@@ -22,7 +22,7 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 14, height: 14, borderRadius: 999, background: "#C6FB50" }} />
+          <div style={{ width: 14, height: 14, borderRadius: 999, background: "#c9a6c5" }} />
           <div style={{ fontSize: 26, letterSpacing: 2, color: "#a3a099" }}>
             LINKAPI TECH PVT. LTD.
           </div>
@@ -34,7 +34,7 @@ export default function OpengraphImage() {
           </div>
           <div style={{ display: "flex", fontSize: 84, lineHeight: 1.02, fontWeight: 600, letterSpacing: -2 }}>
             <span>that grow&nbsp;</span>
-            <span style={{ color: "#C6FB50", fontStyle: "italic" }}>with you.</span>
+            <span style={{ color: "#c9a6c5", fontStyle: "italic" }}>with you.</span>
           </div>
         </div>
 

@@ -15,10 +15,14 @@
   --ink-2: #5a5851;
   --ink-3: #767369;
 
-  /* Accent (use sparingly — CTAs, active states, highlights only) */
-  --accent: #c6fb50;
-  --accent-soft: rgba(198, 251, 80, 0.22);
-  --accent-deep: #5fa314;
+  /* Accent (use sparingly — CTAs, active states, highlights only).
+     Brand purple. It is dark, so text placed ON an accent fill is white, and
+     accents that sit on dark surfaces use --accent-tint (a light purple) to
+     stay visible. */
+  --accent: #4a2545;
+  --accent-soft: rgba(74, 37, 69, 0.16);
+  --accent-deep: #3a1c37;
+  --accent-tint: #c9a6c5;
 
   /* Hairlines */
   --line: rgba(13, 13, 13, 0.1);
@@ -62,7 +66,7 @@
 
   ::selection {
     background: var(--accent);
-    color: #0d0d0d;
+    color: #ffffff;
   }
 
   /* Focus ring: accent for brand + a dark halo so it stays visible on the
@@ -400,7 +404,7 @@ html.cur-on * {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(198, 251, 80, 0.5);
+  box-shadow: 0 0 0 0 rgba(74, 37, 69, 0.5);
   animation: livepulse 2.4s ease-out infinite;
 }
 
@@ -454,7 +458,7 @@ html.cur-on * {
   height: 100%;
   transform-origin: top;
   transform: scaleY(var(--fill, 0));
-  background: linear-gradient(180deg, #d8ff7a, var(--accent), #9fdb30);
+  background: linear-gradient(180deg, #8a5b85, var(--accent), #2c1529);
 }
 
 /* ============================================================
@@ -519,7 +523,7 @@ html.cur-on * {
   background: conic-gradient(
     from 0deg,
     transparent,
-    rgba(198, 251, 80, 0.22),
+    rgba(74, 37, 69, 0.18),
     transparent 40%
   );
   animation: spin 12s linear infinite;

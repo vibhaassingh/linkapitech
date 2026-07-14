@@ -90,7 +90,7 @@ export function WorkQuickView({ c }: { c: CaseStudy }) {
           className="qv-cover relative grid place-items-center overflow-hidden rounded-t-[20px]"
           style={{ background: TONE_BG[c.tone] }}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(198,251,80,.14),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(201,166,197,.16),transparent_55%)]" />
           <span className="absolute left-5 top-5 z-10">
             <Chip variant="glass">{c.industry}</Chip>
           </span>

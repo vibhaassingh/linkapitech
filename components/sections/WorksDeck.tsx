@@ -8,7 +8,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Chip } from "@/components/ui/Chip";
 
 const toneBg: Record<CaseTone, string> = {
-  lime: "linear-gradient(135deg,#1b3a1e,#0d0d0d 72%)",
+  lime: "linear-gradient(135deg,#2e1a33,#0d0d0d 72%)",
   ink: "linear-gradient(135deg,#242424,#0d0d0d 72%)",
   slate: "linear-gradient(135deg,#1c2733,#0d0d0d 72%)",
   violet: "linear-gradient(135deg,#2a1c33,#0d0d0d 72%)",
@@ -62,7 +62,7 @@ function WorkCard({ c, index, total }: { c: CaseStudy; index: number; total: num
           <span className="text-[11px] uppercase tracking-eyebrow text-white/50">
             {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")} · {c.name}
           </span>
-          <span className="rounded-pill bg-accent px-4 py-1.5 text-[11px] font-semibold text-ink transition-transform duration-300 group-hover:-translate-y-0.5">
+          <span className="rounded-pill bg-accent px-4 py-1.5 text-[11px] font-semibold text-white transition-transform duration-300 group-hover:-translate-y-0.5">
             View program →
           </span>
         </div>
@@ -71,7 +71,7 @@ function WorkCard({ c, index, total }: { c: CaseStudy; index: number; total: num
           className="relative aspect-[1672/941] w-full overflow-hidden"
           style={{ background: toneBg[c.tone] }}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(198,251,80,.14),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(201,166,197,.16),transparent_55%)]" />
           <span className="absolute left-6 top-6 z-10">
             <Chip variant="glass">{c.services}</Chip>
           </span>
@@ -83,7 +83,7 @@ function WorkCard({ c, index, total }: { c: CaseStudy; index: number; total: num
               {c.name}
             </span>
           </span>
-          <Seal id={c.slug} className="absolute bottom-6 left-6 z-10 text-accent" />
+          <Seal id={c.slug} className="absolute bottom-6 left-6 z-10 text-accent-tint" />
         </div>
 
         <div className="grid gap-8 border-t border-white/10 px-6 py-8 md:grid-cols-[1.2fr_1fr] md:px-8">
@@ -120,7 +120,7 @@ function Seal({ id, className }: { id: string; className?: string }) {
         </text>
       </svg>
       <span className="absolute inset-0 grid place-items-center">
-        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        <span className="h-1.5 w-1.5 rounded-full bg-accent-tint" />
       </span>
     </span>
   );

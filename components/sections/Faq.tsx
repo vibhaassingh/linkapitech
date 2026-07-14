@@ -58,7 +58,7 @@ export function Faq() {
 
               {isOpen && (
                 <div className="flex max-w-[92%] items-start gap-3">
-                  <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-[11px] font-semibold text-accent">
+                  <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-[11px] font-semibold text-accent-tint">
                     LA
                   </span>
                   {typing ? (

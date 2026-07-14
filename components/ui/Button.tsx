@@ -27,7 +27,7 @@ const variants: Record<Variant, string> = {
   primary:
     "bg-ink px-8 py-5 text-[15px] text-white shadow-[0_14px_40px_-16px_rgba(15,15,14,.55)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-20px_rgba(15,15,14,.7)]",
   accent:
-    "bg-accent px-6.5 py-4 text-[15px] font-semibold text-ink hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-16px_rgba(198,251,80,.5)]",
+    "bg-accent px-6.5 py-4 text-[15px] font-semibold text-white hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-16px_rgba(74,37,69,.5)]",
 };
 
 /**
@@ -52,12 +52,12 @@ export function Button({
   const inner = (
     <>
       {variant === "primary" && (
-        <span className="pointer-events-none absolute inset-0 rounded-pill bg-[radial-gradient(circle_at_50%_50%,rgba(198,251,80,.55),transparent_65%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <span className="pointer-events-none absolute inset-0 rounded-pill bg-[radial-gradient(circle_at_50%_50%,rgba(74,37,69,.5),transparent_65%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       )}
       <span className="relative z-10">{children}</span>
       {showArrow &&
         (variant === "primary" ? (
-          <span className="relative z-10 grid h-6.5 w-6.5 place-items-center rounded-full bg-white text-ink transition-transform duration-500 ease-brand group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:-rotate-6 group-hover:bg-accent">
+          <span className="relative z-10 grid h-6.5 w-6.5 place-items-center rounded-full bg-white text-ink transition-transform duration-500 ease-brand group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:-rotate-6 group-hover:bg-accent group-hover:text-white">
             <Arrow />
           </span>
         ) : (

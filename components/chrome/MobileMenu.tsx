@@ -86,7 +86,7 @@ export function MobileMenu({
         <nav className="flex flex-1 flex-col justify-center gap-1" aria-label="Mobile">
           {links.map((l, i) => {
             const cls =
-              "text-[clamp(34px,9vw,64px)] leading-none tracking-tight transition-colors group-hover:text-accent " +
+              "text-[clamp(34px,9vw,64px)] leading-none tracking-tight transition-colors group-hover:text-accent-tint " +
               (i % 2 ? "font-serif italic" : "font-sans font-medium");
             const inner = (
               <>
@@ -110,7 +110,7 @@ export function MobileMenu({
           <span className="inline-flex items-center gap-2">
             <span className="pulse-dot" /> Plugin support &amp; inquiries
           </span>
-          <a href={`mailto:${CONTACT.primaryEmail}`} className="text-white hover:text-accent">
+          <a href={`mailto:${CONTACT.primaryEmail}`} className="text-white hover:text-accent-tint">
             {CONTACT.primaryEmail}
           </a>
         </div>

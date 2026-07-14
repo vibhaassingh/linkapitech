@@ -70,7 +70,7 @@ export function Testimonials() {
                   {withMark(t.quote, t.emphasis)}
                 </p>
                 <div className="mt-8 flex items-center gap-4">
-                  <span className="grid h-12 w-12 place-items-center rounded-full bg-accent text-sm font-semibold text-ink">
+                  <span className="grid h-12 w-12 place-items-center rounded-full bg-accent text-sm font-semibold text-white">
                     {t.initials}
                   </span>
                   <div>

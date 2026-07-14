@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-/** Favicon — lime "L" on ink (Next.js icon convention, auto cache-busted). */
+/** Favicon — light-purple "L" on ink (Next.js icon convention, auto cache-busted). */
 export default function Icon() {
   return new ImageResponse(
     (
@@ -15,7 +15,7 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#0d0d0d",
-          color: "#C6FB50",
+          color: "#c9a6c5",
           fontSize: 22,
           fontWeight: 700,
           fontFamily: "serif",
