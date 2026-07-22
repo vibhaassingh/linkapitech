@@ -33,7 +33,7 @@ export function CaseGrid() {
                 className="group flex flex-col justify-between rounded-md border border-line bg-surface p-8 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel md:p-10"
               >
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-eyebrow text-steel">
+                  <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
                     {c.kicker} · {c.year}
                   </p>
                   <h3 className="heading-3 mt-4 text-ink">{c.name}</h3>

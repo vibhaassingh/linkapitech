@@ -35,7 +35,7 @@ export function Wordmark({ client, className, size = "md" }: WordmarkProps) {
   return (
     <span
       className={cn(
-        "flex select-none items-center font-display font-semibold tracking-[0.02em] text-steel transition-colors duration-ui hover:text-ink",
+        "flex select-none items-center font-display font-semibold tracking-[0.02em] text-ink-3 transition-colors duration-ui hover:text-ink",
         box,
         size === "lg" ? "text-[clamp(1.5rem,2.4vw,2.1rem)]" : "text-[clamp(1.05rem,1.4vw,1.3rem)]",
         className,

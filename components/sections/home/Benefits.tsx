@@ -16,7 +16,7 @@ export function Benefits() {
               key={b.num}
               className="rounded-md border border-line bg-surface p-7 shadow-card"
             >
-              <p className="font-mono text-xs text-steel">{b.num}</p>
+              <p className="font-mono text-xs text-ink-3">{b.num}</p>
               <h3 className="mt-3 font-display text-[18px] font-semibold leading-snug text-ink">
                 {b.title}
               </h3>

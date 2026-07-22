@@ -47,9 +47,9 @@ export function SiteHeader(_props: SiteHeaderProps) {
       <div className="mx-auto flex h-full w-full max-w-[1240px] items-center justify-between px-6 md:px-10">
         <Link
           href="/"
-          className="rounded-sm font-display text-[19px] font-bold tracking-tight text-navy-900"
+          className="rounded-sm font-display text-[19px] font-semibold tracking-tight text-navy-900"
         >
-          LinkAPI<span className="ml-1 font-semibold text-steel">Tech</span>
+          LinkAPI<span className="ml-1 font-semibold text-ink-3">Tech</span>
         </Link>
 
         <MegaMenu onOpenChange={setPanelOpen} />

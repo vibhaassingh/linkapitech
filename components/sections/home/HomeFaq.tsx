@@ -38,7 +38,7 @@ export function HomeFaq() {
                       <span
                         aria-hidden="true"
                         className={cn(
-                          "text-steel transition-transform duration-ui",
+                          "text-ink-3 transition-transform duration-ui",
                           isOpen && "rotate-45",
                         )}
                       >

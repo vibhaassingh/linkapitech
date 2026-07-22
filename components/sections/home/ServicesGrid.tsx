@@ -51,7 +51,7 @@ export function ServicesGrid() {
               className="group flex flex-col justify-between rounded-md border border-line bg-surface p-7 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel"
             >
               <div>
-                <p className="font-mono text-xs text-steel">{s.num}</p>
+                <p className="font-mono text-xs text-ink-3">{s.num}</p>
                 <h3 className="mt-3 font-display text-[18px] font-semibold leading-snug text-ink">
                   {serviceHeading(s)}
                 </h3>

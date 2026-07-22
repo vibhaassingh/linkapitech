@@ -21,7 +21,7 @@ export function LegalDocView({ doc }: { doc: LegalDoc }) {
         {doc.sections.map((s) => (
           <Reveal key={s.num} className="border-t border-line-soft py-8">
             <h2 className="flex items-baseline gap-4 font-display text-[19px] font-semibold text-ink">
-              <span className="font-mono text-[13px] font-normal tabular-nums text-steel">
+              <span className="font-mono text-[13px] font-normal tabular-nums text-ink-3">
                 {s.num}
               </span>
               {s.title}

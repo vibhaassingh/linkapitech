@@ -13,7 +13,7 @@ interface EyebrowProps {
 export function Eyebrow({ children, className, index, as: Tag = "p" }: EyebrowProps) {
   return (
     <Tag className={cn("eyebrow flex items-center gap-3", className)}>
-      {index && <span className="text-steel">{index}</span>}
+      {index && <span className="text-ink-3">{index}</span>}
       <span>{children}</span>
     </Tag>
   );

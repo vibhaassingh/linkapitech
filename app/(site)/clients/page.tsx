@@ -91,7 +91,7 @@ export default function ClientsPage() {
           <RevealGroup className="mt-12 grid gap-5 md:grid-cols-2" step={80}>
             {PRACTICES.map((p, i) => (
               <div key={p.title} className="rounded-md border border-line bg-canvas p-7">
-                <p className="font-mono text-xs text-steel">{String(i + 1).padStart(2, "0")}</p>
+                <p className="font-mono text-xs text-ink-3">{String(i + 1).padStart(2, "0")}</p>
                 <h3 className="mt-3 font-display text-[18px] font-semibold text-ink">{p.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-ink-2">{p.body}</p>
               </div>

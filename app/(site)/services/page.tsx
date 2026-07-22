@@ -40,7 +40,7 @@ export default function ServicesPage() {
             className="grid gap-6 border-b border-line-soft py-14 [scroll-margin-top:96px] md:grid-cols-[220px_1fr_1fr] md:gap-10"
           >
             <Reveal>
-              <p className="font-mono text-xs uppercase tracking-eyebrow text-steel">
+              <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
                 {s.num} {i === 0 && "· Flagship"}
               </p>
             </Reveal>
@@ -78,7 +78,7 @@ export default function ServicesPage() {
                 key={item}
                 className="flex items-start gap-4 border-b border-line-soft py-4 text-[15px] text-ink-2"
               >
-                <span className="mt-0.5 font-mono text-xs text-steel">
+                <span className="mt-0.5 font-mono text-xs text-ink-3">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 {item}

@@ -17,12 +17,9 @@ export function Hero() {
           <Reveal>
             <Eyebrow>{HERO.eyebrow}</Eyebrow>
           </Reveal>
-          <Reveal delay={80}>
-            <h1 className="display-1 mt-5 text-ink">{HERO.headline}</h1>
-          </Reveal>
-          <Reveal delay={180}>
-            <p className="body-lg mt-6 max-w-[52ch] text-ink-2">{HERO.sub}</p>
-          </Reveal>
+          {/* H1 and sub are LCP candidates — never reveal-gated, paint with first render. */}
+          <h1 className="display-1 mt-5 text-ink">{HERO.headline}</h1>
+          <p className="body-lg mt-6 max-w-[52ch] text-ink-2">{HERO.sub}</p>
           <Reveal delay={280}>
             <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-7">
               <Button href={HERO.cta.href}>{HERO.cta.label}</Button>

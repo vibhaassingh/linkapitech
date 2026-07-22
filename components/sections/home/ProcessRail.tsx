@@ -66,7 +66,7 @@ export function ProcessRail() {
                     />
                   </span>
 
-                  <p className="font-mono text-xs uppercase tracking-eyebrow text-steel">
+                  <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
                     {phase.phaseLabel}
                   </p>
                   <h3 className="heading-3 mt-2 text-ink">

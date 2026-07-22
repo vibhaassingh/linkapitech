@@ -12,7 +12,7 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr_1.2fr]">
           {/* Brand */}
           <div>
-            <p className="font-display text-[19px] font-bold tracking-tight">
+            <p className="font-display text-[19px] font-semibold tracking-tight">
               LinkAPI<span className="ml-1 font-semibold text-steel">Tech</span>
             </p>
             <p className="mt-4 max-w-[36ch] text-sm leading-relaxed text-ink-inv-2">
@@ -71,15 +71,18 @@ export function SiteFooter() {
               {CONTACT.channels.map((ch) => (
                 <li key={ch.phone}>
                   <p className="text-[12.5px] text-steel">{ch.label}</p>
-                  <p className="mt-1 text-sm">
-                    <a href={ch.phoneHref} className="tnum font-medium text-ink-inv hover:underline">
+                  <p className="mt-0.5 text-sm">
+                    <a
+                      href={ch.phoneHref}
+                      className="tnum inline-block py-1 font-medium text-ink-inv hover:underline"
+                    >
                       {ch.phone}
                     </a>
                   </p>
                   <p className="text-sm">
                     <a
                       href={`mailto:${ch.email}`}
-                      className="break-all text-ink-inv-2 transition-colors duration-ui hover:text-ink-inv"
+                      className="inline-block break-all py-1 text-ink-inv-2 transition-colors duration-ui hover:text-ink-inv"
                     >
                       {ch.email}
                     </a>

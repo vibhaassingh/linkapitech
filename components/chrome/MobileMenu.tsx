@@ -153,7 +153,7 @@ function Disclosure({ label, children }: { label: string; children: React.ReactN
         {label}
         <span
           aria-hidden="true"
-          className={cn("text-steel transition-transform duration-ui", open && "rotate-45")}
+          className={cn("text-ink-3 transition-transform duration-ui", open && "rotate-45")}
         >
           +
         </span>

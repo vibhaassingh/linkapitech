@@ -69,7 +69,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
       {/* Header */}
       <header className="mt-8 border-b border-line-soft pb-10">
         <Reveal>
-          <p className="font-mono text-xs uppercase tracking-eyebrow text-steel">
+          <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
             {c.kicker} · {c.year}
           </p>
         </Reveal>
@@ -126,7 +126,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
                 key={h}
                 className="flex items-start gap-4 border-b border-line-soft py-3.5 text-[15px] text-ink-2"
               >
-                <span className="mt-0.5 font-mono text-xs text-steel">
+                <span className="mt-0.5 font-mono text-xs text-ink-3">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 {h}
@@ -136,17 +136,17 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
         </Reveal>
         <Reveal delay={100}>
           <h2 className="heading-3 text-ink">By the numbers</h2>
-          <dl className="mt-6 flex flex-col gap-6">
+          <ul className="mt-6 flex flex-col gap-6">
             {c.stats.map((s) => (
-              <div key={s.label} className="border-b border-line-soft pb-5">
-                <dt className="text-[13px] text-ink-3">{s.label}</dt>
-                <dd className="mt-1 font-display text-3xl font-semibold tnum text-navy-900">
+              <li key={s.label} className="border-b border-line-soft pb-5">
+                <p className="text-[13px] text-ink-3">{s.label}</p>
+                <p className="mt-1 font-display text-3xl font-semibold tnum text-navy-900">
                   {s.num}
-                </dd>
+                </p>
                 {s.body && <p className="mt-1 text-[12.5px] text-ink-3">{s.body}</p>}
-              </div>
+              </li>
             ))}
-          </dl>
+          </ul>
         </Reveal>
       </div>
 

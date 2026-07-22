@@ -1,17 +1,58 @@
 # linkapitech-site
 
-A faithful design-clone of **allgoodstudio.com**, rebuilt in Next.js and populated
-entirely with **LinkAPI Tech's real content**. Built per the plan bundle in the
-parent folder (`PLAN.md`, `CLAUDE.md`, and the five spec files).
+**linkapitech.com — "Institutional Light" redesign.** An ultra-corporate,
+bank-audience website for LinkAPI Tech Pvt. Ltd., with the client banks
+(HSBC · Axis Bank · IndusInd Bank · Aditya Birla*) as the narrative center of
+every page. Near-white canvas, deep-navy accent, typography-led, one signature
+vanilla-Three.js hero. Populated entirely with **LinkAPI's real content**.
 
 ## Stack
 
 - **Next.js 15** (App Router, React 19, TypeScript, RSC by default)
-- **Tailwind CSS v3** + CSS-variable design tokens (`DESIGN-SYSTEM.md §6`)
-- **Lenis** (smooth scroll) + **GSAP/ScrollTrigger** — homepage only, one RAF loop
-- **next/font/google** — Onest (300–800) + Instrument Serif (italic)
+- **Tailwind CSS v3** + CSS-variable design tokens (`:root` in `globals.css`)
+- **Lenis** smooth scroll (homepage only, single rAF loop — no GSAP)
+- **three** (vanilla, no react-three-fiber) — lazy hero scene, see below
+- **next/font/google** — Schibsted Grotesk 600 (display) + Inter 400/500 (body)
+  + IBM Plex Mono 400 (eyebrows/numerals); 4 font files total, deliberately lean
 - **react-hook-form** + **zod** — contact form
 - Env-driven analytics; dynamic OG image, favicons, sitemap, robots, JSON-LD
+
+## The Three.js hero (lazy-load pattern)
+
+`components/three/` — a "connective arc network": LinkAPI hub, the four bank
+nodes on a shallow 3D arc, navy bezier connections, silver data pulses.
+
+- A **static SVG poster** (`HeroPoster.tsx`) is server-rendered in the initial
+  HTML — it is the *only* visual under reduced-motion, no-WebGL, or <1024px
+  viewports (mobile never downloads three).
+- On capable desktops, `HeroVisual.tsx` dynamically imports the scene at
+  browser idle (`requestIdleCallback`) and crossfades it in after the first
+  rendered frame. three (~110KB gz) stays out of the critical bundle — the
+  homepage first-load is unchanged by the scene.
+- Bank labels are **HTML text** projected per frame inside the scene's single
+  rAF (crisp at any DPR, real text). RAF halts when the hero is off-screen
+  (IntersectionObserver) or the tab is hidden; everything disposes on unmount.
+- DPR capped at 1.5, antialias off on retina, `powerPreference: "low-power"`.
+
+## Motion system
+
+- Reveals are **React-state-driven**: `useInView` (IO threshold 0) renders a
+  `data-inview` attribute — re-renders can never wipe the revealed state, and
+  wrappers taller than the viewport still fire.
+- Easing/durations are tokens: `--ease-out-expo`, 900ms entrances, 200ms UI,
+  80ms staggers. A global `prefers-reduced-motion` kill-switch snaps
+  everything to its end state and prevents the WebGL scene from loading.
+- The hero H1 + subhead are **never** reveal-gated (they're the LCP elements).
+
+## Mega menu (accessibility contract)
+
+`components/chrome/MegaMenu.tsx` — full-width Solutions/Work panels:
+click/Enter/Space toggle; hover-intent (80ms open / 250ms close, one shared
+timer across trigger+panel — WCAG 1.4.13 persistent); Esc closes and restores
+trigger focus; panels are `hidden` when closed and sit in DOM order directly
+after their trigger (natural Tab flow, no focus trap); ArrowDown opens and
+focuses the first link; a hover-opened panel absorbs the follow-up click.
+Mobile (<1024px): `role="dialog"` sheet with focus trap/restore + scroll lock.
 
 ## Getting started
 
@@ -35,62 +76,47 @@ npm run build && npm start   # production
 
 ```
 app/
-  layout.tsx                 root: fonts, grain overlay, base metadata, analytics
-  globals.css                :root tokens + reveal/VCR/cursor/curtain/accordion CSS
-  (marketing)/               heavy-motion route group (Lenis/GSAP/cursor/preloader)
-    layout.tsx  page.tsx      homepage
-  (site)/                    lightweight route group (CSS smooth scroll only)
-    about  services  contact  terms  privacy  work  work/[slug]
-  api/contact/route.ts       working form handler (replaces broken template endpoints)
+  layout.tsx                 root: fonts, base metadata, analytics
+  globals.css                :root tokens + type scale + reveal/menu/accordion CSS
+  (marketing)/               homepage route group (Lenis + lazy Three.js)
+  (site)/                    lightweight inner pages (native smooth scroll)
+    about  services  clients  contact  terms  privacy  work  work/[slug]
+  api/contact/route.ts       zod + honeypot + Resend-optional form handler
   opengraph-image  icon  apple-icon  sitemap  robots
 components/
-  chrome/   SiteHeader, MobileMenu, FooterMarquee, SiteFooter
-  sections/ Hero, TrustLogos, SplitShell, WorksDeck, ServiceAccordion,
-            ProcessStepper, Benefits, Testimonials, ContactSection, ContactForm,
-            ContactDetails, Faq, LegalDoc
-  ui/       Button, Chip, MixedHeading, SectionEyebrow, Marquee, Counter, Field
-  motion/   SmoothScrollProvider, Preloader, Cursor, Reveal, VerticalCutReveal, hooks
-content/    services, process, benefits, testimonials, faq, cases, stats, clients,
-            home, about, legal   (typed data — the single source of truth for copy)
-lib/        site, metadata, analytics, jsonld, cn
+  chrome/   SiteHeader, MegaMenu, MegaPanel, MobileMenu, SiteFooter
+  sections/ home/* (11 homepage sections), PageHero, work/caseToneStyles,
+            ContactForm, LegalDoc
+  three/    HeroVisual, HeroPoster, scene/ (createHeroScene, palette)
+  ui/       Button, Container, Eyebrow, StatNumber, Wordmark, Chip, Field
+  motion/   SmoothScrollProvider, useInView, Reveal, RevealGroup, hooks
+content/    services, process, benefits, testimonials, faq, cases, stats,
+            clients, home, about, legal  (typed data — single source of truth)
+lib/        site (IA + contacts), metadata, analytics, jsonld, cn
 ```
 
-## What's faithful to the reference
+## Quality gates (verified on the production build)
 
-Type system (Onest + italic-serif accent), tokens (`#0d0d0d` / `#ffffff` / rationed
-lime `#C6FB50`), hairline borders, global film-grain, the 01–06 numbered-index motif,
-sticky index-rail split shell (collapses ≤1100px), palette-inverted Works deck,
-7-row services accordion, scroll-driven 4-phase process, 6 benefit cards, testimonial
-"approval ledger", chat-style FAQ, footer stats marquee + closing footer. Every
-animation is `prefers-reduced-motion`-gated. Reference bugs (PLAN §6) are avoided:
-single RAF loop, no auto-firing modal, working form, `#contact` CTA, fixed testimonial.
+Lighthouse mobile — `/` 90/100/100/100 · `/services` 96/100/100/100 ·
+`/work/[slug]` 95/100/100/100 · `/clients` 95/100/100/100
+(Perf/A11y/Best-Practices/SEO). CLS 0 on every page. Content fully readable
+without JavaScript (RSC HTML, poster included).
 
-## What's LinkAPI's real content
+## Content-truth rules
 
-Real contacts (Ghaziabad address, +91-9318373476 / partnership@linkapitech.com,
-+91-9891121770 / Operations@linkapitech.com, WhatsApp), real trust stats (5000+ API
-implementations, 45,000+ customers, ₹20,000 Cr/month, 10L+ transactions), real
-About (Mission/Vision/Commitment/Performance), and the real "What we offer?" scope.
-No Latin/template filler, no dummy mega-menu.
+All facts come from `content/` — real contacts, real aggregate stats (5000+
+API implementations, 45,000+ customers, ₹20,000 Cr/month, 10L+ txns/month),
+real service language. **No outcome claim is attributed to a named bank**
+(logos are trust signals only), and no certifications are claimed (none
+exist in the source). Draft copy is flagged `TODO: client to confirm` in
+code comments.
 
 ## Open items — `TODO: client to confirm`
 
-These are drafted on-brand and flagged as **code comments** (not user-facing):
-
-- **Case studies** (`content/cases.ts`) are aggregate, program-level summaries built
-  from real stats — **not** client-specific case studies. Replace with real
-  per-engagement narratives + real dates when available.
-- **Client logos** (`content/clients.ts`) render as text wordmarks; supply licensed
-  vector logos and confirm the 4th mark (likely "Aditya Birla").
-- **Testimonials** (`content/testimonials.ts`) need real company/role (+ LinkedIn);
-  the "Tech Solutions" wrong-company bug is already fixed.
-- **FAQ** (`content/faq.ts`) is net-new draft copy — review before publishing.
-- **Legal** (`content/legal.ts`) is draft copy — needs legal review + a real date.
-- **Service 07** (BFSI Sales Augmentation) may belong as a standalone Partner page.
-- Social profile URLs are empty (`lib/site.ts`) — icons stay hidden until supplied.
-- Consider commissioning real photography and short benefit clips.
-
-## Optional / Phase 8 (not built)
-
-Blog, the Works "quick view" intercepting-route modal, the WebGL "Threads" hero
-accent, and the Thread-Nav drag scrubber — all reserved as optional polish.
+- *Aditya Birla wordmark: confirm the exact entity name behind `aditya.png`.
+- Licensed vector logos for all four bank marks (`content/clients.ts` —
+  `Wordmark` drops SVGs into the same slot).
+- Case studies are aggregate program summaries; replace with real
+  per-engagement narratives + dates when available.
+- Testimonials need real company/role; FAQ and legal copy are drafts.
+- Social profile URLs are empty — icons stay hidden until supplied.

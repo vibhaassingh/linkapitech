@@ -2,8 +2,8 @@
  * Services accordion — 7 slots (CONTENT-MAPPING §4.3 / §5.2), flagship first.
  * Copy is authored from LinkAPI's real service language, with the three
  * duplicated source blurbs rewritten as differentiated descriptions and tag
- * chips derived from real phrasing. Every heading renders `title` in Onest with
- * the trailing `accent` phrase in italic-serif (DESIGN-SYSTEM §2.2).
+ * chips derived from real phrasing. `title` + `accent` form the full service
+ * heading (see serviceHeading below).
  */
 export interface Service {
   num: string;
