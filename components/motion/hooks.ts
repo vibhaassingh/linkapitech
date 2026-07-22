@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
-const FINE = "(any-pointer:fine)";
 
 /** Centralized reduced-motion flag (INTERACTIONS-AND-MOTION §7.1). */
 export function usePrefersReducedMotion() {
@@ -18,40 +17,7 @@ export function usePrefersReducedMotion() {
   return reduced;
 }
 
-/**
- * Reveal system A — attaches `.in` when the element scrolls into view. Snaps
- * immediately under reduced motion. Returns a ref to spread onto the element
- * (which should also carry the `reveal` class).
- */
-export function useReveal<T extends HTMLElement = HTMLDivElement>(
-  threshold = 0.12,
-): RefObject<T | null> {
-  const ref = useRef<T | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (window.matchMedia(REDUCE).matches) {
-      el.classList.add("in");
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            el.classList.add("in");
-            io.unobserve(el);
-          }
-        });
-      },
-      { threshold, rootMargin: "0px 0px -7% 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [threshold]);
-  return ref;
-}
-
-/** Count-up on first view (INTERACTIONS-AND-MOTION §5.11). */
+/** Count-up on first view. (The reveal system now lives in useInView.ts.) */
 export function useCounter(target: number, duration = 1400) {
   const ref = useRef<HTMLElement | null>(null);
   const [value, setValue] = useState(0);
@@ -93,34 +59,7 @@ export function useCounter(target: number, duration = 1400) {
   return { ref, value };
 }
 
-/** Magnetic pull toward the cursor, capped at `strength` px (§6). */
-export function useMagnetic<T extends HTMLElement = HTMLElement>(strength = 18) {
-  const ref = useRef<T | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (!window.matchMedia(FINE).matches) return;
-    if (window.matchMedia(REDUCE).matches) return;
-    const move = (e: MouseEvent) => {
-      const r = el.getBoundingClientRect();
-      const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
-      const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
-      el.style.transform = `translate(${dx * strength}px, ${dy * strength}px)`;
-    };
-    const leave = () => {
-      el.style.transform = "";
-    };
-    el.addEventListener("mousemove", move);
-    el.addEventListener("mouseleave", leave);
-    return () => {
-      el.removeEventListener("mousemove", move);
-      el.removeEventListener("mouseleave", leave);
-    };
-  }, [strength]);
-  return ref;
-}
-
-/** Which section id currently straddles the mid-viewport line (§5.4). */
+/** Which section id currently straddles the mid-viewport line. */
 export function useActiveSection(ids: string[], fraction = 0.42) {
   const [active, setActive] = useState(ids[0]);
   const key = ids.join(",");

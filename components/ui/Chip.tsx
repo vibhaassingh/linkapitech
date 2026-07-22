@@ -11,14 +11,14 @@ interface Props {
 
 const variants: Record<ChipVariant, string> = {
   neutral:
-    "bg-bg-2 text-ink px-3.5 py-2 text-xs font-medium transition-colors duration-300 hover:bg-accent-soft",
+    "bg-navy-050 text-navy-700 px-3.5 py-1.5 text-xs font-medium",
   glass:
-    "border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] uppercase tracking-wide text-white backdrop-blur-[6px]",
+    "border border-line-inv bg-white/[0.06] px-3 py-1.5 text-[11px] uppercase tracking-eyebrow text-ink-inv-2",
   outline:
-    "border border-line px-4 py-2 text-[13px] text-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-ink",
+    "border border-line px-3.5 py-1.5 text-[13px] text-ink-2 transition-colors duration-ui hover:border-steel hover:text-ink",
 };
 
-/** Chip / tag — neutral (light), glass (on imagery), outline (DESIGN-SYSTEM §5.4). */
+/** Tag chip — navy tint (light), glass (on inverse), hairline outline. */
 export function Chip({ children, variant = "neutral", className }: Props) {
   return (
     <span className={cn("inline-flex items-center rounded-pill leading-none", variants[variant], className)}>

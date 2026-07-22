@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-/** Favicon — lime "L" on ink (Next.js icon convention, auto cache-busted). */
+/** Favicon — white monogram on institutional navy. */
 export default function Icon() {
   return new ImageResponse(
     (
@@ -14,13 +14,12 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0d0d0d",
-          color: "#C6FB50",
-          fontSize: 22,
+          background: "#0A1F44",
+          color: "#F2F5F9",
+          fontSize: 20,
           fontWeight: 700,
-          fontFamily: "serif",
-          fontStyle: "italic",
-          borderRadius: 6,
+          fontFamily: "sans-serif",
+          borderRadius: 7,
         }}
       >
         L

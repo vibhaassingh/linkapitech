@@ -3,43 +3,63 @@
 @tailwind utilities;
 
 /* ============================================================
-   Design tokens — verbatim from DESIGN-SYSTEM.md §6.1
+   Design tokens — "Institutional Light" (redesign 2026-07).
+   Near-white canvas, deep-navy accent, silver hairlines.
+   All color pairings AA-checked against their intended surfaces.
    ============================================================ */
 :root {
   /* Surfaces */
-  --bg: #ffffff;
-  --bg-2: #f4f4f4;
+  --canvas: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #eff2f6;
+  --inverse: #071733;
+  --inverse-2: #0a1f44;
 
-  /* Ink (text) scale */
-  --ink: #0d0d0d;
-  --ink-2: #5a5851;
-  --ink-3: #767369;
+  /* Ink (on light) */
+  --ink: #0b1b33;
+  --ink-2: #3d4b63;
+  --ink-3: #5e6e86;
 
-  /* Accent (use sparingly — CTAs, active states, highlights only) */
-  --accent: #c6fb50;
-  --accent-soft: rgba(198, 251, 80, 0.22);
-  --accent-deep: #5fa314;
+  /* Ink (on inverse) */
+  --ink-inv: #f2f5f9;
+  --ink-inv-2: #a9b8ce;
+
+  /* Navy accent scale */
+  --navy-950: #071733;
+  --navy-900: #0a1f44;
+  --navy-700: #14356b;
+  --navy-600: #1e4a94;
+  --navy-200: #c7d3e6;
+  --navy-100: #dee6f2;
+  --navy-050: #ecf1f8;
+
+  /* Silver / steel (scene lines, wordmarks, decorative rules) */
+  --steel: #8fa1bc;
+  --steel-2: #c3cddc;
 
   /* Hairlines */
-  --line: rgba(13, 13, 13, 0.1);
-  --line-2: rgba(13, 13, 13, 0.05);
+  --line: rgba(11, 27, 51, 0.12);
+  --line-soft: rgba(11, 27, 51, 0.06);
+  --line-inv: rgba(242, 245, 249, 0.14);
 
-  /* Dark / inverted surfaces */
-  --ink-footer: #0a0a0a;
-  --card-dark: #0d0d0d;
-  --card-dark-ink: #fafafa;
-
-  /* Radii */
+  /* Radii — institutional = tight */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
   --r-pill: 999px;
-  --r-card: 20px;
-  --r-input: 12px;
-  --r-chip: 10px;
+
+  /* Elevation — hairline-first; shadow only for floating chrome */
+  --shadow-menu: 0 16px 48px -16px rgba(7, 23, 51, 0.18),
+    0 2px 8px rgba(7, 23, 51, 0.06);
+  --shadow-card: 0 1px 2px rgba(7, 23, 51, 0.05);
 
   /* Motion */
-  --ease: cubic-bezier(0.2, 0.9, 0.2, 1);
-
-  /* Grain overlay (fractal-noise turbulence data-URI) */
-  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/></svg>");
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --dur-entrance: 900ms;
+  --dur-slow: 1200ms;
+  --dur-ui: 200ms;
+  --dur-menu: 320ms;
+  --stagger: 80ms;
 }
 
 @layer base {
@@ -51,59 +71,98 @@
 
   html,
   body {
-    background: var(--bg);
+    background: var(--canvas);
     color: var(--ink);
-    font-family: var(--font-onest), system-ui, sans-serif;
+    font-family: var(--font-sans), system-ui, sans-serif;
     font-weight: 400;
-    line-height: 1.4;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background: var(--accent);
-    color: #0d0d0d;
+    background: var(--navy-200);
+    color: var(--navy-950);
   }
 
-  /* Focus ring: accent for brand + a dark halo so it stays visible on the
-     white page (accent alone is ~1.2:1 on white). Works on light and dark. */
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--navy-600);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(13, 13, 13, 0.55);
   }
-  /* On dark surfaces, swap the halo to a light tint. */
-  .bg-ink :focus-visible,
-  .bg-ink-footer :focus-visible,
-  .bg-card-dark :focus-visible {
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+  /* On inverse surfaces the navy ring vanishes — swap to the inverse ink. */
+  .bg-inverse :focus-visible,
+  .bg-inverse-2 :focus-visible {
+    outline-color: var(--ink-inv);
   }
 
   h1,
   h2,
   h3,
   h4 {
-    font-weight: 500;
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+    font-weight: 600;
   }
 }
 
 /* ============================================================
-   Film-grain overlay — single global pseudo-layer (§1.4).
-   Rendered once via <Grain/> in the root layout.
+   Type scale — clamp-driven, display face for headings,
+   tabular numerals for every stat.
    ============================================================ */
-.grain-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9000;
-  background-image: var(--grain);
-  opacity: 0.1;
-  mix-blend-mode: multiply;
+.display-1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2.75rem, 1.2rem + 5.2vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+.display-2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 1rem + 3vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+.heading-3 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.65rem);
+  line-height: 1.2;
+  font-weight: 600;
+}
+.body-lg {
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+.eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+.stat-num {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Section rhythm */
+.section-pad {
+  padding-top: clamp(88px, 11vh, 152px);
+  padding-bottom: clamp(88px, 11vh, 152px);
 }
 
 /* ============================================================
-   Lenis smooth scroll (only active when <SmoothScrollProvider>
-   adds .lenis to <html> on the marketing route).
+   Lenis smooth scroll (active only when <SmoothScrollProvider>
+   runs on the marketing route).
    ============================================================ */
 html.lenis,
 html.lenis body {
@@ -128,53 +187,90 @@ html {
 }
 
 /* ============================================================
-   Reveal system A — plain fade/slide/blur on IntersectionObserver.
-   Used by useReveal() across marketing + inner pages.
+   Reveal system — state lives in React (data-inview is rendered,
+   never imperatively toggled, so re-renders can't wipe it).
    ============================================================ */
-.reveal {
+[data-reveal] {
   opacity: 0;
-  transform: translateY(38px);
-  filter: blur(14px);
-  transition: opacity 820ms var(--ease), transform 980ms var(--ease),
-    filter 760ms var(--ease);
+  transform: translateY(24px);
+  transition: opacity var(--dur-entrance) var(--ease-out-expo),
+    transform var(--dur-entrance) var(--ease-out-expo);
   transition-delay: var(--reveal-delay, 0ms);
   will-change: opacity, transform;
 }
-.reveal.in {
+[data-reveal][data-inview] {
   opacity: 1;
   transform: none;
-  filter: none;
   will-change: auto;
 }
 
+/* Decorative hairline that draws in under section headings. */
+.rule-draw {
+  height: 1px;
+  background: var(--line);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+[data-inview] .rule-draw,
+.rule-draw[data-inview] {
+  transform: scaleX(1);
+}
+
 /* ============================================================
-   Hero "Vertical Cut Reveal" (VCR) — per-glyph/word clip mask.
-   The <VerticalCutReveal> component sets --i per span and flips
-   data-revealed / data-vcr-done on the wrapper.
+   Accordion — grid-rows 0fr→1fr height animation (FAQ, mobile nav).
    ============================================================ */
-.vcr {
-  display: inline-block;
+.acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
   overflow: hidden;
-  vertical-align: top;
+  transition: grid-template-rows 0.42s var(--ease-out-expo);
 }
-.vcr-inner {
-  display: inline-block;
-  transform: translateY(var(--vcr-from, 120%));
-  transition: transform var(--vcr-dur, 900ms) var(--ease);
-  transition-delay: calc(
-    var(--i, 0) * var(--vcr-stagger, 32ms) + var(--vcr-base, 0ms)
-  );
-  will-change: transform;
+.acc-row.is-open .acc-panel {
+  grid-template-rows: 1fr;
 }
-[data-revealed="true"] .vcr-inner {
-  transform: translateY(0);
+.acc-panel-min {
+  min-height: 0;
 }
-[data-vcr-done="true"] .vcr {
-  overflow: visible;
+.acc-inner {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.32s var(--ease-out-expo) 0.06s,
+    transform 0.32s var(--ease-out-expo) 0.06s;
 }
-/* Release the promoted compositor layer once the reveal has settled (§7.2). */
-[data-vcr-done="true"] .vcr-inner {
-  will-change: auto;
+.acc-row.is-open .acc-inner {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================================================
+   Quiet pulse dot (SecurityBand rows, live-channel hints).
+   Steel ring on a navy core — 6s, deliberately slow.
+   ============================================================ */
+.pulse-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--navy-600);
+  flex: none;
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(30, 74, 148, 0.35);
+  animation: quietpulse 6s ease-out infinite;
+}
+@keyframes quietpulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(30, 74, 148, 0.35);
+  }
+  30%,
+  100% {
+    box-shadow: 0 0 0 10px rgba(30, 74, 148, 0);
+  }
 }
 
 /* ============================================================
@@ -188,7 +284,6 @@ html {
   scrollbar-width: none;
 }
 
-/* Marquee edge-fade mask (hero logo strip). */
 .mask-fade-x {
   -webkit-mask-image: linear-gradient(
     to right,
@@ -207,8 +302,8 @@ html {
 }
 
 /* ============================================================
-   Global reduced-motion discipline (INTERACTIONS-AND-MOTION §7).
-   Every custom motion primitive snaps to its end state.
+   Global reduced-motion discipline — every custom motion
+   primitive snaps to its end state; scene canvas never loads.
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -222,334 +317,12 @@ html {
   html {
     scroll-behavior: auto;
   }
-  .reveal {
+  [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
-    filter: none !important;
+    transition: none !important;
   }
-  .vcr-inner {
-    transform: none !important;
+  .rule-draw {
+    transform: scaleX(1) !important;
   }
-  .vcr {
-    overflow: visible !important;
-  }
-}
-
-/* ============================================================
-   Section shell rhythm (DESIGN-SYSTEM §3.3)
-   ============================================================ */
-.rsec-pad {
-  padding: clamp(96px, 10vw, 140px) clamp(40px, 10vw, 200px);
-}
-@media (max-width: 1100px) {
-  .rsec-pad {
-    padding: 90px 40px;
-  }
-}
-@media (max-width: 768px) {
-  .rsec-pad {
-    padding: 64px 24px;
-  }
-}
-@media (max-width: 600px) {
-  .rsec-pad {
-    padding: 56px 20px;
-  }
-}
-
-/* ============================================================
-   Preloader curtain (INTERACTIONS §3)
-   ============================================================ */
-.curtain {
-  position: fixed;
-  inset: 0;
-  z-index: 9500;
-  display: grid;
-  place-items: center;
-  background: #fcfcfc;
-  transform-origin: top;
-  transition: transform 0.7s cubic-bezier(0.7, 0.05, 0.2, 1) 0.1s;
-}
-.curtain--gone {
-  transform: scaleY(0);
-}
-
-/* ============================================================
-   Custom cursor (INTERACTIONS §4)
-   ============================================================ */
-.cur {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 100000;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate3d(-100px, -100px, 0);
-  will-change: transform;
-  color: var(--ink);
-}
-html.cur-on,
-html.cur-on * {
-  cursor: none !important;
-}
-@media (any-hover: none) {
-  html.cur-on,
-  html.cur-on * {
-    cursor: auto !important;
-  }
-  .cur {
-    display: none;
-  }
-}
-.cur > * {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: translate(-50%, -50%);
-}
-.cur-arrow {
-  transition: opacity 0.18s var(--ease);
-}
-.cur-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--ink);
-  box-shadow: 0 0 0 2px #fff;
-  opacity: 0;
-  transition: opacity 0.18s var(--ease);
-}
-.cur-view {
-  width: 90px;
-  height: 90px;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.4);
-  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
-}
-.cur-view::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--accent);
-}
-.cur-view svg {
-  position: absolute;
-  inset: 0;
-  animation: spin 9s linear infinite;
-}
-.cur-view-text {
-  fill: var(--ink);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-}
-.cur-view-arrow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.cur--hand .cur-arrow,
-.cur--view .cur-arrow,
-.cur--text .cur-arrow {
-  opacity: 0;
-}
-.cur--hand .cur-dot,
-.cur--text .cur-dot {
-  opacity: 1;
-}
-.cur--view .cur-view {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-.cur-ring {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  transform: translate(-50%, -50%) scale(0.25);
-  animation: curRipple 0.55s var(--ease) forwards;
-}
-@keyframes curRipple {
-  to {
-    transform: translate(-50%, -50%) scale(3.4);
-    opacity: 0;
-  }
-}
-
-/* ============================================================
-   Live pulse dot (§1.3 / §4.3)
-   ============================================================ */
-.pulse-dot {
-  position: relative;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex: none;
-}
-.pulse-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(198, 251, 80, 0.5);
-  animation: livepulse 2.4s ease-out infinite;
-}
-
-/* ============================================================
-   Accordion — grid-rows 0fr→1fr height animation (§5.7)
-   ============================================================ */
-.acc-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  overflow: hidden;
-  transition: grid-template-rows 0.55s var(--ease);
-}
-.acc-row.is-open .acc-panel {
-  grid-template-rows: 1fr;
-}
-.acc-panel-min {
-  min-height: 0;
-}
-.acc-inner {
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.5s var(--ease) 0.08s, transform 0.5s var(--ease) 0.08s;
-}
-.acc-row.is-open .acc-inner {
-  opacity: 1;
-  transform: none;
-}
-.acc-lime {
-  transform: scaleY(0);
-  transform-origin: top;
-  transition: transform 0.45s var(--ease);
-}
-.acc-row.is-open .acc-lime {
-  transform: scaleY(1);
-}
-
-/* ============================================================
-   Works sticky stack (§5.5) — disabled ≤980px
-   ============================================================ */
-@media (max-width: 980px) {
-  .ws-card {
-    position: relative !important;
-    top: auto !important;
-  }
-}
-
-/* ============================================================
-   Process rail fill (§5.8) — --fill written by useScrollFill
-   ============================================================ */
-.proc-fill {
-  height: 100%;
-  transform-origin: top;
-  transform: scaleY(var(--fill, 0));
-  background: linear-gradient(180deg, #d8ff7a, var(--accent), #9fdb30);
-}
-
-/* ============================================================
-   Highlighter marker (testimonial + FAQ emphasis, §1.3)
-   ============================================================ */
-.hl-mark {
-  background: linear-gradient(
-    to top,
-    var(--accent-soft) 0,
-    var(--accent-soft) 42%,
-    transparent 42%
-  );
-  padding: 0 0.04em;
-}
-
-/* ============================================================
-   FAQ typing indicator (§5.7)
-   ============================================================ */
-.typing {
-  display: inline-flex;
-  gap: 4px;
-  align-items: center;
-}
-.typing i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ink-3);
-  animation: typing 1s infinite;
-}
-.typing i:nth-child(2) {
-  animation-delay: 0.15s;
-}
-.typing i:nth-child(3) {
-  animation-delay: 0.3s;
-}
-@keyframes typing {
-  0%,
-  60%,
-  100% {
-    opacity: 0.25;
-    transform: translateY(0);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-}
-
-/* ============================================================
-   Benefit media poster — lightweight animated gradient (no video assets)
-   ============================================================ */
-.ben-poster {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #f1f2ed, #e6ece3);
-}
-.ben-poster::after {
-  content: "";
-  position: absolute;
-  inset: -45%;
-  background: conic-gradient(
-    from 0deg,
-    transparent,
-    rgba(198, 251, 80, 0.22),
-    transparent 40%
-  );
-  animation: spin 12s linear infinite;
-}
-
-/* ============================================================
-   Rotating seal badge (work cards) (§7.1)
-   ============================================================ */
-.seal svg {
-  animation: spin 9s linear infinite;
-}
-.seal-text {
-  fill: currentColor;
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-/* Footer signature wordmark fade into the floor. */
-.footer-signature {
-  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 92%);
-  mask-image: linear-gradient(to bottom, #000 30%, transparent 92%);
-}
-.footer-link {
-  width: fit-content;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  transition: color 0.3s var(--ease);
-}
-.footer-link:hover {
-  color: var(--accent);
 }

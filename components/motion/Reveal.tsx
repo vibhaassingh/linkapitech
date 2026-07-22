@@ -1,20 +1,23 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { cn } from "@/lib/cn";
-import { useReveal } from "./hooks";
+import { useInView } from "./useInView";
 
 interface RevealProps {
   children: ReactNode;
   className?: string;
-  /** stagger delay in ms */
+  /** transition delay in ms (use RevealGroup for index-based staggers) */
   delay?: number;
-  as?: "div" | "section" | "li" | "span" | "p" | "header" | "article";
+  as?: "div" | "section" | "li" | "span" | "p" | "header" | "article" | "footer";
   style?: CSSProperties;
   id?: string;
 }
 
-/** Convenience wrapper around the `.reveal` fade/slide/blur (System A). */
+/**
+ * Scroll reveal driven entirely through React state: `data-inview` is part of
+ * the rendered output, so re-renders can never wipe the revealed state (the
+ * failure mode of the old imperative classList system).
+ */
 export function Reveal({
   children,
   className,
@@ -23,14 +26,20 @@ export function Reveal({
   style,
   id,
 }: RevealProps) {
-  const ref = useReveal<HTMLElement>();
+  const { ref, inView } = useInView<HTMLElement>();
   const Comp = Tag as React.ElementType;
   return (
     <Comp
       id={id}
       ref={ref}
-      className={cn("reveal", className)}
-      style={{ ...(style ?? {}), "--reveal-delay": `${delay}ms` } as CSSProperties}
+      data-reveal=""
+      data-inview={inView || undefined}
+      className={className}
+      style={
+        delay
+          ? ({ ...(style ?? {}), "--reveal-delay": `${delay}ms` } as CSSProperties)
+          : style
+      }
     >
       {children}
     </Comp>

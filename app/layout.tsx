@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { onest, instrumentSerif } from "./fonts";
+import { schibsted, inter, plexMono } from "./fonts";
 import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
 import { Analytics } from "@/lib/analytics";
@@ -28,16 +28,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d0d0d",
+  themeColor: "#0A1F44",
   colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${onest.variable} ${instrumentSerif.variable}`}>
+    <html lang="en" className={`${schibsted.variable} ${inter.variable} ${plexMono.variable}`}>
       <body className="font-sans antialiased">
-        {/* Single global film-grain overlay (DESIGN-SYSTEM §1.4). */}
-        <div className="grain-overlay" aria-hidden="true" />
         {children}
         <Analytics />
       </body>

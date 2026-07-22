@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-// A real branded OG cover (PLAN §6 — the reference's og-cover.jpg was missing).
+// Branded OG cover — institutional navy, bank-centric trust line.
 export const alt = "LinkAPI Tech — BFSI API Integration & Technology Services";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -15,32 +15,34 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#0d0d0d",
-          color: "#ffffff",
+          background: "#0A1F44",
+          color: "#F2F5F9",
           padding: "80px",
           fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 14, height: 14, borderRadius: 999, background: "#C6FB50" }} />
-          <div style={{ fontSize: 26, letterSpacing: 2, color: "#a3a099" }}>
+          <div style={{ width: 12, height: 12, borderRadius: 999, background: "#8FA1BC" }} />
+          <div style={{ fontSize: 24, letterSpacing: 4, color: "#A9B8CE" }}>
             LINKAPI TECH PVT. LTD.
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 84, lineHeight: 1.02, fontWeight: 600, letterSpacing: -2 }}>
-            Secure connections
+          <div style={{ fontSize: 82, lineHeight: 1.05, fontWeight: 600, letterSpacing: -2 }}>
+            Bank-grade integration,
           </div>
-          <div style={{ display: "flex", fontSize: 84, lineHeight: 1.02, fontWeight: 600, letterSpacing: -2 }}>
-            <span>that grow&nbsp;</span>
-            <span style={{ color: "#C6FB50", fontStyle: "italic" }}>with you.</span>
+          <div style={{ fontSize: 82, lineHeight: 1.05, fontWeight: 600, letterSpacing: -2 }}>
+            delivered.
+          </div>
+          <div style={{ marginTop: 28, fontSize: 26, color: "#A9B8CE" }}>
+            Powering integrations for HSBC · Axis Bank · IndusInd Bank
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 40, fontSize: 24, color: "#a3a099" }}>
+        <div style={{ display: "flex", gap: 40, fontSize: 23, color: "#A9B8CE" }}>
           <span>5000+ API implementations</span>
-          <span>20,000 Cr / month</span>
+          <span>20,000 Cr / month processed</span>
           <span>45,000+ customers</span>
         </div>
       </div>

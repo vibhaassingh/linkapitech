@@ -1,11 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { useMagnetic } from "@/components/motion/hooks";
 
-type Variant = "primary" | "accent";
+type Variant = "primary" | "outline" | "quiet" | "accent";
 
 interface ButtonProps {
   children: ReactNode;
@@ -13,6 +10,7 @@ interface ButtonProps {
   variant?: Variant;
   className?: string;
   showArrow?: boolean;
+  /** @deprecated old design's magnetic hover — accepted and ignored until the last legacy consumer is rebuilt */
   magnetic?: boolean;
   type?: "button" | "submit";
   onClick?: () => void;
@@ -21,18 +19,21 @@ interface ButtonProps {
 }
 
 const base =
-  "group relative inline-flex items-center justify-center gap-3.5 rounded-pill font-medium tracking-wide transition-all duration-500 ease-brand disabled:opacity-60 disabled:pointer-events-none";
+  "group inline-flex items-center justify-center gap-2.5 rounded-sm font-medium transition-colors duration-ui ease-out-expo disabled:opacity-60 disabled:pointer-events-none";
 
-const variants: Record<Variant, string> = {
+const styles: Record<Exclude<Variant, "accent">, string> = {
   primary:
-    "bg-ink px-8 py-5 text-[15px] text-white shadow-[0_14px_40px_-16px_rgba(15,15,14,.55)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-20px_rgba(15,15,14,.7)]",
-  accent:
-    "bg-accent px-6.5 py-4 text-[15px] font-semibold text-ink hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-16px_rgba(198,251,80,.5)]",
+    "bg-navy-900 px-7 py-[15px] text-[15px] text-ink-inv hover:bg-navy-700",
+  outline:
+    "border border-line bg-transparent px-7 py-[14px] text-[15px] text-ink hover:border-ink",
+  quiet:
+    "px-0 py-1 text-[15px] text-navy-600 hover:text-navy-900",
 };
 
 /**
- * Primary dark pill (light surfaces) and accent lime pill (dark surfaces only),
- * per DESIGN-SYSTEM §5.1–5.2. Renders <Link> for internal paths, <a> otherwise.
+ * Institutional button set: navy fill, hairline outline, quiet link-with-arrow.
+ * Renders <Link> for internal paths, <a> otherwise. ("accent" maps to primary
+ * for the few not-yet-rebuilt legacy call sites.)
  */
 export function Button({
   children,
@@ -40,61 +41,47 @@ export function Button({
   variant = "primary",
   className,
   showArrow = true,
-  magnetic = false,
+  magnetic: _magnetic,
   type = "button",
   onClick,
   disabled,
   ...rest
 }: ButtonProps) {
-  const magRef = useMagnetic<HTMLElement>(18);
-  const classes = cn(base, variants[variant], className);
+  const v: Exclude<Variant, "accent"> = variant === "accent" ? "primary" : variant;
+  const classes = cn(base, styles[v], className);
 
   const inner = (
     <>
-      {variant === "primary" && (
-        <span className="pointer-events-none absolute inset-0 rounded-pill bg-[radial-gradient(circle_at_50%_50%,rgba(198,251,80,.55),transparent_65%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <span>{children}</span>
+      {showArrow && (
+        <span
+          aria-hidden="true"
+          className="transition-transform duration-ui ease-out-expo group-hover:translate-x-0.5"
+        >
+          <Arrow />
+        </span>
       )}
-      <span className="relative z-10">{children}</span>
-      {showArrow &&
-        (variant === "primary" ? (
-          <span className="relative z-10 grid h-6.5 w-6.5 place-items-center rounded-full bg-white text-ink transition-transform duration-500 ease-brand group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:-rotate-6 group-hover:bg-accent">
-            <Arrow />
-          </span>
-        ) : (
-          <span className="relative z-10 transition-transform duration-500 ease-brand group-hover:translate-x-1">
-            <Arrow />
-          </span>
-        ))}
     </>
   );
-
-  const attach = magnetic ? { ref: magRef as never } : {};
 
   if (href) {
     const internal = href.startsWith("/") && !href.startsWith("//");
     if (internal) {
       return (
-        <Link href={href} className={classes} {...attach} {...rest}>
+        <Link href={href} className={classes} {...rest}>
           {inner}
         </Link>
       );
     }
     return (
-      <a href={href} className={classes} {...attach} {...rest}>
+      <a href={href} className={classes} {...rest}>
         {inner}
       </a>
     );
   }
 
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={classes}
-      {...attach}
-      {...rest}
-    >
+    <button type={type} onClick={onClick} disabled={disabled} className={classes} {...rest}>
       {inner}
     </button>
   );
@@ -102,11 +89,11 @@ export function Button({
 
 function Arrow() {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
       <path
         d="M5 12h14M13 6l6 6-6 6"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

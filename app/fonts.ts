@@ -1,18 +1,26 @@
-import { Onest, Instrument_Serif } from "next/font/google";
+import { Schibsted_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 
-// UI + body sans. Headings render at weight 500 (confident-but-light).
-export const onest = Onest({
+// Display — engineered grotesk voice for headlines and stat numerals.
+export const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-onest",
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
   display: "swap",
 });
 
-// Editorial accent — every sitewide usage is italic 400 (roman loaded for safety).
-export const instrumentSerif = Instrument_Serif({
+// Body/UI workhorse. Tabular figures are enabled per-element via `tnum`
+// (stats, counters) so numerals never jitter during count-up.
+export const inter = Inter({
   subsets: ["latin"],
-  weight: "400",
-  style: ["italic", "normal"],
-  variable: "--font-instrument-serif",
+  weight: ["400", "500", "600"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+// Infrastructure accent — eyebrows, stat labels, nav numerals. ≤0.8rem only.
+export const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
   display: "swap",
 });
