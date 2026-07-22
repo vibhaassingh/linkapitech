@@ -13,7 +13,7 @@ export interface Stat {
 
 /** The four headline stats used in the footer marquee ticker (HOMEPAGE-SECTIONS §8). */
 export const MARQUEE_STATS: Stat[] = [
-  { value: "5000+", count: 5000, suffix: "+", label: "API implementations" },
+  { value: "5,000+", count: 5000, suffix: "+", label: "API implementations" },
   { value: "45,000+", count: 45000, suffix: "+", label: "Customers served" },
   { value: "₹20,000 Cr", prefix: "₹", count: 20000, suffix: " Cr", label: "Processed / month" },
   { value: "10L+", count: 10, suffix: "L+", label: "Transactions / month" },
@@ -30,13 +30,13 @@ export const PERFORMANCE_STATS: Stat[] = [
 /** About-page intro stat cards (CONTENT-MAPPING §2.3, verbatim labels). */
 export const IMPACT_STATS: Stat[] = [
   {
-    value: "5000+",
+    value: "5,000+",
     count: 5000,
     suffix: "+",
     label: "API implementations across BFSI, Fintech, Agritech & Edutech domains",
   },
   {
-    value: "2500+",
+    value: "2,500+",
     count: 2500,
     suffix: "+",
     label: "Reconciliation solutions delivered, driving process efficiency",
@@ -48,7 +48,7 @@ export const IMPACT_STATS: Stat[] = [
     label: "Portals built for external and internal clients",
   },
   {
-    value: "1000+",
+    value: "1,000+",
     count: 1000,
     suffix: "+",
     label: "Active partners across developers, ERP & plugin resellers, and CAs",

@@ -6,7 +6,7 @@ import { HOME_SECTIONS } from "@/content/home";
 /** Why LinkAPI — six reasons, 3×2 hairline cards. */
 export function Benefits() {
   return (
-    <section id="why" className="section-pad">
+    <section id="why" className="ambient-violet section-pad">
       <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <SectionHeader meta={HOME_SECTIONS.why} />
 
@@ -14,7 +14,7 @@ export function Benefits() {
           {BENEFITS.map((b) => (
             <div
               key={b.num}
-              className="rounded-md border border-line bg-surface p-7 shadow-card"
+              className="spotlight overflow-hidden rounded-md border border-line bg-surface p-7 shadow-card"
             >
               <p className="font-mono text-xs text-ink-3">{b.num}</p>
               <h3 className="mt-3 font-display text-[18px] font-semibold leading-snug text-ink">

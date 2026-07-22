@@ -37,6 +37,12 @@
   --steel: #8fa1bc;
   --steel-2: #c3cddc;
 
+  /* Violet — cursor-reactive ambient light only. Never used for text or
+     structure, so the institutional navy identity stays intact. */
+  --violet: #6d5ae6;
+  --violet-soft: rgba(109, 90, 230, 0.1);
+  --violet-glow: rgba(109, 90, 230, 0.16);
+
   /* Hairlines */
   --line: rgba(11, 27, 51, 0.12);
   --line-soft: rgba(11, 27, 51, 0.06);
@@ -140,14 +146,14 @@
   letter-spacing: 0.14em;
   color: var(--ink-3);
 }
+/* Sized so the longest real figure ("₹20,000 Cr") fits one line in a
+   four-up band at 1240px. */
 .stat-num {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-size: clamp(1.9rem, 2.6vw, 2.75rem);
   line-height: 1.05;
   letter-spacing: -0.02em;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
 }
 .tnum {
   font-variant-numeric: tabular-nums;
@@ -215,6 +221,87 @@ html {
 [data-inview] .rule-draw,
 .rule-draw[data-inview] {
   transform: scaleX(1);
+}
+
+/* ============================================================
+   Cursor-reactive violet light.
+
+   Two layers, both purely decorative and pointer:fine only:
+   1. `.cursor-glow` — one fixed ambient blob that trails the pointer
+      across every page, driven by --mx/--my written once per frame.
+   2. `.spotlight` — a per-card sheen at --cx/--cy, revealed on hover.
+   Both are disabled under reduced motion and on touch.
+   ============================================================ */
+.cursor-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out-expo);
+  background: radial-gradient(
+    620px circle at var(--mx, 50%) var(--my, 40%),
+    var(--violet-glow),
+    rgba(109, 90, 230, 0.05) 38%,
+    transparent 68%
+  );
+}
+.cursor-glow[data-active="true"] {
+  opacity: 1;
+}
+
+/* Section-level violet wash that drifts with the pointer. */
+.ambient-violet {
+  position: relative;
+  isolation: isolate;
+}
+.ambient-violet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    760px circle at var(--mx, 50%) var(--my, 50%),
+    var(--violet-soft),
+    transparent 62%
+  );
+}
+
+/* Card sheen — follows the pointer inside the card, fades in on hover. */
+.spotlight {
+  position: relative;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 420ms var(--ease-out-expo);
+  background: radial-gradient(
+    340px circle at var(--cx, 50%) var(--cy, 50%),
+    var(--violet-glow),
+    transparent 72%
+  );
+}
+.spotlight:hover::before,
+.spotlight:focus-within::before {
+  opacity: 1;
+}
+.spotlight > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (any-pointer: coarse) {
+  .cursor-glow,
+  .ambient-violet::before,
+  .spotlight::before {
+    display: none;
+  }
 }
 
 /* ============================================================
@@ -336,6 +423,85 @@ html {
 }
 
 /* ============================================================
+   Process rail — a quiet "signal" travels the wire, and completed
+   nodes carry a soft violet glow. Both purely decorative; the global
+   reduced-motion rule below neutralises the animation.
+   ============================================================ */
+.proc-signal {
+  position: absolute;
+  left: 50%;
+  top: -22%;
+  height: 22%;
+  width: 3px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--navy-600) 45%,
+    var(--violet) 62%,
+    transparent
+  );
+  opacity: 0;
+  animation: procSignal 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes procSignal {
+  0% {
+    top: -22%;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 0.6;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+.proc-node-done {
+  box-shadow: 0 0 0 5px var(--violet-soft);
+}
+
+/* ============================================================
+   Stat band — a faint "ledger flow": fine steel connectors with
+   travelling dashes and softly pulsing violet nodes. Decorative;
+   sits behind the numbers and is neutralised under reduced motion.
+   ============================================================ */
+.stat-flow {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+}
+.stat-flow-line {
+  fill: none;
+  stroke: var(--steel);
+  stroke-width: 1;
+  stroke-dasharray: 3 12;
+  opacity: 0.2;
+  animation: statFlow var(--flow-d, 7s) linear infinite;
+}
+@keyframes statFlow {
+  to {
+    stroke-dashoffset: -150;
+  }
+}
+.stat-flow-node {
+  fill: var(--violet);
+  animation: statNode 4.5s ease-in-out infinite;
+}
+@keyframes statNode {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ============================================================
    Global reduced-motion discipline — every custom motion
    primitive snaps to its end state; scene canvas never loads.
    ============================================================ */
@@ -358,5 +524,10 @@ html {
   }
   .rule-draw {
     transform: scaleX(1) !important;
+  }
+  .cursor-glow,
+  .ambient-violet::before,
+  .spotlight::before {
+    display: none !important;
   }
 }

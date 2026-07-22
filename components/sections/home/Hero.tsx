@@ -11,7 +11,7 @@ import { HERO } from "@/content/home";
  */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="ambient-violet relative overflow-hidden">
       <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 px-6 pb-[clamp(56px,7vw,96px)] pt-[clamp(120px,15vh,180px)] md:px-10 lg:grid-cols-[1.05fr_1fr]">
         <div>
           <Reveal>

@@ -14,14 +14,14 @@ export function ServicesGrid() {
   const [flagship, ...rest] = SERVICES;
 
   return (
-    <section id="services" className="section-pad">
+    <section id="services" className="ambient-violet section-pad">
       <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <SectionHeader meta={HOME_SECTIONS.services} />
 
         <RevealGroup className="mt-14 grid gap-5" step={0}>
           <Link
             href={`/services#${flagship.id}`}
-            className="group grid gap-8 rounded-lg bg-navy-050 p-8 transition-colors duration-ui hover:bg-navy-100 md:grid-cols-[1fr_1.2fr] md:p-12"
+            className="spotlight group grid gap-8 overflow-hidden rounded-lg bg-navy-050 p-8 transition-colors duration-ui hover:bg-navy-100 md:grid-cols-[1fr_1.2fr] md:p-12"
           >
             <div>
               <p className="font-mono text-xs uppercase tracking-eyebrow text-navy-600">
@@ -48,7 +48,7 @@ export function ServicesGrid() {
             <Link
               key={s.id}
               href={`/services#${s.id}`}
-              className="group flex flex-col justify-between rounded-md border border-line bg-surface p-7 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel"
+              className="spotlight group flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface p-7 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel"
             >
               <div>
                 <p className="font-mono text-xs text-ink-3">{s.num}</p>

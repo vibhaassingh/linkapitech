@@ -30,7 +30,7 @@ export function CaseGrid() {
               <Link
                 key={c.slug}
                 href={`/work/${c.slug}`}
-                className="group flex flex-col justify-between rounded-md border border-line bg-surface p-8 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel md:p-10"
+                className="spotlight group flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface p-8 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel md:p-10"
               >
                 <div>
                   <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
@@ -42,7 +42,7 @@ export function CaseGrid() {
                 <div className="mt-8 flex items-end justify-between gap-4 border-t border-line-soft pt-6">
                   {lead && (
                     <div>
-                      <p className="font-display text-3xl font-semibold tnum text-navy-900">
+                      <p className="font-display text-3xl font-semibold text-navy-900">
                         {lead.num}
                       </p>
                       <p className="mt-1 text-[12.5px] text-ink-3">{lead.label}</p>

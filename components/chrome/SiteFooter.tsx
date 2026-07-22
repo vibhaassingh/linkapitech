@@ -96,7 +96,7 @@ export function SiteFooter() {
 
         <div className="mt-16 flex flex-col gap-4 border-t border-line-inv pt-6 text-[13px] text-ink-inv-2 md:flex-row md:items-center md:justify-between">
           <p>
-            © {new Date().getFullYear()} {SITE.legalName}. All rights reserved.
+            © {new Date().getFullYear()} {SITE.legalName} All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <a

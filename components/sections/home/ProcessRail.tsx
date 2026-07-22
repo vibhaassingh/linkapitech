@@ -35,6 +35,7 @@ export function ProcessRail() {
               className="w-full origin-top bg-navy-600"
               style={{ height: "100%", transform: "scaleY(var(--fill, 0))" }}
             />
+            <span className="proc-signal" />
           </div>
 
           <div className="flex flex-col gap-14 md:gap-20">
@@ -55,9 +56,9 @@ export function ProcessRail() {
                   {/* node */}
                   <span
                     className={cn(
-                      "absolute left-0 top-1.5 grid h-4 w-4 place-items-center rounded-pill border transition-colors duration-ui md:top-2",
+                      "absolute left-0 top-1.5 grid h-4 w-4 place-items-center rounded-pill border transition-all duration-ui md:top-2",
                       left ? "md:left-auto md:-right-[48px]" : "md:-left-[48px]",
-                      done ? "border-navy-600 bg-navy-600" : "border-steel-2 bg-surface",
+                      done ? "proc-node-done border-navy-600 bg-navy-600" : "border-steel-2 bg-surface",
                     )}
                     aria-hidden="true"
                   >

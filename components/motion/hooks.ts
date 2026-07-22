@@ -21,11 +21,15 @@ export function usePrefersReducedMotion() {
 export function useCounter(target: number, duration = 1400) {
   const ref = useRef<HTMLElement | null>(null);
   const [value, setValue] = useState(0);
+  // `settled` lets callers drop tabular figures once counting stops: tabular
+  // commas occupy a full digit width, which reads as a gap in the final value.
+  const [settled, setSettled] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia(REDUCE).matches) {
       setValue(target);
+      setSettled(true);
       return;
     }
     let raf = 0;
@@ -37,6 +41,7 @@ export function useCounter(target: number, duration = 1400) {
       const p = Math.min(1, (t - start) / duration);
       setValue(target * ease(p));
       if (p < 1) raf = requestAnimationFrame(step);
+      else setSettled(true);
     };
     const io = new IntersectionObserver(
       (entries) => {
@@ -56,7 +61,7 @@ export function useCounter(target: number, duration = 1400) {
       cancelAnimationFrame(raf);
     };
   }, [target, duration]);
-  return { ref, value };
+  return { ref, value, settled };
 }
 
 /**

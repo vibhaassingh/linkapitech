@@ -14,9 +14,13 @@ interface StatNumberProps {
 }
 
 /**
- * Count-up stat block. Numerals use the display face with tabular figures so
- * columns stay steady while counting. Falls back to the verbatim display
- * string when a stat has no numeric target.
+ * Count-up stat block.
+ *
+ * Figures are tabular *while counting* so the column never jitters, then swap
+ * to proportional once settled — tabular commas take a full digit advance and
+ * read as a gap in the final number ("5 , 000+"). The numeral never wraps:
+ * a broken "₹20,000 / Cr" would push its label out of alignment with the rest
+ * of the row, so the unit rides along on one line.
  */
 export function StatNumber({
   stat,
@@ -25,13 +29,19 @@ export function StatNumber({
   labelClassName,
   duration = 1400,
 }: StatNumberProps) {
-  const { ref, value } = useCounter(stat.count ?? 0, duration);
+  const { ref, value, settled } = useCounter(stat.count ?? 0, duration);
   const animated = stat.count != null;
 
   return (
-    <div ref={ref as React.RefObject<HTMLDivElement>} className={className}>
-      <p className={cn("stat-num text-ink", numClassName)}>
-        {animated ? (
+    <div ref={ref as React.RefObject<HTMLDivElement>} className={cn("flex flex-col", className)}>
+      <p
+        className={cn(
+          "stat-num whitespace-nowrap text-ink",
+          animated && !settled && "tnum",
+          numClassName,
+        )}
+      >
+        {animated && !settled ? (
           <>
             {stat.prefix}
             {Math.round(value).toLocaleString("en-IN")}
@@ -41,9 +51,7 @@ export function StatNumber({
           stat.value
         )}
       </p>
-      <p className={cn("mt-2 text-sm leading-relaxed text-ink-3", labelClassName)}>
-        {stat.label}
-      </p>
+      <p className={cn("mt-2 text-sm leading-relaxed text-ink-3", labelClassName)}>{stat.label}</p>
     </div>
   );
 }

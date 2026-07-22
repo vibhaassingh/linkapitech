@@ -230,7 +230,7 @@ export function MegaMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => v
             <ul className="flex flex-col gap-4">
               {MARQUEE_STATS.slice(2).map((s) => (
                 <li key={s.label}>
-                  <p className="font-display text-xl font-semibold tnum text-ink">{s.value}</p>
+                  <p className="font-display text-xl font-semibold text-ink">{s.value}</p>
                   <p className="mt-0.5 font-mono text-[11px] uppercase tracking-eyebrow text-ink-3">
                     {s.label}
                   </p>
@@ -287,7 +287,7 @@ function FeaturedCard() {
         </p>
       </div>
       <div className="mt-8">
-        <p className="font-display text-2xl font-semibold tnum text-ink">{impl.value}</p>
+        <p className="font-display text-2xl font-semibold text-ink">{impl.value}</p>
         <p className="mt-1 text-[12.5px] leading-snug text-ink-3">API implementations</p>
         <span className="mt-4 inline-flex items-center gap-2 text-[13.5px] font-medium text-navy-600 transition-colors duration-ui group-hover:text-navy-900">
           Clients &amp; trust

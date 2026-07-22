@@ -31,7 +31,7 @@ export default function WorkIndexPage() {
               <Link
                 key={c.slug}
                 href={`/work/${c.slug}`}
-                className="group flex flex-col justify-between rounded-md border border-line bg-surface shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel"
+                className="spotlight group flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel"
               >
                 <div className="rounded-t-md p-8 md:p-10" style={{ background: tone.bg }}>
                   <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
@@ -43,7 +43,7 @@ export default function WorkIndexPage() {
                 <div className="flex items-end justify-between gap-4 p-8 pt-6 md:px-10">
                   {lead && (
                     <div>
-                      <p className="font-display text-3xl font-semibold tnum" style={{ color: tone.accent }}>
+                      <p className="font-display text-3xl font-semibold" style={{ color: tone.accent }}>
                         {lead.num}
                       </p>
                       <p className="mt-1 text-[12.5px] text-ink-3">{lead.label}</p>

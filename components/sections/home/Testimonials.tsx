@@ -17,7 +17,7 @@ export function Testimonials() {
           {TESTIMONIALS.map((t) => (
             <figure
               key={t.name}
-              className="flex flex-col justify-between rounded-md border border-line bg-surface p-8 shadow-card"
+              className="spotlight flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface p-8 shadow-card"
             >
               <blockquote className="text-[15px] leading-relaxed text-ink-2">
                 “{t.quote}”

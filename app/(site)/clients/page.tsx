@@ -90,7 +90,7 @@ export default function ClientsPage() {
           </Reveal>
           <RevealGroup className="mt-12 grid gap-5 md:grid-cols-2" step={80}>
             {PRACTICES.map((p, i) => (
-              <div key={p.title} className="rounded-md border border-line bg-canvas p-7">
+              <div key={p.title} className="spotlight overflow-hidden rounded-md border border-line bg-canvas p-7">
                 <p className="font-mono text-xs text-ink-3">{String(i + 1).padStart(2, "0")}</p>
                 <h3 className="mt-3 font-display text-[18px] font-semibold text-ink">{p.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-ink-2">{p.body}</p>
@@ -109,7 +109,7 @@ export default function ClientsPage() {
           {TESTIMONIALS.map((t) => (
             <figure
               key={t.name}
-              className="flex flex-col justify-between rounded-md border border-line bg-surface p-8 shadow-card"
+              className="spotlight flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface p-8 shadow-card"
             >
               <blockquote className="text-[15px] leading-relaxed text-ink-2">
                 “{t.quote}”

@@ -1,5 +1,6 @@
 import { RevealGroup } from "@/components/motion/RevealGroup";
 import { SectionHeader } from "./SectionHeader";
+import { SecurityMesh } from "@/components/three/SecurityMesh";
 import { HOME_SECTIONS } from "@/content/home";
 
 /**
@@ -33,8 +34,9 @@ const PRACTICES = [
 
 export function SecurityBand() {
   return (
-    <section id="security" className="bg-inverse">
-      <div className="section-pad mx-auto w-full max-w-[1240px] px-6 md:px-10">
+    <section id="security" className="relative overflow-hidden bg-inverse">
+      <SecurityMesh />
+      <div className="relative z-[1] section-pad mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <SectionHeader meta={HOME_SECTIONS.security} inverse />
 
         <RevealGroup className="mt-12 flex flex-col" step={80}>

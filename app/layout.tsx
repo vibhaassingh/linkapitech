@@ -4,6 +4,7 @@ import { schibsted, inter, plexMono } from "./fonts";
 import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
 import { Analytics } from "@/lib/analytics";
+import { CursorGlow } from "@/components/motion/CursorGlow";
 
 export const metadata: Metadata = {
   metadataBase,
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${schibsted.variable} ${inter.variable} ${plexMono.variable}`}>
       <body className="font-sans antialiased">
+        <CursorGlow />
         {children}
         <Analytics />
       </body>

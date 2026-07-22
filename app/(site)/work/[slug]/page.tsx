@@ -108,7 +108,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
           <div key={block.heading} className="rounded-md p-8" style={{ background: tone.bg }}>
             <h2 className="font-display text-[17px] font-semibold text-ink">{block.heading}</h2>
             <p className="mt-3 text-[14.5px] leading-relaxed text-ink-2">{block.body}</p>
-            <p className="mt-6 font-display text-2xl font-semibold tnum" style={{ color: tone.accent }}>
+            <p className="mt-6 font-display text-2xl font-semibold" style={{ color: tone.accent }}>
               {block.stat}
             </p>
             <p className="mt-1 text-[12.5px] text-ink-3">{block.statLabel}</p>
@@ -140,7 +140,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
             {c.stats.map((s) => (
               <li key={s.label} className="border-b border-line-soft pb-5">
                 <p className="text-[13px] text-ink-3">{s.label}</p>
-                <p className="mt-1 font-display text-3xl font-semibold tnum text-navy-900">
+                <p className="mt-1 font-display text-3xl font-semibold text-navy-900">
                   {s.num}
                 </p>
                 {s.body && <p className="mt-1 text-[12.5px] text-ink-3">{s.body}</p>}

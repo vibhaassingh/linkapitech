@@ -41,7 +41,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: "flex", gap: 40, fontSize: 23, color: "#A9B8CE" }}>
-          <span>5000+ API implementations</span>
+          <span>5,000+ API implementations</span>
           <span>20,000 Cr / month processed</span>
           <span>45,000+ customers</span>
         </div>
