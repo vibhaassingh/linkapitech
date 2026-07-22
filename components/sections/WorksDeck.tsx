@@ -55,7 +55,6 @@ function WorkCard({ c, index, total }: { c: CaseStudy; index: number; total: num
       data-cursor="view"
       className="ws-card group block"
       style={{ position: "sticky", top: `calc(86px + ${index * 18}px)` }}
-      aria-label={`${c.name} — view program summary`}
     >
       <article className="overflow-hidden rounded-[24px] border border-white/[0.07] bg-card-dark text-card-dark-ink shadow-[0_40px_90px_-60px_rgba(13,13,13,.7)]">
         <div className="flex items-center justify-between px-6 py-5 md:px-8 md:py-6">

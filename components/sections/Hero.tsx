@@ -36,14 +36,14 @@ export function Hero() {
           </span>
         </h1>
 
-        <Reveal delay={900} className="mt-8 max-w-[54ch]">
+        <Reveal delay={250} className="mt-8 max-w-[54ch]">
           <p className="text-[clamp(16px,1.35vw,21px)] leading-relaxed text-ink-2">
             {HERO.subhead.text}{" "}
             <em className="font-serif italic text-ink">{HERO.subhead.emphasis}</em>
           </p>
         </Reveal>
 
-        <Reveal delay={1100} className="mt-9 flex flex-col items-center gap-5 sm:flex-row sm:gap-8">
+        <Reveal delay={450} className="mt-9 flex flex-col items-center gap-5 sm:flex-row sm:gap-8">
           <Button href={HERO.cta.href} magnetic>
             {HERO.cta.label}
           </Button>
@@ -57,7 +57,7 @@ export function Hero() {
           </a>
         </Reveal>
 
-        <Reveal delay={1350} className="mt-16 w-full">
+        <Reveal delay={650} className="mt-16 w-full">
           <p className="mb-7 text-[11px] uppercase tracking-eyebrow text-ink-3">{TRUST_LINE}</p>
           <TrustLogos />
         </Reveal>

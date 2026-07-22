@@ -19,8 +19,10 @@ export function Preloader() {
       return;
     }
     const start = performance.now();
-    const MIN = 1200;
-    const CAP = 3000;
+    // Brief branded flash rather than the reference's 1.3s hold: a long opaque
+    // curtain dominates LCP/Speed-Index on throttled mobile (PLAN §5 perf gate).
+    const MIN = 600;
+    const CAP = 2400;
     let raf = 0;
 
     const tick = (t: number) => {
@@ -48,7 +50,7 @@ export function Preloader() {
 
   useEffect(() => {
     if (!gone) return;
-    const id = setTimeout(() => setRemoved(true), 1400);
+    const id = setTimeout(() => setRemoved(true), 900);
     return () => clearTimeout(id);
   }, [gone]);
 
