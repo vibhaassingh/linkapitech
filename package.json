@@ -12,7 +12,6 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "clsx": "^2.1.1",
-    "gsap": "^3.12.5",
     "lenis": "^1.1.20",
     "next": "^15.1.6",
     "react": "^19.0.0",
