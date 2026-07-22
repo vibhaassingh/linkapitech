@@ -1,33 +1,33 @@
 import type { LegalDoc } from "@/content/legal";
-import { SectionEyebrow } from "@/components/ui/SectionEyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
 
-/** Renders a numbered-clause legal document (PAGES-AND-ROUTING §1.4). */
+/** Numbered-clause legal document — 680px prose column, institutional styling. */
 export function LegalDocView({ doc }: { doc: LegalDoc }) {
   return (
-    <section className="rsec-pad">
+    <section className="mx-auto w-full max-w-[1240px] px-6 pb-24 pt-[clamp(48px,7vh,80px)] md:px-10">
       <Reveal>
-        <SectionEyebrow num="—" label={doc.title} />
+        <Eyebrow>{doc.title}</Eyebrow>
       </Reveal>
       <Reveal delay={80}>
-        <h1 className="mt-8 font-sans text-[clamp(34px,5vw,64px)] font-medium leading-[1.02] tracking-tighter">
-          {doc.title}
-        </h1>
-        <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-ink-2">{doc.intro}</p>
-        <p className="mt-3 text-[12px] uppercase tracking-eyebrow text-ink-3">
+        <h1 className="display-2 mt-5 text-ink">{doc.title}</h1>
+        <p className="mt-5 max-w-[62ch] leading-relaxed text-ink-2">{doc.intro}</p>
+        <p className="mt-3 font-mono text-xs uppercase tracking-eyebrow text-ink-3">
           Last updated: {doc.updated}
         </p>
       </Reveal>
 
-      <div className="mt-12 max-w-[760px]">
+      <div className="mt-12 max-w-[680px]">
         {doc.sections.map((s) => (
-          <Reveal key={s.num} className="border-t border-line py-8">
-            <h2 className="flex items-baseline gap-4 font-sans text-[clamp(20px,2vw,26px)] font-medium tracking-[-0.015em]">
-              <span className="font-serif text-base italic tabular-nums text-ink-3">{s.num}</span>
+          <Reveal key={s.num} className="border-t border-line-soft py-8">
+            <h2 className="flex items-baseline gap-4 font-display text-[19px] font-semibold text-ink">
+              <span className="font-mono text-[13px] font-normal tabular-nums text-steel">
+                {s.num}
+              </span>
               {s.title}
             </h2>
             {s.body.map((p, i) => (
-              <p key={i} className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-ink-2">
+              <p key={i} className="mt-3 text-[15px] leading-relaxed text-ink-2">
                 {p}
               </p>
             ))}

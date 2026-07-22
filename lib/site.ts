@@ -127,25 +127,3 @@ export const CTA = {
   href: "/contact",
 } as const;
 
-/* ============================================================
-   Legacy exports — still imported by the pre-redesign homepage
-   sections; removed when those components are rebuilt (Phase 3).
-   ============================================================ */
-
-/** @deprecated old homepage numbered-index motif. */
-export const SECTIONS = [
-  { num: "01", id: "work", label: "Work" },
-  { num: "02", id: "services", label: "Services" },
-  { num: "03", id: "process", label: "Process" },
-  { num: "04", id: "why", label: "Why Us" },
-  { num: "05", id: "clients", label: "Clients" },
-  { num: "06", id: "contact", label: "Contact" },
-] as const;
-
-/** @deprecated superseded by SOLUTIONS_MENU / WORK_MENU / NAV_PAGES. */
-export const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
-  { href: "/contact", label: "Contact" },
-] as const;

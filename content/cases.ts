@@ -217,11 +217,3 @@ export const CASES: CaseStudy[] = [
 
 export const CASE_SLUGS = CASES.map((c) => c.slug);
 export const getCase = (slug: string) => CASES.find((c) => c.slug === slug);
-
-/** Generated cover gradients per tone (no source imagery exists). */
-export const TONE_BG: Record<CaseTone, string> = {
-  lime: "linear-gradient(135deg,#1b3a1e,#0d0d0d 72%)",
-  ink: "linear-gradient(135deg,#242424,#0d0d0d 72%)",
-  slate: "linear-gradient(135deg,#1c2733,#0d0d0d 72%)",
-  violet: "linear-gradient(135deg,#2a1c33,#0d0d0d 72%)",
-};

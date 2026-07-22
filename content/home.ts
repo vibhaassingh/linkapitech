@@ -63,29 +63,3 @@ export const HOME_SECTIONS: Record<string, SectionHeading> = {
   },
 };
 
-/* ============================================================
-   Legacy exports — still imported by the not-yet-rebuilt inner
-   pages (ServiceAccordion, old Faq). Removed in Phase 5.
-   ============================================================ */
-
-export interface SectionMeta {
-  num: string;
-  eyebrow: string;
-  end?: string;
-  headingPlain: string;
-  headingAccent: string;
-}
-
-/** @deprecated old design's section headings — inner pages only. */
-export const SECTION_META: Record<string, SectionMeta> = {
-  services: {
-    num: "02",
-    eyebrow: "Services",
-    end: "API · Reconciliation · Security · Support",
-    headingPlain: "Exceeding expectations, one",
-    headingAccent: "integration at a time.",
-  },
-};
-
-/** @deprecated old design's FAQ heading — contact page only. */
-export const FAQ_HEADING = { plain: "Questions, ", accent: "answered." };
