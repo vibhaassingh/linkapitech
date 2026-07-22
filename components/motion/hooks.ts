@@ -59,39 +59,6 @@ export function useCounter(target: number, duration = 1400) {
   return { ref, value };
 }
 
-/** Which section id currently straddles the mid-viewport line. */
-export function useActiveSection(ids: string[], fraction = 0.42) {
-  const [active, setActive] = useState(ids[0]);
-  const key = ids.join(",");
-  useEffect(() => {
-    let raf = 0;
-    const calc = () => {
-      raf = 0;
-      const line = window.innerHeight * fraction;
-      let current = ids[0];
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const r = el.getBoundingClientRect();
-        if (r.top <= line) current = id;
-      }
-      setActive(current);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(calc);
-    };
-    calc();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [key, fraction]); // eslint-disable-line react-hooks/exhaustive-deps
-  return active;
-}
-
 /**
  * Scroll-driven fill for the process rail (§5.8). Writes `--fill` (0→1) directly
  * to `railRef`'s style and returns the number of steps whose center has passed

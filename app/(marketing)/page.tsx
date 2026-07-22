@@ -1,13 +1,16 @@
 import { pageMetadata } from "@/lib/metadata";
 import { JsonLd, organizationGraph } from "@/lib/jsonld";
-import { Hero } from "@/components/sections/Hero";
-import { SplitShell } from "@/components/sections/SplitShell";
-import { WorksDeck } from "@/components/sections/WorksDeck";
-import { ServiceAccordion } from "@/components/sections/ServiceAccordion";
-import { ProcessStepper } from "@/components/sections/ProcessStepper";
-import { Benefits } from "@/components/sections/Benefits";
-import { Testimonials } from "@/components/sections/Testimonials";
-import { ContactSection } from "@/components/sections/ContactSection";
+import { Hero } from "@/components/sections/home/Hero";
+import { TrustWall } from "@/components/sections/home/TrustWall";
+import { StatBand } from "@/components/sections/home/StatBand";
+import { ServicesGrid } from "@/components/sections/home/ServicesGrid";
+import { ProcessRail } from "@/components/sections/home/ProcessRail";
+import { CaseGrid } from "@/components/sections/home/CaseGrid";
+import { SecurityBand } from "@/components/sections/home/SecurityBand";
+import { Benefits } from "@/components/sections/home/Benefits";
+import { Testimonials } from "@/components/sections/home/Testimonials";
+import { HomeFaq } from "@/components/sections/home/HomeFaq";
+import { ContactCta } from "@/components/sections/home/ContactCta";
 
 export const metadata = pageMetadata({
   title: "LinkAPI Tech Pvt. Ltd. | BFSI API Integration & Technology Services",
@@ -21,14 +24,16 @@ export default function HomePage() {
     <>
       <JsonLd data={organizationGraph()} />
       <Hero />
-      <SplitShell>
-        <WorksDeck />
-        <ServiceAccordion />
-        <ProcessStepper />
-        <Benefits />
-        <Testimonials />
-        <ContactSection />
-      </SplitShell>
+      <TrustWall />
+      <StatBand />
+      <ServicesGrid />
+      <ProcessRail />
+      <CaseGrid />
+      <SecurityBand />
+      <Benefits />
+      <Testimonials />
+      <HomeFaq />
+      <ContactCta />
     </>
   );
 }

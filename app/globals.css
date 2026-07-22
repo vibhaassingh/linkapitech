@@ -289,6 +289,23 @@ html {
     box-shadow: 0 0 0 10px rgba(30, 74, 148, 0);
   }
 }
+/* On the navy band the dot swaps to steel so it stays visible. */
+.bg-inverse .pulse-dot {
+  background: var(--steel);
+}
+.bg-inverse .pulse-dot::after {
+  box-shadow: 0 0 0 0 rgba(143, 161, 188, 0.3);
+  animation-name: quietpulse-inv;
+}
+@keyframes quietpulse-inv {
+  0% {
+    box-shadow: 0 0 0 0 rgba(143, 161, 188, 0.3);
+  }
+  30%,
+  100% {
+    box-shadow: 0 0 0 10px rgba(143, 161, 188, 0);
+  }
+}
 
 /* ============================================================
    Utilities
