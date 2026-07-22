@@ -1,6 +1,5 @@
 import { SmoothScrollProvider } from "@/components/motion/SmoothScrollProvider";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
-import { FooterMarquee } from "@/components/chrome/FooterMarquee";
 import { SiteFooter } from "@/components/chrome/SiteFooter";
 
 /**
@@ -13,7 +12,6 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
     <SmoothScrollProvider>
       <SiteHeader variant="marketing" />
       <main>{children}</main>
-      <FooterMarquee />
       <SiteFooter />
     </SmoothScrollProvider>
   );

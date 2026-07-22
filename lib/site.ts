@@ -1,3 +1,6 @@
+import { SERVICES, serviceHeading } from "@/content/services";
+import { CASES } from "@/content/cases";
+
 /**
  * Site-wide configuration — LinkAPI Tech's real contact details, navigation,
  * and trust signals. Sourced from CONTENT-MAPPING.md §1–2 (all values verbatim
@@ -57,7 +60,79 @@ export const SOCIALS: { label: string; href: string }[] = [
   // TODO: client to confirm — add real profile URLs, or these stay hidden.
 ];
 
-/** Homepage section order — the 01–06 numbered-index motif (DESIGN-SYSTEM §3.4). */
+/* ============================================================
+   Navigation IA — institutional header with two mega panels.
+   ============================================================ */
+
+export interface MegaLink {
+  label: string;
+  href: string;
+  description?: string;
+}
+
+export interface MegaColumn {
+  heading: string;
+  links: MegaLink[];
+}
+
+const serviceLink = (id: string): MegaLink => {
+  const s = SERVICES.find((x) => x.id === id);
+  if (!s) throw new Error(`Unknown service id: ${id}`);
+  return {
+    label: serviceHeading(s),
+    href: `/services#${s.id}`,
+    description: s.tags.slice(0, 2).join(" · "),
+  };
+};
+
+/** Solutions panel — the 7 real services grouped by what they do for a bank. */
+export const SOLUTIONS_MENU: MegaColumn[] = [
+  {
+    heading: "Connect",
+    links: [
+      serviceLink("api-integration"),
+      serviceLink("data-integration"),
+      serviceLink("wan-lan"),
+    ],
+  },
+  {
+    heading: "Operate",
+    links: [
+      serviceLink("reconciliation"),
+      serviceLink("security"),
+      serviceLink("it-consulting"),
+    ],
+  },
+  {
+    heading: "Grow",
+    links: [serviceLink("sales-augmentation")],
+  },
+];
+
+/** Work panel — the 4 aggregate program summaries with their headline stat. */
+export const WORK_MENU: MegaLink[] = CASES.map((c) => ({
+  label: c.name,
+  href: `/work/${c.slug}`,
+  description: c.stats[0] ? `${c.stats[0].num} ${c.stats[0].label}` : c.kicker,
+}));
+
+/** Plain top-level links (non-mega). */
+export const NAV_PAGES = [
+  { href: "/clients", label: "Clients" },
+  { href: "/about", label: "About" },
+] as const;
+
+export const CTA = {
+  label: "Consult our Growth Experts",
+  href: "/contact",
+} as const;
+
+/* ============================================================
+   Legacy exports — still imported by the pre-redesign homepage
+   sections; removed when those components are rebuilt (Phase 3).
+   ============================================================ */
+
+/** @deprecated old homepage numbered-index motif. */
 export const SECTIONS = [
   { num: "01", id: "work", label: "Work" },
   { num: "02", id: "services", label: "Services" },
@@ -67,15 +142,10 @@ export const SECTIONS = [
   { num: "06", id: "contact", label: "Contact" },
 ] as const;
 
-/** Top-level page nav (the only real nav on the source: Home/About/Services/Contact + CTA). */
+/** @deprecated superseded by SOLUTIONS_MENU / WORK_MENU / NAV_PAGES. */
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
   { href: "/contact", label: "Contact" },
 ] as const;
-
-export const CTA = {
-  label: "Consult our Growth Experts",
-  href: "/#contact",
-} as const;

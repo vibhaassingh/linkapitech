@@ -218,6 +218,23 @@ html {
 }
 
 /* ============================================================
+   Mega menu sheet — animates on unhide (open); closes instantly.
+   ============================================================ */
+.mega-sheet:not([hidden]) {
+  animation: megaIn var(--dur-menu) var(--ease-out-expo);
+}
+@keyframes megaIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
    Accordion — grid-rows 0fr→1fr height animation (FAQ, mobile nav).
    ============================================================ */
 .acc-panel {
