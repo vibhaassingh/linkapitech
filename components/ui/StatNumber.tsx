@@ -33,7 +33,10 @@ export function StatNumber({
   const animated = stat.count != null;
 
   return (
-    <div ref={ref as React.RefObject<HTMLDivElement>} className={cn("flex flex-col", className)}>
+    <div
+      ref={ref as React.RefObject<HTMLDivElement>}
+      className={cn("flex flex-col", className)}
+    >
       <p
         className={cn(
           "stat-num whitespace-nowrap text-ink",
@@ -51,7 +54,14 @@ export function StatNumber({
           stat.value
         )}
       </p>
-      <p className={cn("mt-2 text-sm leading-relaxed text-ink-3", labelClassName)}>{stat.label}</p>
+      <p
+        className={cn(
+          "mt-2 text-sm leading-relaxed text-ink-3",
+          labelClassName,
+        )}
+      >
+        {stat.label}
+      </p>
     </div>
   );
 }

@@ -116,7 +116,9 @@ export function Ecosystem() {
                       left: `${p.x}%`,
                       top: `${p.y}%`,
                       // anchor the edge facing the hub, so chips grow outward
-                      transform: left ? "translate(-100%, -50%)" : "translate(0, -50%)",
+                      transform: left
+                        ? "translate(-100%, -50%)"
+                        : "translate(0, -50%)",
                       "--float-delay": `${i * -0.7}s`,
                     } as CSSProperties
                   }
@@ -133,7 +135,11 @@ export function Ecosystem() {
                         className="h-5 w-[3px] shrink-0 rounded-pill bg-plum-600"
                       />
                     )}
-                    <Icon name={chip.icon as IconName} size={17} className="text-violet-text" />
+                    <Icon
+                      name={chip.icon as IconName}
+                      size={17}
+                      className="text-violet-text"
+                    />
                     <span className="whitespace-nowrap text-[14px] font-medium text-ink">
                       {chip.label}
                     </span>
@@ -164,7 +170,9 @@ export function Ecosystem() {
               <span className="grad-tile grid h-9 w-9 shrink-0 place-items-center">
                 <Icon name={chip.icon as IconName} size={17} />
               </span>
-              <span className="text-[14.5px] font-medium leading-snug text-ink">{chip.label}</span>
+              <span className="text-[14.5px] font-medium leading-snug text-ink">
+                {chip.label}
+              </span>
             </Link>
           ))}
         </RevealGroup>

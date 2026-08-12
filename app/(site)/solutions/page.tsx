@@ -42,14 +42,19 @@ export default function SolutionsPage() {
           >
             <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
               <Reveal>
-                <h2 className={cn("display-2 max-w-[26ch]", dark ? "text-ink-inv" : "text-ink")}>
+                <h2
+                  className={cn(
+                    "display-2 max-w-[26ch]",
+                    dark ? "text-ink-inv" : "text-ink",
+                  )}
+                >
                   {group.heading}
                 </h2>
               </Reveal>
 
               {dark ? (
                 /* developer-tooling band: list beside the SDK terminal */
-                <div className="mt-12 grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
+                <div className="mt-12 grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-16">
                   <RevealGroup className="flex flex-col" as="ul" step={100}>
                     {group.products.map((p) => (
                       <div
@@ -58,7 +63,11 @@ export default function SolutionsPage() {
                         className="border-b border-line-inv py-7 first:pt-0 last:border-b-0"
                       >
                         <h3 className="flex items-center gap-2.5 text-[17px] font-semibold text-ink-inv">
-                          <Icon name={p.icon} size={18} className="text-lavender-400" />
+                          <Icon
+                            name={p.icon}
+                            size={18}
+                            className="text-lavender-400"
+                          />
                           {p.title}
                         </h3>
                         <p className="mt-2 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-inv-2">
@@ -68,7 +77,7 @@ export default function SolutionsPage() {
                     ))}
                   </RevealGroup>
 
-                  <Reveal delay={180}>
+                  <Reveal delay={180} className="min-w-0">
                     <Terminal
                       method={SDK_SAMPLE.method}
                       path={SDK_SAMPLE.path}
@@ -80,7 +89,9 @@ export default function SolutionsPage() {
                 <RevealGroup
                   className={cn(
                     "mt-12 grid gap-5",
-                    group.products.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3",
+                    group.products.length === 2
+                      ? "md:grid-cols-2"
+                      : "md:grid-cols-3",
                   )}
                   step={90}
                 >
@@ -121,7 +132,12 @@ function ProductCard({ product }: { product: Product }) {
       >
         <Icon name={product.icon} size={19} />
       </span>
-      <h3 className={cn("mt-6 text-[17px] font-semibold", solid ? "text-ink-inv" : "text-ink")}>
+      <h3
+        className={cn(
+          "mt-6 text-[17px] font-semibold",
+          solid ? "text-ink-inv" : "text-ink",
+        )}
+      >
         {product.title}
       </h3>
       <p

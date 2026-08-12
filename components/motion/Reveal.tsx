@@ -14,7 +14,8 @@ interface RevealProps {
    * Handled by the [data-reveal="…"] rules in globals.css.
    */
   dir?: "up" | "left" | "right";
-  as?: "div" | "section" | "li" | "span" | "p" | "header" | "article" | "footer";
+  as?:
+    "div" | "section" | "li" | "span" | "p" | "header" | "article" | "footer";
   style?: CSSProperties;
   id?: string;
 }
@@ -44,7 +45,10 @@ export function Reveal({
       className={className}
       style={
         delay
-          ? ({ ...(style ?? {}), "--reveal-delay": `${delay}ms` } as CSSProperties)
+          ? ({
+              ...(style ?? {}),
+              "--reveal-delay": `${delay}ms`,
+            } as CSSProperties)
           : style
       }
     >

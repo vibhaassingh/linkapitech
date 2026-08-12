@@ -17,19 +17,23 @@ export function HomeFaq() {
 
   return (
     <section id="faq" className="section-pad bg-canvas">
-      <div className="mx-auto grid w-full max-w-[1240px] gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+      <div className="mx-auto grid grid-cols-1 w-full max-w-[1240px] gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <div>
           <Reveal>
             <span className="eyebrow-capsule">{HOME_SECTIONS.faq.eyebrow}</span>
-            <h2 className="display-2 mt-6 max-w-[16ch] text-ink">{HOME_SECTIONS.faq.heading}</h2>
+            <h2 className="display-2 mt-6 max-w-[16ch] text-ink">
+              {HOME_SECTIONS.faq.heading}
+            </h2>
           </Reveal>
 
           <Reveal delay={140}>
             <div className="mt-10 rounded-xl border border-line-soft bg-surface p-7">
-              <h3 className="text-[18px] font-semibold text-ink">Still have a question?</h3>
+              <h3 className="text-[18px] font-semibold text-ink">
+                Still have a question?
+              </h3>
               <p className="mt-2 max-w-[34ch] text-[14.5px] leading-relaxed text-ink-2">
-                Can&rsquo;t find the answer you&rsquo;re looking for? Send us an email and
-                we&rsquo;ll get back to you as soon as possible.
+                Can&rsquo;t find the answer you&rsquo;re looking for? Send us an
+                email and we&rsquo;ll get back to you as soon as possible.
               </p>
               <Button
                 href={`mailto:${CONTACT.primaryEmail}`}
@@ -50,7 +54,10 @@ export function HomeFaq() {
               return (
                 <li
                   key={item.q}
-                  className={cn("acc-row border-b border-line-soft", isOpen && "is-open")}
+                  className={cn(
+                    "acc-row border-b border-line-soft",
+                    isOpen && "is-open",
+                  )}
                 >
                   <h3>
                     <button
@@ -91,7 +98,13 @@ export function HomeFaq() {
 
 function Chevron() {
   return (
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="17"
+      height="17"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="m6 9.5 6 6 6-6"
         stroke="currentColor"

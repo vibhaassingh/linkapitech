@@ -14,7 +14,9 @@ export function WhoWeAre() {
           <div className="mt-10 rounded-xl border border-line-soft bg-surface p-8 shadow-card md:p-12">
             <p className="max-w-[92ch] text-[17px] leading-[1.75] text-ink-2">
               {WHO_WE_ARE.lead}{" "}
-              <strong className="font-semibold text-violet-text">{WHO_WE_ARE.bold}</strong>{" "}
+              <strong className="font-semibold text-violet-text">
+                {WHO_WE_ARE.bold}
+              </strong>{" "}
               {WHO_WE_ARE.tail}
             </p>
           </div>

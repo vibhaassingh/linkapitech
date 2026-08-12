@@ -42,9 +42,14 @@
   --ink-inv: #f7f3f9;
   --ink-inv-2: #cdbbd4;
 
-  /* Semantic */
+  /* Semantic.
+     --success is the dot/fill colour; --success-text is the darkened variant
+     required for small text on white (the fill fails AA at 4.5:1 there).
+     --terminal-cmt likewise: code comments need 4.5:1 on --terminal. */
   --success: #1fa971;
+  --success-text: #147d52;
   --terminal: #171b21;
+  --terminal-cmt: #8b93a0;
   --error: #b3261e;
 
   /* Hairlines.
@@ -401,16 +406,22 @@ html {
   transform: none;
   will-change: auto;
 }
-/* Zig-zag rows slide from their own side. */
-[data-reveal="left"] {
-  transform: translateX(-32px);
-}
-[data-reveal="right"] {
-  transform: translateX(32px);
-}
-[data-reveal="left"][data-inview],
-[data-reveal="right"][data-inview] {
-  transform: none;
+/* Zig-zag rows slide in from their own side — but only from lg, where the
+   two-column zig-zag actually exists. Below that every card is in one column,
+   so a sideways slide means nothing AND the pre-reveal transform pushes the
+   card past the viewport, widening the document and producing a horizontal
+   scrollbar on phones. The default vertical rise applies there instead. */
+@media (min-width: 1024px) {
+  [data-reveal="left"] {
+    transform: translateX(-32px);
+  }
+  [data-reveal="right"] {
+    transform: translateX(32px);
+  }
+  [data-reveal="left"][data-inview],
+  [data-reveal="right"][data-inview] {
+    transform: none;
+  }
 }
 
 /* Decorative hairline that draws in under section headings. */
@@ -604,7 +615,7 @@ html {
   color: #e8c57f;
 }
 .terminal .t-cmt {
-  color: #5e6a78;
+  color: var(--terminal-cmt);
 }
 /* Staggered line reveal once in view. */
 .terminal [data-tline] {

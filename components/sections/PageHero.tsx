@@ -47,7 +47,8 @@ export function PageHero({
       <div
         className={cn(
           "mx-auto w-full max-w-[1240px] px-6 pb-16 pt-[132px] md:px-10 md:pb-20 md:pt-[152px]",
-          twoCol && "grid items-center gap-12 lg:grid-cols-[1fr_0.95fr] lg:gap-16",
+          twoCol &&
+            "grid items-center gap-12 lg:grid-cols-[1fr_0.95fr] lg:gap-16",
         )}
       >
         <div className={cn(centered && "mx-auto max-w-[46rem] text-center")}>

@@ -28,8 +28,12 @@ export function SectionHeader({
         className,
       )}
     >
-      {meta.eyebrow && <span className="eyebrow-capsule mb-6 inline-flex">{meta.eyebrow}</span>}
-      <h2 className={cn("display-2", inverse ? "text-ink-inv" : "text-ink")}>{meta.heading}</h2>
+      {meta.eyebrow && (
+        <span className="eyebrow-capsule mb-6 inline-flex">{meta.eyebrow}</span>
+      )}
+      <h2 className={cn("display-2", inverse ? "text-ink-inv" : "text-ink")}>
+        {meta.heading}
+      </h2>
       {meta.lead && (
         <p
           className={cn(

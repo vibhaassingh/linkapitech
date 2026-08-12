@@ -62,7 +62,8 @@ export function Button({
   disabled,
   ...rest
 }: ButtonProps) {
-  const v: Exclude<Variant, "accent"> = variant === "accent" ? "primary" : variant;
+  const v: Exclude<Variant, "accent"> =
+    variant === "accent" ? "primary" : variant;
   const classes = cn(base, styles[v], className);
   // Default on for the pill variants; never for the inline text link.
   const pull = (magnetic ?? v !== "quiet") ? { "data-magnetic": "" } : {};
@@ -113,7 +114,13 @@ export function Button({
 
 function Arrow() {
   return (
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M5 12h14M13 6l6 6-6 6"
         stroke="currentColor"

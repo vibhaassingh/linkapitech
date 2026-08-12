@@ -26,7 +26,7 @@ export default function ContactPage() {
       />
 
       <section className="section-pad bg-surface">
-        <div className="mx-auto grid w-full max-w-[1240px] items-start gap-12 px-6 md:px-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+        <div className="mx-auto grid grid-cols-1 w-full max-w-[1240px] items-start gap-12 px-6 md:px-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           {/* Contact details */}
           <Reveal>
             <span className="eyebrow-capsule">Contact details</span>

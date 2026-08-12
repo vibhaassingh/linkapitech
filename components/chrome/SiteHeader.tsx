@@ -42,11 +42,18 @@ export function SiteHeader(_props: SiteHeaderProps) {
             stuck || mobileOpen ? "shadow-menu" : "shadow-card",
           )}
         >
-          <Link href="/" className="rounded-sm text-plum-950" aria-label="LinkAPI Tech — home">
+          <Link
+            href="/"
+            className="rounded-sm text-plum-950"
+            aria-label="LinkAPI Tech — home"
+          >
             <Logo />
           </Link>
 
-          <nav aria-label="Primary" className="hidden items-center gap-7 lg:flex">
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-7 lg:flex"
+          >
             {NAV.map((item) => {
               const active = isActive(item.href);
               return (

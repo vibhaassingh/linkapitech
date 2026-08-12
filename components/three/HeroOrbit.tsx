@@ -10,7 +10,12 @@ import { HeroField } from "@/components/three/HeroField";
  * WebGL haze between the arcs and the chips on capable desktops; the arcs and
  * chips are the whole composition on their own, so it is purely additive.
  */
-const CHIPS: { icon: IconName; className: string; delay: string; label: string }[] = [
+const CHIPS: {
+  icon: IconName;
+  className: string;
+  delay: string;
+  label: string;
+}[] = [
   {
     icon: "bolt",
     className: "left-[46%] top-[6%]",

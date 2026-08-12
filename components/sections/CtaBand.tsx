@@ -58,7 +58,13 @@ export function CtaBand({
 
 function MailIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="none"
+      aria-hidden="true"
+    >
       <rect
         x="3"
         y="5.5"

@@ -32,13 +32,15 @@ export function OfferTimeline() {
                   {/* The number node is absolutely positioned, so it occupies no
                       grid cell — the card must be placed by explicit column,
                       since `order` has nothing in flow to swap with. */}
-                  <div className="grid items-center gap-x-10 lg:grid-cols-2">
+                  <div className="grid grid-cols-1 items-center gap-x-10 lg:grid-cols-2">
                     <Reveal
                       delay={60}
                       dir={right ? "right" : "left"}
                       className={cn(
                         "pl-14 lg:pl-0",
-                        right ? "lg:col-start-2 lg:pl-14" : "lg:col-start-1 lg:pr-14",
+                        right
+                          ? "lg:col-start-2 lg:pl-14"
+                          : "lg:col-start-1 lg:pr-14",
                       )}
                     >
                       <article

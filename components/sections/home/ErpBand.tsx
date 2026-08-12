@@ -21,7 +21,10 @@ export function ErpBand() {
               (TallyPrime) and a wide one (NetSuite) carry the same weight. */}
           <ul className="mx-auto mt-12 flex max-w-[1140px] flex-wrap items-center justify-center gap-x-5 gap-y-6 rounded-xl border border-line-soft bg-canvas px-6 py-10 md:gap-x-7">
             {ERPS.map((e) => (
-              <li key={e.name} className="grid h-14 w-[140px] place-items-center">
+              <li
+                key={e.name}
+                className="grid h-14 w-[140px] place-items-center"
+              >
                 <Image
                   src={e.logo}
                   alt={e.name}

@@ -24,7 +24,8 @@ export default function ConnectedBankingPage() {
         align="left"
         title={
           <>
-            Your <span className="accent-word">bank account,</span> inside your ERP.
+            Your <span className="accent-word">bank account,</span> inside your
+            ERP.
           </>
         }
         lead="Connected Banking Enterprise Solution brings full banking functionality into the accounting and ERP systems your teams already use. Check balances, make payments, run collections and reconcile automatically — without ever leaving your workflow."
@@ -44,7 +45,11 @@ export default function ConnectedBankingPage() {
               className="absolute bottom-6 left-[7px] top-6 w-px bg-line-plum lg:left-1/2"
             />
 
-            <RevealGroup className="flex flex-col gap-6 lg:gap-3" as="ul" step={70}>
+            <RevealGroup
+              className="flex flex-col gap-6 lg:gap-3"
+              as="ul"
+              step={70}
+            >
               {CAPABILITIES.map((c, i) => {
                 const right = i % 2 === 1;
                 return (
@@ -52,18 +57,22 @@ export default function ConnectedBankingPage() {
                     {/* The rail dot is absolute, so it takes no grid cell — the
                         card is placed by explicit column rather than `order`,
                         which would have nothing in flow to swap with. */}
-                    <div className="grid items-center gap-x-12 lg:grid-cols-2">
+                    <div className="grid grid-cols-1 items-center gap-x-12 lg:grid-cols-2">
                       <div
                         className={cn(
                           "pl-9 lg:pl-0",
-                          right ? "lg:col-start-2 lg:pl-12" : "lg:col-start-1 lg:pr-12",
+                          right
+                            ? "lg:col-start-2 lg:pl-12"
+                            : "lg:col-start-1 lg:pr-12",
                         )}
                       >
                         <article className="rounded-xl border border-line-soft bg-surface p-6 shadow-card md:p-7">
                           <span className="grad-fill grid h-11 w-11 place-items-center rounded-md text-ink-inv">
                             <Icon name={c.icon} size={19} />
                           </span>
-                          <h3 className="mt-5 text-[17px] font-semibold text-ink">{c.title}</h3>
+                          <h3 className="mt-5 text-[17px] font-semibold text-ink">
+                            {c.title}
+                          </h3>
                           <p className="mt-2 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-2">
                             {c.body}
                           </p>
@@ -92,7 +101,10 @@ export default function ConnectedBankingPage() {
             </h2>
             <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-6 md:gap-x-12">
               {ERPS.map((e) => (
-                <li key={e.name} className="grid h-12 w-[130px] place-items-center">
+                <li
+                  key={e.name}
+                  className="grid h-12 w-[130px] place-items-center"
+                >
                   <Image
                     src={e.logo}
                     alt={e.name}
@@ -120,8 +132,11 @@ export default function ConnectedBankingPage() {
           </Reveal>
 
           <Reveal delay={160}>
-            <div className="section-dark mt-12 grid items-center gap-8 rounded-xl p-8 md:p-10 lg:grid-cols-[1fr_auto_1.15fr_auto_1fr]">
-              <Column heading={ARCHITECTURE.left.heading} items={ARCHITECTURE.left.items} />
+            <div className="section-dark mt-12 grid grid-cols-1 items-center gap-8 rounded-xl p-8 md:p-10 lg:grid-cols-[1fr_auto_1.15fr_auto_1fr]">
+              <Column
+                heading={ARCHITECTURE.left.heading}
+                items={ARCHITECTURE.left.items}
+              />
 
               <Flow />
 
@@ -139,7 +154,10 @@ export default function ConnectedBankingPage() {
 
               <Flow />
 
-              <Column heading={ARCHITECTURE.right.heading} items={ARCHITECTURE.right.items} />
+              <Column
+                heading={ARCHITECTURE.right.heading}
+                items={ARCHITECTURE.right.items}
+              />
             </div>
           </Reveal>
         </div>
@@ -168,7 +186,11 @@ function Column({
             key={it.label}
             className="glass flex items-center gap-3 rounded-lg px-4 py-3 text-[14px] font-medium text-ink-inv"
           >
-            <Icon name={it.icon} size={17} className="relative z-[1] text-lavender-400" />
+            <Icon
+              name={it.icon}
+              size={17}
+              className="relative z-[1] text-lavender-400"
+            />
             <span className="relative z-[1]">{it.label}</span>
           </li>
         ))}
@@ -180,7 +202,10 @@ function Column({
 /** Dashed connector between architecture columns — horizontal on lg, vertical below. */
 function Flow() {
   return (
-    <span aria-hidden="true" className="mx-auto grid place-items-center text-lavender-400">
+    <span
+      aria-hidden="true"
+      className="mx-auto grid place-items-center text-lavender-400"
+    >
       <svg
         viewBox="0 0 60 12"
         width="60"
@@ -203,7 +228,13 @@ function Flow() {
           strokeLinejoin="round"
         />
       </svg>
-      <svg viewBox="0 0 12 40" width="12" height="40" fill="none" className="lg:hidden">
+      <svg
+        viewBox="0 0 12 40"
+        width="12"
+        height="40"
+        fill="none"
+        className="lg:hidden"
+      >
         <path
           d="M6 0v28"
           stroke="currentColor"
@@ -231,7 +262,10 @@ function Flow() {
  */
 function ConnectionDiagram() {
   return (
-    <div className="relative mx-auto aspect-[5/4] w-full max-w-[520px]" aria-hidden="true">
+    <div
+      className="relative mx-auto aspect-[5/4] w-full max-w-[520px]"
+      aria-hidden="true"
+    >
       <span className="absolute left-1/2 top-1/2 h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-pill border border-dashed border-lavender-400" />
       <span className="absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-pill border border-line-soft" />
 
@@ -239,9 +273,19 @@ function ConnectionDiagram() {
         <Icon name="link" size={32} />
       </span>
 
-      <Pill className="left-1/2 top-[6%] -translate-x-1/2" label="Partner bank" dot />
-      <Pill className="left-0 top-1/2 -translate-y-1/2" label="LinkAPI platform" />
-      <Pill className="right-0 top-1/2 -translate-y-1/2" label="Bank infrastructure" />
+      <Pill
+        className="left-1/2 top-[6%] -translate-x-1/2"
+        label="Partner bank"
+        dot
+      />
+      <Pill
+        className="left-0 top-1/2 -translate-y-1/2"
+        label="LinkAPI platform"
+      />
+      <Pill
+        className="right-0 top-1/2 -translate-y-1/2"
+        label="Bank infrastructure"
+      />
 
       <span className="absolute bottom-[4%] left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap text-[12.5px] text-ink-3">
         <Icon name="shield" size={14} className="text-success" />

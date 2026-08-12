@@ -19,18 +19,20 @@ const NODE_POS = [
 export function PartnerProgram() {
   return (
     <section id="partner-program" className="section-dark section-pad">
-      <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 px-6 md:px-10 lg:grid-cols-2 lg:gap-16">
+      <div className="mx-auto grid grid-cols-1 w-full max-w-[1240px] items-center gap-12 px-6 md:px-10 lg:grid-cols-2 lg:gap-16">
         <Reveal>
           <span className="eyebrow-capsule">{PARTNER_PROGRAM.eyebrow}</span>
-          <h2 className="display-2 mt-6 max-w-[18ch] text-ink-inv">{PARTNER_PROGRAM.heading}</h2>
+          <h2 className="display-2 mt-6 max-w-[18ch] text-ink-inv">
+            {PARTNER_PROGRAM.heading}
+          </h2>
           <p className="mt-5 max-w-[54ch] text-[15.5px] leading-relaxed text-ink-inv-2">
             {PARTNER_PROGRAM.body}
           </p>
         </Reveal>
 
         <Reveal delay={160}>
-          {/* lg+: cluster */}
-          <div className="relative hidden aspect-[5/4] w-full glass rounded-xl lg:block">
+          {/* xl+: cluster (needs more width than lg gives the absolute chips) */}
+          <div className="relative hidden aspect-[5/4] w-full glass rounded-xl xl:block">
             <span
               aria-hidden="true"
               className="absolute left-1/2 top-1/2 h-[130px] w-[130px] -translate-x-1/2 -translate-y-1/2 rounded-pill"
@@ -61,8 +63,8 @@ export function PartnerProgram() {
             ))}
           </div>
 
-          {/* below lg: chip list */}
-          <ul className="flex flex-wrap gap-2.5 lg:hidden">
+          {/* below xl: chip list */}
+          <ul className="flex flex-wrap gap-2.5 xl:hidden">
             {PARTNER_PROGRAM.nodes.map((label) => (
               <li
                 key={label}

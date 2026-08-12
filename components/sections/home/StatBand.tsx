@@ -13,7 +13,9 @@ export function StatBand() {
     <section aria-label="LinkAPI in numbers" className="section-pad bg-canvas">
       <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <Reveal className="text-center">
-          <h2 className="display-2 text-ink">{HOME_SECTIONS.numbers.heading}</h2>
+          <h2 className="display-2 text-ink">
+            {HOME_SECTIONS.numbers.heading}
+          </h2>
         </Reveal>
 
         <RevealGroup

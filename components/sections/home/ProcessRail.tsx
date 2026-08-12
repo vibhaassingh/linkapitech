@@ -13,7 +13,7 @@ import { HOME_SECTIONS } from "@/content/home";
 export function ProcessRail() {
   return (
     <section id="process" className="section-dark section-pad">
-      <div className="mx-auto grid w-full max-w-[1240px] items-start gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+      <div className="mx-auto grid grid-cols-1 w-full max-w-[1240px] items-start gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <div>
           <SectionHeader meta={HOME_SECTIONS.process} inverse />
 
@@ -31,7 +31,9 @@ export function ProcessRail() {
                   <span className="relative z-[1]">{p.num}</span>
                 </span>
                 <div className="min-w-0 pt-1.5">
-                  <h3 className="text-[17px] font-semibold text-ink-inv">{p.title}</h3>
+                  <h3 className="text-[17px] font-semibold text-ink-inv">
+                    {p.title}
+                  </h3>
                   <p className="mt-1.5 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-inv-2">
                     {p.description}
                   </p>
@@ -41,7 +43,7 @@ export function ProcessRail() {
           </RevealGroup>
         </div>
 
-        <Reveal delay={200} className="lg:pt-4">
+        <Reveal delay={200} className="min-w-0 lg:pt-4">
           <Terminal />
         </Reveal>
       </div>

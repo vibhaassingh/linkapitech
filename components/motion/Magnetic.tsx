@@ -30,7 +30,8 @@ export function Magnetic() {
       raf = 0;
       if (!current || !rect) return;
       const dx = ((px - (rect.left + rect.width / 2)) / (rect.width / 2)) * MAX;
-      const dy = ((py - (rect.top + rect.height / 2)) / (rect.height / 2)) * MAX;
+      const dy =
+        ((py - (rect.top + rect.height / 2)) / (rect.height / 2)) * MAX;
       const cx = Math.max(-MAX, Math.min(MAX, dx));
       const cy = Math.max(-MAX, Math.min(MAX, dy));
       current.style.transform = `translate3d(${cx.toFixed(2)}px, ${cy.toFixed(2)}px, 0)`;

@@ -34,7 +34,11 @@ export const TextField = forwardRef<
         ref={ref}
         aria-invalid={error ? true : undefined}
         aria-describedby={errId}
-        className={cn(control, error && "border-[color:var(--error)]", className)}
+        className={cn(
+          control,
+          error && "border-[color:var(--error)]",
+          className,
+        )}
         {...rest}
       />
       {error && (
@@ -64,7 +68,12 @@ export const TextArea = forwardRef<
         rows={rows}
         aria-invalid={error ? true : undefined}
         aria-describedby={errId}
-        className={cn(control, "resize-y", error && "border-[color:var(--error)]", className)}
+        className={cn(
+          control,
+          "resize-y",
+          error && "border-[color:var(--error)]",
+          className,
+        )}
         {...rest}
       />
       {error && (

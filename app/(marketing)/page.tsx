@@ -40,7 +40,10 @@ export default function HomePage() {
       <HomeFaq />
       <CtaBand
         ctaLabel="Book a Demo"
-        secondary={{ label: "partnership@linkapitech.com", href: "mailto:partnership@linkapitech.com" }}
+        secondary={{
+          label: "partnership@linkapitech.com",
+          href: "mailto:partnership@linkapitech.com",
+        }}
       />
     </>
   );

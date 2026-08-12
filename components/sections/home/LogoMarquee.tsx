@@ -12,13 +12,19 @@ import { TRUST_LINE } from "@/content/stats";
  */
 export function LogoMarquee() {
   return (
-    <section aria-label={TRUST_LINE} className="border-y border-line-soft bg-surface py-10 md:py-12">
+    <section
+      aria-label={TRUST_LINE}
+      className="border-y border-line-soft bg-surface py-10 md:py-12"
+    >
       <p className="mb-8 text-center text-[12px] font-semibold uppercase tracking-eyebrow text-ink-3">
         {TRUST_LINE}
       </p>
 
       <div className="marquee-mask no-scrollbar mask-fade-x overflow-hidden">
-        <div className="marquee items-center" style={{ ["--marquee-d" as string]: "42s" }}>
+        <div
+          className="marquee items-center"
+          style={{ ["--marquee-d" as string]: "42s" }}
+        >
           <Row />
           <Row aria-hidden dup />
         </div>
@@ -33,14 +39,23 @@ export function LogoMarquee() {
  * made an 8:1 wordmark render twice as wide as the rest. `scale` is the
  * remaining per-logo optical nudge.
  */
-function Row({ "aria-hidden": hidden, dup }: { "aria-hidden"?: boolean; dup?: boolean }) {
+function Row({
+  "aria-hidden": hidden,
+  dup,
+}: {
+  "aria-hidden"?: boolean;
+  dup?: boolean;
+}) {
   return (
     <ul
       className={`flex shrink-0 items-center gap-10 pr-10 md:gap-14 md:pr-14${dup ? " marquee-dup" : ""}`}
       aria-hidden={hidden ? "true" : undefined}
     >
       {CLIENTS.map((c) => (
-        <li key={c.name} className="grid h-10 w-[150px] shrink-0 place-items-center">
+        <li
+          key={c.name}
+          className="grid h-10 w-[150px] shrink-0 place-items-center"
+        >
           <Image
             src={c.logo as string}
             alt={hidden ? "" : c.name}

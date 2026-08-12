@@ -60,7 +60,10 @@ export function HeroField() {
       const r = wrap.getBoundingClientRect();
       const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
       const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
-      scene.setPointer(Math.max(-1, Math.min(1, nx)), Math.max(-1, Math.min(1, ny)));
+      scene.setPointer(
+        Math.max(-1, Math.min(1, nx)),
+        Math.max(-1, Math.min(1, ny)),
+      );
     };
 
     const boot = async () => {

@@ -26,11 +26,16 @@ export const metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <>
-      <PageHero tone="dark" align="center" title={ABOUT_HERO.title} lead={ABOUT_HERO.lead} />
+      <PageHero
+        tone="dark"
+        align="center"
+        title={ABOUT_HERO.title}
+        lead={ABOUT_HERO.lead}
+      />
 
       {/* Our Story */}
       <section className="section-pad bg-surface">
-        <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 px-6 md:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+        <div className="mx-auto grid grid-cols-1 w-full max-w-[1240px] items-center gap-12 px-6 md:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           <Reveal>
             <h2 className="display-2 text-ink">{OUR_STORY.heading}</h2>
             {OUR_STORY.paragraphs.map((p) => (
@@ -52,7 +57,7 @@ export default function AboutPage() {
       {/* Mission / Vision */}
       <section className="section-pad bg-canvas">
         <RevealGroup
-          className="mx-auto grid w-full max-w-[1240px] gap-5 px-6 md:px-10 lg:grid-cols-2"
+          className="mx-auto grid grid-cols-1 w-full max-w-[1240px] gap-5 px-6 md:px-10 lg:grid-cols-2"
           step={120}
         >
           <article className="h-full rounded-xl border border-line-soft bg-surface p-8 shadow-card md:p-10">
@@ -80,7 +85,11 @@ export default function AboutPage() {
             </p>
           </Reveal>
 
-          <RevealGroup className="mt-14 grid gap-5 md:grid-cols-3" as="ul" step={90}>
+          <RevealGroup
+            className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3"
+            as="ul"
+            step={90}
+          >
             {COMMITMENT.items.map((c) => (
               <div key={c.title} className="glass sheen h-full rounded-xl p-7">
                 <span className="glass-strong relative z-[1] grid h-11 w-11 place-items-center rounded-md text-ink-inv">
@@ -105,7 +114,11 @@ export default function AboutPage() {
             <h2 className="display-2 text-ink">{APART.heading}</h2>
           </Reveal>
 
-          <RevealGroup className="mt-12 grid gap-5 md:grid-cols-2" as="ul" step={80}>
+          <RevealGroup
+            className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2"
+            as="ul"
+            step={80}
+          >
             {APART.items.map((it) => (
               <div
                 key={it.body}
@@ -114,7 +127,9 @@ export default function AboutPage() {
                 <span className="grad-fill grid h-10 w-10 shrink-0 place-items-center rounded-pill text-ink-inv">
                   <Icon name={it.icon} size={18} />
                 </span>
-                <p className="text-[15.5px] leading-relaxed text-ink-2">{it.body}</p>
+                <p className="text-[15.5px] leading-relaxed text-ink-2">
+                  {it.body}
+                </p>
               </div>
             ))}
           </RevealGroup>
@@ -128,7 +143,10 @@ export default function AboutPage() {
             <h2 className="display-2 text-ink">{TRACK_RECORD.heading}</h2>
           </Reveal>
 
-          <RevealGroup className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" step={80}>
+          <RevealGroup
+            className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            step={80}
+          >
             {IMPACT_STATS.map((s) => (
               <article
                 key={s.label}
@@ -149,7 +167,7 @@ export default function AboutPage() {
           </RevealGroup>
 
           <Reveal delay={160}>
-            <div className="grad-fill mt-5 grid gap-6 rounded-xl p-8 shadow-float sm:grid-cols-3 md:p-10">
+            <div className="grad-fill mt-5 grid grid-cols-1 gap-6 rounded-xl p-8 shadow-float sm:grid-cols-3 md:p-10">
               {GROWTH_STATS.map((s) => (
                 <StatNumber
                   key={s.label}

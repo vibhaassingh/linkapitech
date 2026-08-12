@@ -82,9 +82,13 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
       hidden={!open}
       className="fixed inset-0 top-[76px] z-40 overflow-y-auto bg-canvas lg:hidden"
     >
-      <nav aria-label="Mobile primary" className="flex min-h-full flex-col px-6 pb-12 pt-6">
+      <nav
+        aria-label="Mobile primary"
+        className="flex min-h-full flex-col px-6 pb-12 pt-6"
+      >
         {NAV.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
@@ -110,13 +114,19 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
         <div className="mt-10">
           <p className="eyebrow mb-3">Reach us</p>
           {CONTACT.channels.map((ch) => (
-            <p key={ch.phone} className="mb-3 text-sm leading-relaxed text-ink-2">
+            <p
+              key={ch.phone}
+              className="mb-3 text-sm leading-relaxed text-ink-2"
+            >
               <a href={ch.phoneHref} className="font-medium text-ink">
                 {ch.phone}
               </a>
               <br />
               {/* break-all would orphan a single character; wrap at the @ instead */}
-              <a href={`mailto:${ch.email}`} className="[overflow-wrap:anywhere]">
+              <a
+                href={`mailto:${ch.email}`}
+                className="[overflow-wrap:anywhere]"
+              >
                 {ch.email}
               </a>
             </p>

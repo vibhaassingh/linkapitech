@@ -10,7 +10,12 @@ interface EyebrowProps {
 }
 
 /** Mono section label — the "infrastructure" voice above every heading. */
-export function Eyebrow({ children, className, index, as: Tag = "p" }: EyebrowProps) {
+export function Eyebrow({
+  children,
+  className,
+  index,
+  as: Tag = "p",
+}: EyebrowProps) {
   return (
     <Tag className={cn("eyebrow flex items-center gap-3", className)}>
       {index && <span className="text-ink-3">{index}</span>}

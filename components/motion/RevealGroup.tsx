@@ -33,14 +33,17 @@ export function RevealGroup({
 }: RevealGroupProps) {
   const { ref, inView } = useInView<HTMLElement>();
   const Comp = Tag as React.ElementType;
-  const ChildTag: React.ElementType = Tag === "ul" || Tag === "ol" ? "li" : "div";
+  const ChildTag: React.ElementType =
+    Tag === "ul" || Tag === "ol" ? "li" : "div";
   return (
     <Comp ref={ref} data-inview={inView || undefined} className={className}>
       {Children.map(children, (child, i) => (
         <ChildTag
           data-reveal=""
           data-inview={inView || undefined}
-          style={{ "--reveal-delay": `${baseDelay + i * step}ms` } as CSSProperties}
+          style={
+            { "--reveal-delay": `${baseDelay + i * step}ms` } as CSSProperties
+          }
         >
           {child}
         </ChildTag>

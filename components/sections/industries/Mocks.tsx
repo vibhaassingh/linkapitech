@@ -17,7 +17,11 @@ export function SegmentMock({ mock }: { mock: Segment["mock"] }) {
         return <Reconciliation />;
       case "nbfc":
         return (
-          <Terminal title={NBFC_SAMPLE.title} lines={NBFC_SAMPLE.lines} className="w-full" />
+          <Terminal
+            title={NBFC_SAMPLE.title}
+            lines={NBFC_SAMPLE.lines}
+            className="w-full"
+          />
         );
       case "ledger":
         return <Ledger />;
@@ -32,7 +36,7 @@ export function SegmentMock({ mock }: { mock: Segment["mock"] }) {
     <div
       role="img"
       aria-label="Illustrative product interface with sample data"
-      className="w-full"
+      className="w-full min-w-0"
     >
       {inner()}
     </div>
@@ -58,7 +62,7 @@ function Reconciliation() {
           <span className="h-2.5 w-2.5 rounded-pill bg-plum-700" />
           {d.title}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-pill bg-[color:var(--success)]/10 px-2.5 py-1 text-[11.5px] font-semibold uppercase tracking-wide text-[color:var(--success)]">
+        <span className="inline-flex items-center gap-1.5 rounded-pill bg-[color:var(--success)]/10 px-2.5 py-1 text-[11.5px] font-semibold uppercase tracking-wide text-[color:var(--success-text)]">
           <span className="h-1.5 w-1.5 rounded-pill bg-[color:var(--success)]" />
           {d.status}
         </span>
@@ -67,10 +71,15 @@ function Reconciliation() {
       <hr className="my-4 border-line-soft" />
 
       <p className="text-[13px] text-ink-3">{d.metricLabel}</p>
-      <p className="mt-1 text-[26px] font-bold tracking-tight text-violet-text">{d.metricValue}</p>
+      <p className="mt-1 text-[26px] font-bold tracking-tight text-violet-text">
+        {d.metricValue}
+      </p>
 
       <div className="mt-4 h-2 overflow-hidden rounded-pill bg-lavender-200">
-        <span className="grad-fill block h-full rounded-pill" style={{ width: `${d.progress}%` }} />
+        <span
+          className="grad-fill block h-full rounded-pill"
+          style={{ width: `${d.progress}%` }}
+        />
       </div>
       <div className="mt-2.5 flex justify-between text-[12.5px]">
         <span className="text-ink-3">{d.footLeft}</span>
@@ -86,7 +95,7 @@ function Ledger() {
     <Shell>
       <div className="flex items-center justify-between gap-4">
         <span className="text-[14px] font-semibold text-ink">{d.title}</span>
-        <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[color:var(--success)]">
+        <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[color:var(--success-text)]">
           <span className="h-1.5 w-1.5 rounded-pill bg-[color:var(--success)]" />
           {d.status}
         </span>
@@ -94,7 +103,10 @@ function Ledger() {
 
       <dl className="mt-4 divide-y divide-line-soft border-y border-line-soft">
         {d.rows.map((r) => (
-          <div key={r.label} className="flex items-center justify-between gap-4 py-3">
+          <div
+            key={r.label}
+            className="flex items-center justify-between gap-4 py-3"
+          >
             <dt className="text-[12.5px] text-ink-3">{r.label}</dt>
             <dd className="text-[13.5px] font-semibold text-ink">{r.value}</dd>
           </div>
@@ -107,7 +119,9 @@ function Ledger() {
             <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
               {t.label}
             </p>
-            <p className="mt-0.5 text-[17px] font-bold text-violet-text">{t.value}</p>
+            <p className="mt-0.5 text-[17px] font-bold text-violet-text">
+              {t.value}
+            </p>
           </div>
         ))}
       </div>
@@ -126,7 +140,9 @@ function Checkout() {
           <Icon name="cart" size={18} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px] font-medium text-ink">{d.item}</span>
+          <span className="block truncate text-[13.5px] font-medium text-ink">
+            {d.item}
+          </span>
           <span className="block text-[12px] text-ink-3">{d.qty}</span>
         </span>
         <span className="text-[15px] font-semibold text-ink">{d.price}</span>
@@ -155,9 +171,12 @@ function Rails() {
         {d.heading}
       </p>
 
-      <div className="mt-5 flex items-center gap-2">
+      <div className="mt-5 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
         {d.nodes.map((n, i) => (
-          <div key={n.label} className="flex min-w-0 flex-1 items-center gap-2">
+          <div
+            key={n.label}
+            className="flex min-w-0 items-center gap-2 sm:flex-1"
+          >
             <div
               className={
                 i === 1
@@ -168,8 +187,8 @@ function Rails() {
               <p
                 className={
                   i === 1
-                    ? "text-[9.5px] font-semibold uppercase tracking-wide text-ink-inv-2"
-                    : "text-[9.5px] font-semibold uppercase tracking-wide text-ink-3"
+                    ? "truncate text-[9.5px] font-semibold uppercase tracking-wide text-ink-inv-2"
+                    : "truncate text-[9.5px] font-semibold uppercase tracking-wide text-ink-3"
                 }
               >
                 {n.kicker}
@@ -185,7 +204,10 @@ function Rails() {
               </p>
             </div>
             {i < d.nodes.length - 1 && (
-              <span aria-hidden="true" className="shrink-0 text-lavender-400">
+              <span
+                aria-hidden="true"
+                className="hidden shrink-0 text-lavender-400 sm:block"
+              >
                 <svg viewBox="0 0 24 8" width="24" height="8" fill="none">
                   <path
                     d="M0 4h20"

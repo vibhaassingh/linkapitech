@@ -47,7 +47,9 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     };
   }, [reduced]);
 
-  return <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>;
+  return (
+    <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>
+  );
 }
 
 /**

@@ -13,7 +13,11 @@ const schema = z.object({
   firstName: z.string().min(2, "Please enter your first name"),
   lastName: z.string().min(1, "Please enter your last name"),
   email: z.string().email("Enter a valid work email"),
-  phone: z.string().min(7, "Enter a reachable number").optional().or(z.literal("")),
+  phone: z
+    .string()
+    .min(7, "Enter a reachable number")
+    .optional()
+    .or(z.literal("")),
   company: z.string().min(2, "Please enter your company"),
   message: z.string().min(10, "Tell us a little more"),
   // Honeypot: real users never see or fill this; the server drops any submission
@@ -59,11 +63,11 @@ export function ContactForm() {
     >
       <h2 className="heading-3 text-ink">Book a Demo</h2>
       <p className="mb-7 mt-2 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-2">
-        Tell us what you&rsquo;re looking to solve and our team will come back with a tailored
-        implementation plan.
+        Tell us what you&rsquo;re looking to solve and our team will come back
+        with a tailored implementation plan.
       </p>
 
-      <div className="grid gap-x-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
         <TextField
           label="First name"
           placeholder="First name"

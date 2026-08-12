@@ -54,9 +54,13 @@ export default function ServicesPage() {
             <div className="mt-10 rounded-xl border border-line-soft bg-surface p-8 shadow-card md:p-10">
               <p className="max-w-[88ch] text-[17px] leading-[1.75] text-ink-2">
                 {ENGAGEMENT.lead}{" "}
-                <strong className="font-semibold text-violet-text">{ENGAGEMENT.boldA}</strong>{" "}
+                <strong className="font-semibold text-violet-text">
+                  {ENGAGEMENT.boldA}
+                </strong>{" "}
                 {ENGAGEMENT.midA}{" "}
-                <strong className="font-semibold text-violet-text">{ENGAGEMENT.boldB}</strong>{" "}
+                <strong className="font-semibold text-violet-text">
+                  {ENGAGEMENT.boldB}
+                </strong>{" "}
                 {ENGAGEMENT.tail}
               </p>
             </div>

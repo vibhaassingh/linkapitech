@@ -14,7 +14,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-line-soft bg-canvas">
       <div className="mx-auto w-full max-w-[1240px] px-6 pb-10 pt-16 md:px-10 md:pt-20">
-        <div className="grid gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)] md:gap-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)] md:gap-8">
           {/* Brand */}
           <div>
             <Link href="/" className="inline-block rounded-sm text-plum-950">
@@ -33,7 +33,10 @@ export function SiteFooter() {
                       className="grid h-9 w-9 place-items-center rounded-pill bg-plum-600 text-ink-inv transition-colors duration-ui hover:bg-violet-600"
                       aria-label={s.label}
                     >
-                      <span aria-hidden="true" className="text-[13px] font-semibold">
+                      <span
+                        aria-hidden="true"
+                        className="text-[13px] font-semibold"
+                      >
                         {s.label.charAt(0)}
                       </span>
                     </a>
@@ -45,11 +48,15 @@ export function SiteFooter() {
             <div className="mt-6 space-y-1 text-[14px] text-ink-2">
               <a
                 href={`mailto:${CONTACT.primaryEmail}`}
-                className="block rounded-sm transition-colors duration-ui hover:text-plum-700 [overflow-wrap:anywhere]"
+                /* py-1 lifts the hit area to 26px — WCAG 2.2 SC 2.5.8 wants a
+                   24px minimum target and the bare line-box was 23.99px. */
+                className="block rounded-sm py-1 transition-colors duration-ui hover:text-plum-700 [overflow-wrap:anywhere]"
               >
                 {CONTACT.primaryEmail}
               </a>
-              <p className="max-w-[28ch] leading-relaxed text-ink-3">{CONTACT.address.full}</p>
+              <p className="max-w-[28ch] leading-relaxed text-ink-3">
+                {CONTACT.address.full}
+              </p>
             </div>
           </div>
 

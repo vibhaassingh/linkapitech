@@ -49,9 +49,13 @@ export function CursorGlow() {
       // and Document has no closest() — guard before calling it.
       const target = e.target;
       const next =
-        target instanceof Element ? target.closest<HTMLElement>(".spotlight") : null;
+        target instanceof Element
+          ? target.closest<HTMLElement>(".spotlight")
+          : null;
       if (next !== card.current?.el) {
-        card.current = next ? { el: next, rect: next.getBoundingClientRect() } : null;
+        card.current = next
+          ? { el: next, rect: next.getBoundingClientRect() }
+          : null;
       }
 
       if (!activeRef.current) {
@@ -91,5 +95,11 @@ export function CursorGlow() {
     // effect never re-runs (and never re-binds listeners) as the pointer moves.
   }, []);
 
-  return <div className="cursor-glow" data-active={active || undefined} aria-hidden="true" />;
+  return (
+    <div
+      className="cursor-glow"
+      data-active={active || undefined}
+      aria-hidden="true"
+    />
+  );
 }

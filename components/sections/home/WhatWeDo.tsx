@@ -9,7 +9,9 @@ export function WhatWeDo() {
     <section className="section-dark section-pad">
       <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <Reveal>
-          <h2 className="display-2 text-ink-inv">{HOME_SECTIONS.what.heading}</h2>
+          <h2 className="display-2 text-ink-inv">
+            {HOME_SECTIONS.what.heading}
+          </h2>
         </Reveal>
 
         <RevealGroup className="mt-10 flex flex-col gap-5" step={110}>

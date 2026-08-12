@@ -28,7 +28,11 @@ export function Testimonials() {
     if (!track) return;
     const clamped = Math.max(0, Math.min(TESTIMONIALS.length - 1, i));
     const card = track.children[clamped] as HTMLElement | undefined;
-    if (card) track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
+    if (card)
+      track.scrollTo({
+        left: card.offsetLeft - track.offsetLeft,
+        behavior: "smooth",
+      });
     setActive(clamped);
   };
 
@@ -41,7 +45,9 @@ export function Testimonials() {
     let nearest = 0;
     let best = Infinity;
     cards.forEach((c, i) => {
-      const d = Math.abs(c.offsetLeft - track.offsetLeft + c.clientWidth / 2 - mid);
+      const d = Math.abs(
+        c.offsetLeft - track.offsetLeft + c.clientWidth / 2 - mid,
+      );
       if (d < best) {
         best = d;
         nearest = i;
@@ -79,8 +85,12 @@ export function Testimonials() {
                       {t.initials}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-[15px] font-semibold text-ink">{t.name}</span>
-                      <span className="block text-[13.5px] text-ink-3">{t.role}</span>
+                      <span className="block text-[15px] font-semibold text-ink">
+                        {t.name}
+                      </span>
+                      <span className="block text-[13.5px] text-ink-3">
+                        {t.role}
+                      </span>
                     </span>
                   </figcaption>
                 </figure>
@@ -89,7 +99,10 @@ export function Testimonials() {
           </ul>
         </Reveal>
 
-        <Reveal delay={200} className="mt-9 flex items-center justify-center gap-4">
+        <Reveal
+          delay={200}
+          className="mt-9 flex items-center justify-center gap-4"
+        >
           <button
             type="button"
             onClick={() => scrollToIndex(active - 1)}
@@ -129,7 +142,13 @@ export function Testimonials() {
 
 function QuoteMark() {
   return (
-    <svg viewBox="0 0 40 30" width="40" height="30" aria-hidden="true" className="text-lavender-300">
+    <svg
+      viewBox="0 0 40 30"
+      width="40"
+      height="30"
+      aria-hidden="true"
+      className="text-lavender-300"
+    >
       <path
         d="M0 30V16.5C0 7.4 5.6 1.2 15 0v6.4c-4.9 1.1-7.4 4-7.4 8.4H15V30H0Zm25 0V16.5C25 7.4 30.6 1.2 40 0v6.4c-4.9 1.1-7.4 4-7.4 8.4H40V30H25Z"
         fill="currentColor"
@@ -140,7 +159,13 @@ function QuoteMark() {
 
 function Chevron({ dir }: { dir: "left" | "right" }) {
   return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d={dir === "left" ? "M14 6l-6 6 6 6" : "M10 6l6 6-6 6"}
         stroke="currentColor"
