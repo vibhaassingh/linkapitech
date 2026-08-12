@@ -82,7 +82,7 @@ export default function AboutPage() {
 
           <RevealGroup className="mt-14 grid gap-5 md:grid-cols-3" as="ul" step={90}>
             {COMMITMENT.items.map((c) => (
-              <li key={c.title} className="glass sheen h-full rounded-xl p-7">
+              <div key={c.title} className="glass sheen h-full rounded-xl p-7">
                 <span className="glass-strong relative z-[1] grid h-11 w-11 place-items-center rounded-md text-ink-inv">
                   <Icon name={c.icon} size={19} />
                 </span>
@@ -92,7 +92,7 @@ export default function AboutPage() {
                 <p className="relative z-[1] mt-2 text-[14.5px] leading-relaxed text-ink-inv-2">
                   {c.body}
                 </p>
-              </li>
+              </div>
             ))}
           </RevealGroup>
         </div>
@@ -107,7 +107,7 @@ export default function AboutPage() {
 
           <RevealGroup className="mt-12 grid gap-5 md:grid-cols-2" as="ul" step={80}>
             {APART.items.map((it) => (
-              <li
+              <div
                 key={it.body}
                 className="flex h-full items-start gap-4 rounded-xl border border-line-soft bg-surface p-7 shadow-card"
               >
@@ -115,7 +115,7 @@ export default function AboutPage() {
                   <Icon name={it.icon} size={18} />
                 </span>
                 <p className="text-[15.5px] leading-relaxed text-ink-2">{it.body}</p>
-              </li>
+              </div>
             ))}
           </RevealGroup>
         </div>

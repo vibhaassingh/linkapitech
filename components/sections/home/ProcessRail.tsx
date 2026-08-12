@@ -19,7 +19,7 @@ export function ProcessRail() {
 
           <RevealGroup className="mt-10" as="ol" step={110}>
             {PROCESS.map((p, i) => (
-              <li key={p.num} className="relative flex gap-5 pb-9 last:pb-0">
+              <div key={p.num} className="relative flex gap-5 pb-9 last:pb-0">
                 {/* connector — stops at the last node */}
                 {i < PROCESS.length - 1 && (
                   <span
@@ -36,7 +36,7 @@ export function ProcessRail() {
                     {p.description}
                   </p>
                 </div>
-              </li>
+              </div>
             ))}
           </RevealGroup>
         </div>

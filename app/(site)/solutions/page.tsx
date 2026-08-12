@@ -52,7 +52,7 @@ export default function SolutionsPage() {
                 <div className="mt-12 grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
                   <RevealGroup className="flex flex-col" as="ul" step={100}>
                     {group.products.map((p) => (
-                      <li
+                      <div
                         key={p.id}
                         id={p.id}
                         className="border-b border-line-inv py-7 first:pt-0 last:border-b-0"
@@ -64,7 +64,7 @@ export default function SolutionsPage() {
                         <p className="mt-2 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-inv-2">
                           {p.body}
                         </p>
-                      </li>
+                      </div>
                     ))}
                   </RevealGroup>
 

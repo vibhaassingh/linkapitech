@@ -16,14 +16,14 @@ export function Challenges() {
           step={70}
         >
           {CHALLENGES.map((c) => (
-            <li key={c.body} className="glass sheen h-full rounded-xl p-7">
+            <div key={c.body} className="glass sheen h-full rounded-xl p-7">
               <span className="glass-strong relative z-[1] grid h-11 w-11 place-items-center rounded-md text-ink-inv">
                 <Icon name={c.icon} size={19} />
               </span>
               <p className="relative z-[1] mt-6 text-[15px] leading-relaxed text-ink-inv">
                 {c.body}
               </p>
-            </li>
+            </div>
           ))}
         </RevealGroup>
       </div>

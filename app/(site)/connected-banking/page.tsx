@@ -48,7 +48,7 @@ export default function ConnectedBankingPage() {
               {CAPABILITIES.map((c, i) => {
                 const right = i % 2 === 1;
                 return (
-                  <li key={c.title} className="relative">
+                  <div key={c.title} className="relative">
                     {/* The rail dot is absolute, so it takes no grid cell — the
                         card is placed by explicit column rather than `order`,
                         which would have nothing in flow to swap with. */}
@@ -75,7 +75,7 @@ export default function ConnectedBankingPage() {
                         className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 rounded-pill bg-plum-700 ring-4 ring-[color:var(--violet-soft)] lg:left-1/2 lg:-translate-x-1/2"
                       />
                     </div>
-                  </li>
+                  </div>
                 );
               })}
             </RevealGroup>
