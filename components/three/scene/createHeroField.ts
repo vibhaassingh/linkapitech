@@ -166,6 +166,32 @@ export function createHeroField(
   let driftY = 0;
   const MAX_DRIFT = 12;
 
+  // ---- scroll-velocity coupling -------------------------------------------
+  // The velocity bus writes --scroll-velocity (−1..1, already lerped) onto
+  // <html> as an inline custom property. Reading it back off `.style` is a
+  // string lookup on that inline declaration: no getComputedStyle, no style
+  // recalc, no layout — cheap enough to do once per frame, which is why it is
+  // read here and not per-particle.
+  //
+  // If nothing ever writes it, getPropertyValue returns "" and the factor
+  // stays exactly 1 — i.e. the pre-coupling behaviour, unchanged.
+  const root = document.documentElement;
+  /** Peak speed swing. ±10% is the brief's ceiling and also about where the
+   *  haze stops reading as ambient and starts reading as a scroll indicator. */
+  const VELOCITY_GAIN = 0.1;
+  let velocity = 0;
+  const readVelocity = () => {
+    const raw = root.style.getPropertyValue("--scroll-velocity");
+    const parsed = raw ? parseFloat(raw) : 0;
+    const target = Number.isFinite(parsed)
+      ? Math.max(-1, Math.min(1, parsed))
+      : 0;
+    // A second, gentler lerp on top of the bus's own: even if the bus is ever
+    // written from a coarser tick than rAF, the field can never step.
+    velocity += (target - velocity) * 0.08;
+    return velocity;
+  };
+
   const resize = () => {
     const { clientWidth: w, clientHeight: h } = container;
     if (!w || !h) return;
@@ -174,7 +200,13 @@ export function createHeroField(
 
   const frame = () => {
     if (!running) return;
-    t += 1 / 60;
+
+    // 0.9 … 1.1. Advancing `t` by it rather than reading velocity at each use
+    // site means the sway and the arc pulses inherit the same modulation for
+    // free, and — because the factor is always positive — `t` stays monotonic,
+    // so a fast scroll can never make a pulse run backwards along its arc.
+    const flow = 1 + readVelocity() * VELOCITY_GAIN;
+    t += flow / 60;
 
     driftX += (pointerX * MAX_DRIFT - driftX) * 0.045;
     driftY += (pointerY * (MAX_DRIFT * 0.5) - driftY) * 0.045;
@@ -185,7 +217,7 @@ export function createHeroField(
     const arr = particleGeo.attributes.position.array as Float32Array;
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const iy = i * 3 + 1;
-      arr[iy] -= pSpeed[i] * 0.06;
+      arr[iy] -= pSpeed[i] * 0.06 * flow;
       // gentle lateral sway keeps the field from looking like falling rain
       arr[i * 3] += Math.sin(t * 0.5 + pPhase[i]) * 0.045;
       if (arr[iy] < ARC.cy - ARC.radii[0] - 20) arr[iy] = ARC.cy - 10;

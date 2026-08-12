@@ -13,6 +13,18 @@ import { Icon } from "@/components/ui/Icon";
 import { StatNumber } from "@/components/ui/StatNumber";
 import { cn } from "@/lib/cn";
 
+/**
+ * Card craft shared by this page: 20px radius (card step of the radius scale —
+ * nested boxes drop to 12, pills to 999), a 4px hover lift on `--spring-smooth`,
+ * and `.icon-draw` so an Icon inside that opts in replays its stroke draw.
+ *
+ * transform + box-shadow only, so a lift can never move a neighbour (CLS 0).
+ * Reduced motion: the global block collapses `transition-duration` to 0.001ms,
+ * making the lift an instant state change whose resting state is the flat card.
+ */
+const CARD_LIFT =
+  "icon-draw rounded-lg transition-[transform,box-shadow] duration-[var(--dur-spring-smooth)] ease-[var(--spring-smooth)] hover:-translate-y-1 hover:shadow-float";
+
 export function generateStaticParams() {
   return BANK_SLUGS.map((slug) => ({ slug }));
 }
@@ -107,7 +119,7 @@ export default async function BankDetailPage({
 
           {/* Neutral, capability-framed disclaimer (no partnership claim). */}
           <Reveal delay={140}>
-            <p className="mt-8 max-w-[80ch] rounded-lg border border-line-soft bg-tint px-5 py-4 text-[13.5px] leading-relaxed text-ink-2">
+            <p className="mt-8 max-w-[80ch] rounded-md border border-line-soft bg-tint px-5 py-4 text-[13.5px] leading-relaxed text-ink-2">
               This page describes LinkAPI Tech&apos;s integration capability for{" "}
               {b.name}&apos;s banking systems. It is not a claim of official
               partnership with, or endorsement by, {b.name}.
@@ -126,17 +138,20 @@ export default async function BankDetailPage({
           </Reveal>
 
           <RevealGroup
-            className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
             as="ul"
             step={80}
           >
             {b.capabilities.map((c) => (
               <div
                 key={c.body}
-                className="flex h-full items-start gap-4 rounded-xl border border-line-soft bg-surface p-7 shadow-card"
+                className={cn(
+                  CARD_LIFT,
+                  "flex h-full items-start gap-4 border border-line-soft bg-surface p-7 shadow-card",
+                )}
               >
                 <span className="grad-fill grid h-10 w-10 shrink-0 place-items-center rounded-pill text-ink-inv">
-                  <Icon name={c.icon} size={18} />
+                  <Icon name={c.icon} size={18} draw />
                 </span>
                 <p className="min-w-0 text-[15.5px] leading-relaxed text-ink-2">
                   {c.body}
@@ -185,7 +200,8 @@ export default async function BankDetailPage({
                       >
                         <article
                           className={cn(
-                            "relative overflow-hidden rounded-lg bg-tint p-6 shadow-card",
+                            CARD_LIFT,
+                            "relative overflow-hidden bg-tint p-6 shadow-card",
                             right ? "lg:pl-7" : "lg:pr-7",
                           )}
                         >
@@ -198,7 +214,7 @@ export default async function BankDetailPage({
                                 : "left-0 lg:left-auto lg:right-0",
                             )}
                           />
-                          <div className="flex items-start justify-between gap-5">
+                          <div className="flex items-start justify-between gap-6">
                             <div className="min-w-0">
                               <h3 className="text-[17px] font-semibold text-ink">
                                 {step.title}
@@ -208,7 +224,7 @@ export default async function BankDetailPage({
                               </p>
                             </div>
                             <span className="grad-tile grid h-10 w-10 shrink-0 place-items-center">
-                              <Icon name={step.icon} size={18} />
+                              <Icon name={step.icon} size={18} draw />
                             </span>
                           </div>
                         </article>
@@ -235,7 +251,7 @@ export default async function BankDetailPage({
       <section className="section-pad bg-canvas">
         <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
           <Reveal>
-            <div className="grad-fill rounded-xl p-8 shadow-float md:p-10">
+            <div className="grad-fill rounded-lg p-8 shadow-float md:p-10">
               <p className="max-w-[70ch] text-[14px] font-semibold leading-relaxed text-ink-inv">
                 {b.stats.caption}
               </p>
@@ -261,16 +277,19 @@ export default async function BankDetailPage({
             <h2 className="text-[12px] font-semibold uppercase tracking-eyebrow text-ink-3">
               Other bank integrations
             </h2>
+            {/* py-1 keeps the target ≥24px tall (14px × 1.7 alone is 23.8 —
+                a hair under WCAG 2.5.8, which this link has already failed
+                once). Do not drop it for the sake of a tighter baseline. */}
             <Link
               href="/banks"
-              className="inline-block rounded-sm py-1 text-[14px] font-semibold text-violet-text transition-colors duration-ui hover:text-plum-700"
+              className="link-draw inline-block rounded-sm py-1 text-[14px] font-semibold text-violet-text transition-colors duration-ui hover:text-plum-700"
             >
               All bank integrations &rarr;
             </Link>
           </div>
 
           <RevealGroup
-            className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2"
+            className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2"
             as="ul"
             step={90}
           >
@@ -279,7 +298,7 @@ export default async function BankDetailPage({
                 key={r.slug}
                 href={`/banks/${r.slug}`}
                 aria-label={`${r.name} integration`}
-                className="group flex items-center justify-between gap-4 rounded-xl border border-line-soft bg-canvas p-6 transition-all duration-ui ease-out-expo hover:border-line-violet hover:shadow-card"
+                className="group flex items-center justify-between gap-4 rounded-lg border border-line-soft bg-canvas p-6 transition-[transform,box-shadow,border-color] duration-[var(--dur-spring-smooth)] ease-[var(--spring-smooth)] hover:-translate-y-1 hover:border-line-violet hover:shadow-card"
               >
                 <span className="flex h-9 min-w-0 items-center">
                   <BankMark bank={r} boxW={150} boxH={36} decorative />
@@ -350,22 +369,22 @@ function BankMark({
  */
 function ConnectionCard({ bank }: { bank: BankPage }) {
   return (
-    <div className="mx-auto w-full max-w-[380px] rounded-xl border border-line-soft bg-surface p-7 shadow-float md:p-8">
+    <div className="icon-draw mx-auto w-full max-w-[380px] rounded-lg border border-line-soft bg-surface p-7 shadow-float md:p-8">
       <div className="flex h-14 items-center justify-center">
         <BankMark bank={bank} boxW={200} boxH={56} align="center" />
       </div>
 
       <Connector label="Secure API connection" />
 
-      <div className="grad-fill flex items-center justify-center gap-3 rounded-lg px-4 py-3.5 text-ink-inv">
-        <Icon name="link" size={18} />
+      <div className="grad-fill flex items-center justify-center gap-3 rounded-md px-4 py-3.5 text-ink-inv">
+        <Icon name="link" size={18} draw />
         <span className="text-[14.5px] font-semibold">LinkAPI platform</span>
       </div>
 
       <Connector />
 
-      <div className="flex items-center justify-center gap-3 rounded-lg border border-line bg-canvas px-4 py-3.5 text-ink">
-        <Icon name="grid" size={18} className="text-violet-text" />
+      <div className="flex items-center justify-center gap-3 rounded-md border border-line bg-canvas px-4 py-3.5 text-ink">
+        <Icon name="grid" size={18} className="text-violet-text" draw />
         <span className="text-[14.5px] font-medium">Your ERP or platform</span>
       </div>
     </div>

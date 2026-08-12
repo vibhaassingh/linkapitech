@@ -51,7 +51,9 @@ export default function ServicesPage() {
             <h2 className="display-2 text-ink">{ENGAGEMENT.heading}</h2>
           </Reveal>
           <Reveal delay={120}>
-            <div className="mt-10 rounded-xl border border-line-soft bg-surface p-8 shadow-card md:p-10">
+            {/* mt-12 / r-lg: one heading→content step and one card radius
+                across the page (was mt-10 + rounded-xl). */}
+            <div className="mt-12 rounded-lg border border-line-soft bg-surface p-8 shadow-card md:p-10">
               <p className="max-w-[88ch] text-[17px] leading-[1.75] text-ink-2">
                 {ENGAGEMENT.lead}{" "}
                 <strong className="font-semibold text-violet-text">

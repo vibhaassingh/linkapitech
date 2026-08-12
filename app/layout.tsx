@@ -1,5 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+// Chrome-only structural CSS (header ramp, footer curtain, sheet, view
+// transitions). Imported AFTER the design system so it can layer on top of it
+// without !important; see the file header for why it is not in globals.css.
+// Relative, not "@/…": the tsconfig alias resolves for CSS too, but a plain
+// path takes the resolver out of the question for a global stylesheet whose
+// ORDER is load-bearing.
+import "../components/chrome/chrome.css";
 import { poppins, plexMono } from "./fonts";
 import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
@@ -42,7 +49,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${plexMono.variable}`}>
       <body className="font-sans antialiased">
-        <CursorGlow />
+        {/* The footer curtain needs <main> to be a stacking context so it can
+            cover the sticky footer, and `.cursor-glow` is `fixed; z-index: 0`
+            — it would be buried underneath. This wrapper lifts the decorative
+            glow back above main. It is empty and zero-height, so it adds no
+            box and cannot shift layout. See chrome.css §3. */}
+        <div className="chrome-glow-layer">
+          <CursorGlow />
+        </div>
         <Magnetic />
         {children}
         <Analytics />

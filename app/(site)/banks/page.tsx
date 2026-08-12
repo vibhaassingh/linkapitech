@@ -32,14 +32,20 @@ export default function BanksIndexPage() {
       <section className="section-pad bg-canvas">
         <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
           <RevealGroup
-            className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
             step={90}
           >
             {BANKS.map((b) => (
+              /* Hover craft: a 4px lift on `--spring-smooth` (its linear() stop
+                 list peaks past 1, so the card genuinely overshoots and
+                 settles). transform + box-shadow + border-colour only — nothing
+                 that reflows, so CLS stays 0. Reduced motion: the global block
+                 collapses transition-duration to 0.001ms and the lift becomes an
+                 instant state change. */
               <Link
                 key={b.slug}
                 href={`/banks/${b.slug}`}
-                className="group flex h-full flex-col rounded-xl border border-line-soft bg-surface p-7 shadow-card transition-all duration-ui ease-out-expo hover:border-line-violet hover:shadow-float"
+                className="group flex h-full flex-col rounded-lg border border-line-soft bg-surface p-7 shadow-card transition-[transform,box-shadow,border-color] duration-[var(--dur-spring-smooth)] ease-[var(--spring-smooth)] hover:-translate-y-1 hover:border-line-violet hover:shadow-float"
               >
                 {/* Fixed box + object-contain, so a 9:1 wordmark can't outweigh
                     a compact lockup; logoScale is the optical nudge. */}
@@ -82,7 +88,7 @@ export default function BanksIndexPage() {
           {/* Capability framing, stated on the hub as well as each bank page, so
               the grid of marks can never read as a partnership roster. */}
           <Reveal delay={120}>
-            <p className="mt-10 max-w-[80ch] rounded-lg border border-line-soft bg-tint px-5 py-4 text-[13.5px] leading-relaxed text-ink-2">
+            <p className="mt-10 max-w-[80ch] rounded-md border border-line-soft bg-tint px-5 py-4 text-[13.5px] leading-relaxed text-ink-2">
               Each page describes LinkAPI Tech&apos;s integration capability for
               that bank&apos;s systems. None is a claim of official partnership
               with, or endorsement by, the bank named.
