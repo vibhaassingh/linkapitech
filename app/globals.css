@@ -41,6 +41,14 @@
   /* Ink on plum */
   --ink-inv: #f7f3f9;
   --ink-inv-2: #cdbbd4;
+  /**
+   * Secondary text on the VIOLET gradient (.grad-fill), which is far lighter
+   * than the plum darks. --ink-inv-2 is calibrated for #42174c..#1a0620 and
+   * only reaches 3.91:1 against the gradient's #8e24aa stop; this reaches
+   * 4.98:1 there (8.39:1 at the dark stop) while staying visibly dimmer than
+   * --ink-inv, so hierarchy survives.
+   */
+  --ink-on-violet-2: #e0d5e8;
 
   /* Semantic.
      --success is the dot/fill colour; --success-text is the darkened variant

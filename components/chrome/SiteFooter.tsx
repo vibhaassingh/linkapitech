@@ -60,13 +60,23 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {FOOTER_COLUMNS.map((col) => (
+          {FOOTER_COLUMNS.map((col) => {
+            /* The bank-integration hub is reachable only from the footer — the
+               five-link pill nav is fixed by the Figma. It joins Products, next
+               to Connected Banking, since it describes what LinkAPI delivers
+               rather than an audience. Derived here rather than in
+               lib/site.ts so the shared nav data stays untouched. */
+            const links =
+              col.heading === "Products"
+                ? [...col.links, { href: "/banks", label: "Bank integrations" }]
+                : col.links;
+            return (
             <nav key={col.heading} aria-label={col.heading}>
               <h2 className="text-[12px] font-semibold uppercase tracking-eyebrow text-ink">
                 {col.heading}
               </h2>
               <ul className="mt-4 space-y-2.5">
-                {col.links.map((l) => (
+                {links.map((l) => (
                   <li key={l.href + l.label}>
                     <Link
                       href={l.href}
@@ -78,7 +88,8 @@ export function SiteFooter() {
                 ))}
               </ul>
             </nav>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-14 flex flex-col gap-3 border-t border-line-soft pt-6 text-[13px] text-ink-3 sm:flex-row sm:items-center sm:justify-between">

@@ -143,7 +143,7 @@ function ProductCard({ product }: { product: Product }) {
       <p
         className={cn(
           "mt-2.5 max-w-[46ch] text-[14.5px] leading-relaxed",
-          solid ? "text-ink-inv-2" : "text-ink-2",
+          solid ? "text-ink-on-violet-2" : "text-ink-2",
         )}
       >
         {product.body}

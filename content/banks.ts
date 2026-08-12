@@ -15,14 +15,29 @@
  * for the reproduced bank marks (Axis, IndusInd, HSBC).
  */
 
-export interface BankStep {
-  title: string;
+import { GROWTH_STATS, IMPACT_STATS, type Stat } from "./stats";
+import type { IconName } from "@/components/ui/Icon";
+
+/** One capability card. `body` is the claim; `icon` is purely presentational. */
+export interface BankCapability {
+  icon: IconName;
   body: string;
 }
 
-export interface BankStat {
-  num: string;
-  label: string;
+export interface BankStep {
+  title: string;
+  body: string;
+  icon: IconName;
+}
+
+/**
+ * The aggregate stat block. `caption` is REQUIRED, not optional: the figures
+ * are LinkAPI-wide, so the type makes it impossible to render them without
+ * also having the "not a per-bank number" disclaimer in hand.
+ */
+export interface BankStats {
+  caption: string;
+  items: Stat[];
 }
 
 export interface BankPage {
@@ -31,48 +46,76 @@ export interface BankPage {
   name: string;
   /** Short name for compact contexts, e.g. "Axis". */
   shortName: string;
-  /** Path to a licensed vector logo in /public, or null for a wordmark placeholder. */
-  logo: string | null;
-  /** Brand hex — used only for a faint hero tint, never for text/CTAs. */
-  brand: string;
+  /** Path to a licensed vector logo in /public. */
+  logo: string;
+  /**
+   * Per-logo optical correction, exactly like ClientMark.scale — the three
+   * marks have very different lockups (HSBC's wordmark is huge relative to its
+   * symbol), so a uniform box makes them read at different weights. Tune here,
+   * never at a call site.
+   */
+  logoScale: number;
   eyebrow: string;
-  /** Serif italic hero line. */
-  tagline: string;
   intro: string;
   overview: string;
   /** What LinkAPI can wire up against this bank's systems (capability, not claim). */
-  capabilities: string[];
+  capabilities: BankCapability[];
   /** The repeatable connectivity → go-live playbook (from real /services scope). */
   steps: BankStep[];
   /** LinkAPI COMPANY-WIDE aggregate — captioned as such on the page. */
-  stats: BankStat[];
+  stats: BankStats;
   meta: { title: string; description: string };
-  aggregate: true;
 }
 
-/** Shared LinkAPI-wide aggregate (content/stats.ts) — NOT per-bank figures. */
-const LINKAPI_AGGREGATE: BankStat[] = [
-  { num: "5000+", label: "API implementations, across all BFSI work" },
-  { num: "₹20,000 Cr", label: "Processed monthly, across all systems" },
-  { num: "UAT→Prod", label: "End-to-end delivery scope" },
+/**
+ * Shared LinkAPI-wide aggregate — the figures themselves come straight from
+ * content/stats.ts (client-authored Figma 2026-08), so a bank page can never
+ * drift from the homepage or contradict it.
+ */
+const LINKAPI_AGGREGATE: BankStats = {
+  caption:
+    "LinkAPI Tech company-wide, across every bank and ERP integration. These are not bank-specific figures.",
+  items: [GROWTH_STATS[0], GROWTH_STATS[1], IMPACT_STATS[0]],
+};
+
+/**
+ * The five capabilities, identical for every bank because the playbook is —
+ * only the first line names the bank whose systems are being integrated.
+ */
+const capabilitiesFor = (bankName: string): BankCapability[] => [
+  { icon: "link", body: `API integration against ${bankName} banking services` },
+  {
+    icon: "shield",
+    body: "Secure connectivity setup with SSL / static-IP prerequisites",
+  },
+  { icon: "bank", body: "Bank configuration and client-end empanelment" },
+  { icon: "sync", body: "Transaction reconciliation via ERP plugins" },
+  {
+    icon: "layers",
+    body: "Data integration through adapters, converters, and parsers",
+  },
 ];
 
 /** The real, repeatable API-integration playbook (CONTENT-MAPPING §2.4 / /services). */
 const CONNECTIVITY_STEPS: BankStep[] = [
   {
     title: "Secure connectivity",
+    icon: "shield",
     body: "Establish secure connectivity for your environment (Basic Telnet Services), with prerequisites like static IP and SSL certificates handled up front.",
   },
   {
     title: "Configuration & empanelment",
+    icon: "bank",
     body: "Bank configuration setup and client-end empanelment, coordinated end to end so the integration clears every prerequisite.",
   },
   {
     title: "UAT → production",
+    icon: "code",
     body: "Comprehensive API integration support from UAT through to production, with technical coordination between the bank and your technology partner.",
   },
   {
     title: "Post-live support",
+    icon: "sync",
     body: "Ongoing post-live support on demand — reconciliation, data movement, and connectivity monitored so systems stay in sync at volume.",
   },
 ];
@@ -83,20 +126,13 @@ export const BANKS: BankPage[] = [
     name: "Axis Bank",
     shortName: "Axis",
     logo: "/assets/banks/axis.svg",
-    brand: "#ae285d",
+    logoScale: 0.95,
     eyebrow: "Bank integration",
-    tagline: "Connect to Axis Bank, cleanly.",
     intro:
       "LinkAPI helps corporates and BFSI businesses integrate their platforms with Axis Bank's banking systems — from secure connectivity through production, with reconciliation that holds at scale.",
     overview:
       "Whether you're launching a new product on Axis Bank rails or extending an existing one, LinkAPI handles the connectivity, configuration, and coordination between your team and the bank. The same repeatable integration playbook behind thousands of BFSI implementations, applied to your Axis Bank use case.",
-    capabilities: [
-      "API integration against Axis Bank banking services",
-      "Secure connectivity setup with SSL / static-IP prerequisites",
-      "Bank configuration and client-end empanelment",
-      "Transaction reconciliation via ERP plugins",
-      "Data integration through adapters, converters, and parsers",
-    ],
+    capabilities: capabilitiesFor("Axis Bank"),
     steps: CONNECTIVITY_STEPS,
     stats: LINKAPI_AGGREGATE,
     meta: {
@@ -104,27 +140,19 @@ export const BANKS: BankPage[] = [
       description:
         "LinkAPI Tech integrates corporate and BFSI platforms with Axis Bank — secure connectivity, configuration, reconciliation, and production support, from UAT to go-live.",
     },
-    aggregate: true,
   },
   {
     slug: "indusind",
     name: "IndusInd Bank",
     shortName: "IndusInd",
     logo: "/assets/banks/indusind.svg",
-    brand: "#98272a",
+    logoScale: 0.96,
     eyebrow: "Bank integration",
-    tagline: "IndusInd Bank connectivity, delivered.",
     intro:
       "LinkAPI connects your platform to IndusInd Bank's systems — establishing secure connectivity, completing configuration and empanelment, and taking the integration from UAT to production.",
     overview:
       "IndusInd Bank integrations follow LinkAPI's proven delivery model: secure connectivity first, then configuration and empanelment, then a coordinated path to production with support that continues after go-live. Reconciliation and data integration keep high-volume flows accurate.",
-    capabilities: [
-      "API integration against IndusInd Bank banking services",
-      "Secure connectivity setup with SSL / static-IP prerequisites",
-      "Bank configuration and client-end empanelment",
-      "Transaction reconciliation via ERP plugins",
-      "Data integration through adapters, converters, and parsers",
-    ],
+    capabilities: capabilitiesFor("IndusInd Bank"),
     steps: CONNECTIVITY_STEPS,
     stats: LINKAPI_AGGREGATE,
     meta: {
@@ -132,27 +160,19 @@ export const BANKS: BankPage[] = [
       description:
         "LinkAPI Tech integrates corporate and BFSI platforms with IndusInd Bank — secure connectivity, configuration, reconciliation, and production support, from UAT to go-live.",
     },
-    aggregate: true,
   },
   {
     slug: "hsbc",
     name: "HSBC",
     shortName: "HSBC",
     logo: "/assets/banks/hsbc.svg",
-    brand: "#db0011",
+    logoScale: 0.7,
     eyebrow: "Bank integration",
-    tagline: "Integrate with HSBC, end to end.",
     intro:
       "LinkAPI helps businesses integrate with HSBC's banking systems — secure connectivity, configuration, and a coordinated path from UAT to production, backed by reconciliation and data integration.",
     overview:
       "HSBC integrations run on the same repeatable playbook LinkAPI applies across BFSI: establish secure connectivity, complete configuration and empanelment, coordinate the bank and your technology partner through UAT to production, then support the integration once it's live.",
-    capabilities: [
-      "API integration against HSBC banking services",
-      "Secure connectivity setup with SSL / static-IP prerequisites",
-      "Bank configuration and client-end empanelment",
-      "Transaction reconciliation via ERP plugins",
-      "Data integration through adapters, converters, and parsers",
-    ],
+    capabilities: capabilitiesFor("HSBC"),
     steps: CONNECTIVITY_STEPS,
     stats: LINKAPI_AGGREGATE,
     meta: {
@@ -160,7 +180,6 @@ export const BANKS: BankPage[] = [
       description:
         "LinkAPI Tech integrates corporate and BFSI platforms with HSBC — secure connectivity, configuration, reconciliation, and production support, from UAT to go-live.",
     },
-    aggregate: true,
   },
 ];
 

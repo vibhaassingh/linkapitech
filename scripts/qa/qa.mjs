@@ -6,7 +6,9 @@ import { writeFileSync } from "node:fs";
 
 const BASE = process.argv[2] ?? "http://localhost:3411";
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking", "/industries", "/contact", "/privacy", "/terms"];
+const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking",
+  "/industries", "/contact", "/privacy", "/terms",
+  "/banks", "/banks/axis", "/banks/indusind", "/banks/hsbc"];
 const VIEWPORTS = [
   { w: 390, h: 844, name: "mobile", mobile: true },
   { w: 768, h: 1024, name: "tablet", mobile: false },
@@ -39,13 +41,38 @@ const AUDIT = `(() => {
     return { r: fg.r*a + bg.r*(1-a), g: fg.g*a + bg.g*(1-a), b: fg.b*a + bg.b*(1-a), a: 1 };
   };
 
-  // Effective background: walk ancestors until an opaque colour. Returns null
-  // when a gradient/image intervenes, since those can't be resolved from CSS.
+  // Pull every colour stop out of a background-image gradient. Computed style
+  // resolves var() for us, so the stops arrive as rgb()/rgba() literals.
+  // Bitmap images stay unmeasurable (returned as {image:true}).
+  const stopsOf = (bgImage) => {
+    if (/url[(]/.test(bgImage)) return null;
+    const found = bgImage.match(/rgba?[(][^)]+[)]/g) || [];
+    const stops = found.map(parse).filter(c => c && c.a > 0.02);
+    return stops.length ? stops : null;
+  };
+
+  // Effective background: walk ancestors until an opaque colour. When a gradient
+  // intervenes, return its colour stops so the caller can test the WORST one —
+  // skipping gradients entirely is how a 3.91:1 pairing survived an earlier
+  // "zero contrast failures" run.
   const bgOf = (el) => {
     let node = el, acc = [];
     while (node && node !== document.documentElement.parentNode) {
       const cs = getComputedStyle(node);
-      if (cs.backgroundImage && cs.backgroundImage !== 'none') return { gradient: true, node };
+      if (cs.backgroundImage && cs.backgroundImage !== 'none') {
+        const stops = stopsOf(cs.backgroundImage);
+        if (!stops) return { image: true, node };
+        // Composite each stop over whatever sits behind the gradient, so
+        // translucent stops (the glass tiers) resolve to real colours.
+        let behind = { r: 255, g: 255, b: 255, a: 1 };
+        let p = node.parentElement;
+        while (p) {
+          const pc = parse(getComputedStyle(p).backgroundColor);
+          if (pc && pc.a === 1) { behind = pc; break; }
+          p = p.parentElement;
+        }
+        return { stops: stops.map(c => (c.a < 1 ? over(c, behind) : c)) };
+      }
       const c = parse(cs.backgroundColor);
       if (c && c.a > 0) {
         acc.push(c);
@@ -91,13 +118,32 @@ const AUDIT = `(() => {
     const weight = parseInt(cs.fontWeight, 10) || 400;
     const large = size >= 24 || (size >= 18.66 && weight >= 700);
     const need = large ? 3 : 4.5;
-    if (bg.gradient) {
-      // measure against BOTH gradient-adjacent guesses is unreliable; flag it
+    if (bg.image) {
       out.contrast.push({
-        status: 'gradient', tag: el.tagName, size, weight,
+        status: 'image', tag: el.tagName, size, weight,
         txt: el.textContent.trim().slice(0,40),
         cls: (el.className || '').toString().slice(0,60),
       });
+      continue;
+    }
+    if (bg.stops) {
+      // Text must clear AA against EVERY stop it can sit over, so score the
+      // worst one. A gradient is not an excuse to skip the check.
+      let worst = null;
+      for (const stop of bg.stops) {
+        const fgc = fg.a < 1 ? over(fg, stop) : fg;
+        const r = ratio(fgc, stop);
+        if (!worst || r < worst.r) worst = { r, stop };
+      }
+      if (worst && worst.r < need) {
+        out.contrast.push({
+          status: 'fail', ratio: +worst.r.toFixed(2), need, size, weight,
+          tag: el.tagName, txt: el.textContent.trim().slice(0,40),
+          cls: (el.className || '').toString().slice(0,70),
+          fg: cs.color,
+          bg: 'gradient stop rgb(' + [worst.stop.r, worst.stop.g, worst.stop.b].map(Math.round).join(',') + ')',
+        });
+      }
       continue;
     }
     const fgc = fg.a < 1 ? over(fg, bg.color) : fg;
@@ -140,9 +186,13 @@ const AUDIT = `(() => {
     .filter(visible);
   for (const el of inter) {
     const r = el.getBoundingClientRect();
-    // WCAG 2.2 SC 2.5.8 minimum target 24x24 (inline links in text are exempt)
+    // WCAG 2.2 SC 2.5.8 minimum target 24x24. Exempt: links inline in prose,
+    // and visually-hidden affordances (a skip link is 1x1 until focused, when it
+    // becomes a full-size pill — measuring its resting box is meaningless).
     const inlineInText = el.tagName === 'A' && el.closest('p,li,figcaption');
-    if (!inlineInText && (r.width < 24 || r.height < 24)) {
+    const srOnly = /(^|\s)sr-only(\s|$)/.test((el.className || '').toString())
+      || (r.width <= 1 && r.height <= 1);
+    if (!inlineInText && !srOnly && (r.width < 24 || r.height < 24)) {
       out.targets.push({ tag: el.tagName, w: Math.round(r.width), h: Math.round(r.height),
         label: (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0,30),
         cls: (el.className||'').toString().slice(0,50) });
@@ -194,12 +244,26 @@ async function session({ w, h, mobile, reducedMotion }) {
   };
 }
 
-const report = { contrastFails: [], gradientText: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
+const report = { contrastFails: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
 
 for (const vp of VIEWPORTS) {
   const s = await session(vp);
   for (const p of PAGES) {
     await s.goto(p);
+    // Refuse to audit a page that did not load. A dead server or a 404 produces
+    // zero findings in every category, which reads exactly like success — this
+    // guard is why the run aborts instead of reporting a vacuous green.
+    const loaded = await s.evalJs(`(() => ({
+      url: location.href,
+      title: document.title,
+      main: !!document.querySelector('main'),
+      text: (document.body.innerText || '').trim().length,
+    }))()`);
+    if (!loaded || !loaded.main || loaded.text < 400 || /chrome-error|about:blank/.test(loaded.url)) {
+      console.error(`\nABORT: ${p} did not load properly — ${JSON.stringify(loaded)}`);
+      console.error("Start a production server first:  npm run build && PORT=3411 npm start");
+      process.exit(2);
+    }
     const a = await s.audit();
     report.pages++;
     for (const c of a.contrast) {
@@ -207,6 +271,7 @@ for (const vp of VIEWPORTS) {
         report.contrastFails.push({ vp: vp.name, page: p, ...c });
     }
     for (const g of a.gradientText) report.gradientText.add(`${g.tag}: ${g.txt}`);
+    for (const c of a.contrast) if (c.status === 'image') report.overImage.add(`${p} ${c.tag}: ${c.txt}`);
     if (a.overflow.overflowing)
       report.overflow.push({ vp: vp.name, page: p, ...a.overflow });
     const skips = a.headings.filter((h) => h.skip);
@@ -245,6 +310,9 @@ const tg = uniq(report.targets, (x) => x.page + x.cls + x.label);
 console.log(`\nSMALL TARGETS (<24px, non-inline): ${tg.length}`);
 for (const t of tg.slice(0, 15))
   console.log(`  ${t.page} <${t.tag}> ${t.w}x${t.h} "${t.label}" cls=${t.cls} [${t.vps.join(",")}]`);
+
+console.log(`\nText over a bitmap image (unmeasurable, review by eye): ${report.overImage.size}`);
+for (const x of [...report.overImage].slice(0, 8)) console.log("  " + x);
 
 console.log(`\nGradient-clipped text (unmeasurable, review by eye): ${report.gradientText.size}`);
 for (const g of [...report.gradientText].slice(0, 8)) console.log("  " + g);

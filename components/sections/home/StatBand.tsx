@@ -38,7 +38,7 @@ export function StatBand() {
             {LIVE_PILL.map((p) => (
               <span key={p.label} className="text-[14px]">
                 <strong className="font-semibold">{p.value}</strong>{" "}
-                <span className="text-ink-inv-2">{p.label}</span>
+                <span className="text-ink-on-violet-2">{p.label}</span>
               </span>
             ))}
           </p>

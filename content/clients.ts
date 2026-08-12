@@ -25,13 +25,32 @@ export interface ClientMark {
   scale?: number;
 }
 
+/**
+ * Three marks (HSBC, IndusInd, Axis) are now licensed vectors shared with the
+ * /banks pages; the other four remain Figma-extracted rasters. `ratio` is the
+ * SVG's own intrinsic ratio — its root width/height where it declares them,
+ * else the viewBox — because that, not the viewBox, is what the browser uses to
+ * fit the mark inside the marquee's 150×40 object-contain box.
+ *
+ * The vectors' bounding boxes differ from the raster crops (Axis carries ~10%
+ * vertical padding inside its viewBox; HSBC's is tight), so `scale` was re-tuned
+ * against the four fixed rasters: the anchor is wordmark cap-height (~11–15px
+ * across the row) with symbol height kept near RBL's.
+ */
 export const CLIENTS: ClientMark[] = [
-  { name: "HSBC", logo: "/logos/hsbc-color.webp", ratio: 232 / 65, scale: 0.95 },
+  // Wordmark-dominant lockup: at scale 1 its "HSBC" caps render ~26px, roughly
+  // double everyone else's. 0.70 puts the hexagon at ~28px, level with RBL's
+  // symbol, and the caps at ~18px.
+  { name: "HSBC", logo: "/assets/banks/hsbc.svg", ratio: 315.9 / 85, scale: 0.7 },
   { name: "HDFC Bank", logo: "/logos/hdfc-color.webp", ratio: 270 / 49, scale: 0.92 },
   { name: "Jio Financial Services", logo: "/logos/jio-color.webp", ratio: 207 / 92, scale: 1 },
   { name: "Shemaroo", logo: "/logos/shemaroo-color.webp", ratio: 212 / 108, scale: 1 },
-  { name: "IndusInd Bank", logo: "/logos/indusind-color.webp", ratio: 354 / 43, scale: 1 },
-  { name: "Axis Bank", logo: "/logos/axis-color.webp", ratio: 235 / 59, scale: 1 },
+  // 9.2:1 wordmark, so width-limited at 150px. 0.96 lifts it off the box edge
+  // and brings its caps (~15px) down toward Axis/RBL.
+  { name: "IndusInd Bank", logo: "/assets/banks/indusind.svg", ratio: 425 / 46, scale: 0.96 },
+  // 0.95 trims the tall "A" symbol to ~33px, between RBL's 29 and Jio's 40,
+  // and pulls the mark back from the 150px box edge.
+  { name: "Axis Bank", logo: "/assets/banks/axis.svg", ratio: 300 / 78, scale: 0.95 },
   { name: "RBL Bank", logo: "/logos/rbl-color.webp", ratio: 295 / 123, scale: 1 },
 ];
 

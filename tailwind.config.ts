@@ -52,6 +52,7 @@ export default {
           3: "var(--ink-3)",
           inv: "var(--ink-inv)",
           "inv-2": "var(--ink-inv-2)",
+          "on-violet-2": "var(--ink-on-violet-2)",
         },
         success: "var(--success)",
         line: {

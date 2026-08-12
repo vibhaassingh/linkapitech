@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/site";
+import { BANK_SLUGS } from "@/content/banks";
 
 /**
  * Static route map. /work, /work/[slug] and /clients are retired (they now
@@ -13,6 +14,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/connected-banking",
     "/services",
     "/industries",
+    "/banks",
+    ...BANK_SLUGS.map((slug) => `/banks/${slug}`),
     "/contact",
     "/terms",
     "/privacy",

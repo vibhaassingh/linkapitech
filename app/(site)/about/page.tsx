@@ -68,7 +68,7 @@ export default function AboutPage() {
           </article>
           <article className="grad-fill h-full rounded-xl p-8 shadow-float md:p-10">
             <h2 className="heading-3 text-ink-inv">{VISION.heading}</h2>
-            <p className="mt-4 max-w-[52ch] text-[15.5px] leading-relaxed text-ink-inv-2">
+            <p className="mt-4 max-w-[52ch] text-[15.5px] leading-relaxed text-ink-on-violet-2">
               {VISION.body}
             </p>
           </article>
@@ -173,7 +173,7 @@ export default function AboutPage() {
                   key={s.label}
                   stat={s}
                   numClassName="!text-ink-inv"
-                  labelClassName="!text-ink-inv-2"
+                  labelClassName="!text-ink-on-violet-2"
                 />
               ))}
             </div>
