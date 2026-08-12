@@ -1,23 +1,17 @@
-import { Schibsted_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Poppins, IBM_Plex_Mono } from "next/font/google";
 
-// Display — engineered grotesk voice for headlines and stat numerals.
-export const schibsted = Schibsted_Grotesk({
+// Single-family discipline (Figma Purple): Poppins everywhere.
+// 700 = display headlines, 600 = headings/buttons/stat numerals,
+// 500 = labels/nav, 400 = body. Four files total — the perf budget
+// allows exactly four font files on the home route.
+export const poppins = Poppins({
   subsets: ["latin"],
-  weight: "600", // single display weight — headings, stats, wordmarks
-  variable: "--font-display",
-  display: "swap",
-});
-
-// Body/UI workhorse. Tabular figures are enabled per-element via `tnum`
-// (stats, counters) so numerals never jitter during count-up.
-export const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
 
-// Infrastructure accent — eyebrows, stat labels, nav numerals. ≤0.8rem only.
+// Code terminals only (How We Work / SDK cards). Never for UI text.
 export const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: "400",

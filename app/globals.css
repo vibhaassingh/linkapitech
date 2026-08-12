@@ -3,61 +3,90 @@
 @tailwind utilities;
 
 /* ============================================================
-   Design tokens — "Institutional Light" (redesign 2026-07).
-   Near-white canvas, deep-navy accent, silver hairlines.
-   All color pairings AA-checked against their intended surfaces.
+   Design tokens — "Figma Purple" (redesign 2026-08, REDESIGN-V3.md).
+   Deep plum/orchid darks alternating with lavender-washed lights.
+   Sampled from the client Figma export; AA-checked pairings:
+   ink/ink-2 on canvas ✓, ink-inv on plum-700..950 ✓,
+   violet-text on white = large-text only.
    ============================================================ */
 :root {
-  /* Surfaces */
-  --canvas: #f7f8fa;
+  /* Plum scale (dark sections, brand) */
+  --plum-950: #1a0620;
+  --plum-900: #250d29;
+  --plum-800: #2d1235;
+  --plum-700: #42174c;
+  --plum-600: #62216f; /* primary brand — buttons, hubs, icon circles */
+
+  /* Violet (gradients, links, accent text) */
+  --violet-600: #7b2d8e;
+  --violet-500: #8e24aa;
+  --violet-text: #6f257f; /* two-tone headlines — large text on light only */
+
+  /* Lavender (tints, ghost numerals, rings) */
+  --lavender-400: #c9b8d8;
+  --lavender-300: #d9cce3;
+  --lavender-200: #e9dfeb;
+
+  /* Light surfaces */
+  --canvas: #faf8fc;
+  --canvas-2: #f6f1f7;
+  --card-tint: #f5eff9;
   --surface: #ffffff;
-  --surface-2: #eff2f6;
-  --inverse: #071733;
-  --inverse-2: #0a1f44;
 
-  /* Ink (on light) */
-  --ink: #0b1b33;
-  --ink-2: #3d4b63;
-  --ink-3: #5e6e86;
+  /* Ink on light */
+  --ink: #1d1d1f;
+  --ink-2: #4a4552;
+  --ink-3: #6e6779;
 
-  /* Ink (on inverse) */
-  --ink-inv: #f2f5f9;
-  --ink-inv-2: #a9b8ce;
+  /* Ink on plum */
+  --ink-inv: #f7f3f9;
+  --ink-inv-2: #cdbbd4;
 
-  /* Navy accent scale */
-  --navy-950: #071733;
-  --navy-900: #0a1f44;
-  --navy-700: #14356b;
-  --navy-600: #1e4a94;
-  --navy-200: #c7d3e6;
-  --navy-100: #dee6f2;
-  --navy-050: #ecf1f8;
-
-  /* Silver / steel (scene lines, wordmarks, decorative rules) */
-  --steel: #8fa1bc;
-  --steel-2: #c3cddc;
-
-  /* Violet — cursor-reactive ambient light only. Never used for text or
-     structure, so the institutional navy identity stays intact. */
-  --violet: #6d5ae6;
-  --violet-soft: rgba(109, 90, 230, 0.1);
-  --violet-glow: rgba(109, 90, 230, 0.16);
+  /* Semantic */
+  --success: #1fa971;
+  --terminal: #171b21;
+  --error: #b3261e;
 
   /* Hairlines */
-  --line: rgba(11, 27, 51, 0.12);
-  --line-soft: rgba(11, 27, 51, 0.06);
-  --line-inv: rgba(242, 245, 249, 0.14);
+  --line: rgba(29, 29, 31, 0.1);
+  --line-soft: rgba(29, 29, 31, 0.06);
+  --line-inv: rgba(247, 243, 249, 0.14);
 
-  /* Radii — institutional = tight */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
+  /* Gradients */
+  --grad-tile: linear-gradient(135deg, var(--violet-500), #4a148c);
+  --grad-section: linear-gradient(180deg, var(--plum-700), var(--plum-950));
+  --grad-hero: radial-gradient(
+      120% 90% at 78% 30%,
+      rgba(142, 36, 170, 0.35),
+      transparent 55%
+    ),
+    linear-gradient(175deg, var(--plum-900) 0%, var(--plum-800) 45%, var(--plum-950) 100%);
+  --grad-wash: radial-gradient(
+      90% 80% at 15% 20%,
+      rgba(142, 36, 170, 0.1),
+      transparent 60%
+    ),
+    radial-gradient(80% 90% at 92% 15%, rgba(142, 36, 170, 0.14), transparent 55%),
+    linear-gradient(180deg, var(--canvas-2), var(--canvas));
+
+  /* Liquid glass */
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-bg-strong: rgba(255, 255, 255, 0.11);
+  --glass-line: rgba(255, 255, 255, 0.16);
+  --glass-blur: 18px;
+
+  /* Radii — Figma Purple = generous */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-xl: 24px;
   --r-pill: 999px;
 
-  /* Elevation — hairline-first; shadow only for floating chrome */
-  --shadow-menu: 0 16px 48px -16px rgba(7, 23, 51, 0.18),
-    0 2px 8px rgba(7, 23, 51, 0.06);
-  --shadow-card: 0 1px 2px rgba(7, 23, 51, 0.05);
+  /* Elevation — plum-tinted, soft */
+  --shadow-menu: 0 16px 48px -16px rgba(37, 13, 41, 0.2),
+    0 2px 8px rgba(37, 13, 41, 0.06);
+  --shadow-card: 0 2px 6px rgba(37, 13, 41, 0.05);
+  --shadow-float: 0 24px 64px -24px rgba(37, 13, 41, 0.25);
 
   /* Motion */
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
@@ -66,6 +95,30 @@
   --dur-ui: 200ms;
   --dur-menu: 320ms;
   --stagger: 80ms;
+
+  /* Poppins carries both roles; --font-display stays a valid hook for
+     the type-scale classes and tailwind's font-display key. */
+  --font-display: var(--font-sans);
+
+  /* ---- TEMP compat aliases (Institutional Light key names) ----
+     Old components still reference navy/steel/inverse Tailwind keys
+     until Phases 2–4 replace them. Mapped into the plum palette so
+     interim builds render coherently. Remove in Phase 6. */
+  --surface-2: #f1eaf5;
+  --inverse: var(--plum-950);
+  --inverse-2: var(--plum-800);
+  --navy-950: var(--plum-950);
+  --navy-900: var(--plum-900);
+  --navy-700: var(--plum-700);
+  --navy-600: var(--plum-600);
+  --navy-200: var(--lavender-300);
+  --navy-100: #e9dff0;
+  --navy-050: var(--card-tint);
+  --steel: #a99bb5;
+  --steel-2: #d3c8dc;
+  --violet: var(--violet-500);
+  --violet-soft: rgba(142, 36, 170, 0.1);
+  --violet-glow: rgba(142, 36, 170, 0.16);
 }
 
 @layer base {
@@ -81,23 +134,23 @@
     color: var(--ink);
     font-family: var(--font-sans), system-ui, sans-serif;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.7;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background: var(--navy-200);
-    color: var(--navy-950);
+    background: var(--lavender-300);
+    color: var(--plum-950);
   }
 
   :focus-visible {
-    outline: 2px solid var(--navy-600);
+    outline: 2px solid var(--plum-600);
     outline-offset: 2px;
   }
-  /* On inverse surfaces the navy ring vanishes — swap to the inverse ink. */
+  /* On plum surfaces the plum ring vanishes — swap to inverse ink. */
   .bg-inverse :focus-visible,
-  .bg-inverse-2 :focus-visible {
+  .section-dark :focus-visible {
     outline-color: var(--ink-inv);
   }
 
@@ -111,64 +164,202 @@
 }
 
 /* ============================================================
-   Type scale — clamp-driven, display face for headings,
-   tabular numerals for every stat.
+   Type scale — Poppins, clamp-driven. Display = 700, headings = 600.
    ============================================================ */
 .display-1 {
-  font-family: var(--font-display), sans-serif;
-  font-size: clamp(2.75rem, 1.2rem + 5.2vw, 4.5rem);
-  line-height: 1.04;
-  letter-spacing: -0.025em;
-  font-weight: 600;
+  font-size: clamp(2.6rem, 1.2rem + 4.6vw, 4.2rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 700;
 }
 .display-2 {
-  font-family: var(--font-display), sans-serif;
-  font-size: clamp(2rem, 1rem + 3vw, 3rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-weight: 600;
+  font-size: clamp(2rem, 1.1rem + 2.8vw, 3rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  font-weight: 700;
 }
 .heading-3 {
-  font-family: var(--font-display), sans-serif;
-  font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.65rem);
-  line-height: 1.2;
+  font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.55rem);
+  line-height: 1.25;
   font-weight: 600;
 }
 .body-lg {
-  font-size: 1.125rem;
-  line-height: 1.65;
+  font-size: 1.0625rem;
+  line-height: 1.7;
 }
-.eyebrow {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.75rem;
-  font-weight: 400;
+/* Two-tone headline accent word(s) — large text only (AA-large ✓). */
+.accent-word {
+  color: var(--violet-text);
+}
+.section-dark .accent-word,
+.bg-inverse .accent-word {
+  color: var(--lavender-400);
+}
+
+/* Capsule eyebrow — pill outline, letterspaced caps (Figma pattern). */
+.eyebrow-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.44em 1.1em;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  font-size: 0.72rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.13em;
+  color: var(--violet-text);
+  background: var(--surface);
+}
+.section-dark .eyebrow-capsule,
+.bg-inverse .eyebrow-capsule {
+  border-color: var(--glass-line);
+  color: var(--ink-inv);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+}
+/* Legacy plain eyebrow (still used by inner pages until Phase 4). */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
   color: var(--ink-3);
 }
-/* Sized so the longest real figure ("₹20,000 Cr") fits one line in a
-   four-up band at 1240px. */
+
 .stat-num {
-  font-family: var(--font-display), sans-serif;
-  font-size: clamp(1.9rem, 2.6vw, 2.75rem);
+  font-size: clamp(1.9rem, 2.6vw, 2.6rem);
   line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-weight: 600;
+  letter-spacing: -0.015em;
+  font-weight: 700;
 }
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
+/* Ghost numerals — huge lavender gradient digits (Why LinkAPI, What We Do). */
+.ghost-num {
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, var(--lavender-400), rgba(201, 184, 216, 0.25));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.section-dark .ghost-num {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.12));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
 /* Section rhythm */
 .section-pad {
-  padding-top: clamp(88px, 11vh, 152px);
-  padding-bottom: clamp(88px, 11vh, 152px);
+  padding-top: clamp(80px, 10vh, 140px);
+  padding-bottom: clamp(80px, 10vh, 140px);
+}
+
+/* Dark plum section shell — gradient bg, inverted ink defaults. */
+.section-dark {
+  background: var(--grad-section);
+  color: var(--ink-inv);
+}
+.section-dark ::selection {
+  background: var(--plum-600);
+  color: var(--ink-inv);
+}
+
+/* Light lavender-washed hero shell (inner pages). */
+.section-wash {
+  background: var(--grad-wash);
 }
 
 /* ============================================================
-   Lenis smooth scroll (active only when <SmoothScrollProvider>
-   runs on the marketing route).
+   Liquid glass vocabulary
+   ============================================================ */
+.glass {
+  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-line);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+}
+.glass-strong {
+  background: var(--glass-bg-strong);
+}
+/* Inner top highlight — the "wet edge". */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.14),
+    transparent 24%
+  );
+}
+/* No-backdrop-filter fallback: denser fill so text stays readable. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: rgba(66, 23, 76, 0.72);
+  }
+}
+
+/* Specular sweep on hover — a 120° sheen that glides across. */
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+.sheen::before {
+  content: "";
+  position: absolute;
+  inset: -60% auto;
+  top: -60%;
+  bottom: -60%;
+  left: -75%;
+  width: 50%;
+  transform: rotate(18deg) translateX(0);
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.14) 45%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.14) 55%,
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.sheen:hover::before,
+.sheen:focus-visible::before {
+  opacity: 1;
+  animation: sheenSweep 900ms var(--ease-out-expo);
+}
+@keyframes sheenSweep {
+  from {
+    transform: rotate(18deg) translateX(-40%);
+  }
+  to {
+    transform: rotate(18deg) translateX(420%);
+  }
+}
+
+/* Gradient icon tile (violet → deep purple). */
+.grad-tile {
+  background: var(--grad-tile);
+  color: #fff;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+}
+
+/* ============================================================
+   Lenis smooth scroll (marketing route only).
    ============================================================ */
 html.lenis,
 html.lenis body {
@@ -209,6 +400,17 @@ html {
   transform: none;
   will-change: auto;
 }
+/* Zig-zag rows slide from their own side. */
+[data-reveal="left"] {
+  transform: translateX(-32px);
+}
+[data-reveal="right"] {
+  transform: translateX(32px);
+}
+[data-reveal="left"][data-inview],
+[data-reveal="right"][data-inview] {
+  transform: none;
+}
 
 /* Decorative hairline that draws in under section headings. */
 .rule-draw {
@@ -224,13 +426,7 @@ html {
 }
 
 /* ============================================================
-   Cursor-reactive violet light.
-
-   Two layers, both purely decorative and pointer:fine only:
-   1. `.cursor-glow` — one fixed ambient blob that trails the pointer
-      across every page, driven by --mx/--my written once per frame.
-   2. `.spotlight` — a per-card sheen at --cx/--cy, revealed on hover.
-   Both are disabled under reduced motion and on touch.
+   Cursor-reactive violet light (pointer:fine only).
    ============================================================ */
 .cursor-glow {
   position: fixed;
@@ -242,7 +438,7 @@ html {
   background: radial-gradient(
     620px circle at var(--mx, 50%) var(--my, 40%),
     var(--violet-glow),
-    rgba(109, 90, 230, 0.05) 38%,
+    rgba(142, 36, 170, 0.05) 38%,
     transparent 68%
   );
 }
@@ -305,20 +501,86 @@ html {
 }
 
 /* ============================================================
-   Mega menu sheet — animates on unhide (open); closes instantly.
+   Logo marquee — duplicate the row in DOM; this scrolls one copy.
    ============================================================ */
-.mega-sheet:not([hidden]) {
-  animation: megaIn var(--dur-menu) var(--ease-out-expo);
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-d, 36s) linear infinite;
 }
-@keyframes megaIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
+.marquee-mask:hover .marquee {
+  animation-play-state: paused;
+}
+@keyframes marquee {
   to {
-    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================================
+   Orbit (Product Ecosystem) — rings rotate, chips counter-rotate.
+   ============================================================ */
+.orbit-spin {
+  animation: orbitSpin var(--orbit-d, 90s) linear infinite;
+}
+.orbit-spin-reverse {
+  animation: orbitSpin var(--orbit-d, 90s) linear infinite reverse;
+}
+@keyframes orbitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Gentle float for hero glass chips. */
+.chip-float {
+  animation: chipFloat 7s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+@keyframes chipFloat {
+  0%,
+  100% {
     transform: translateY(0);
   }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ============================================================
+   Code terminal (How We Work / SDK cards).
+   ============================================================ */
+.terminal {
+  background: var(--terminal);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8125rem;
+  line-height: 1.9;
+  color: #c4cbd4;
+}
+.terminal .t-key {
+  color: #7fb4e8;
+}
+.terminal .t-str {
+  color: #7ed492;
+}
+.terminal .t-num {
+  color: #e8c57f;
+}
+.terminal .t-cmt {
+  color: #5e6a78;
+}
+/* Staggered line reveal once in view. */
+.terminal [data-tline] {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 400ms var(--ease-out-expo), transform 400ms var(--ease-out-expo);
+  transition-delay: calc(var(--tline, 0) * 90ms);
+}
+[data-inview] .terminal [data-tline],
+.terminal[data-inview] [data-tline] {
+  opacity: 1;
+  transform: none;
 }
 
 /* ============================================================
@@ -348,15 +610,14 @@ html {
 }
 
 /* ============================================================
-   Quiet pulse dot (SecurityBand rows, live-channel hints).
-   Steel ring on a navy core — 6s, deliberately slow.
+   Quiet pulse dot (live-channel hints).
    ============================================================ */
 .pulse-dot {
   position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--navy-600);
+  background: var(--plum-600);
   flex: none;
 }
 .pulse-dot::after {
@@ -364,33 +625,34 @@ html {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(30, 74, 148, 0.35);
+  box-shadow: 0 0 0 0 rgba(98, 33, 111, 0.35);
   animation: quietpulse 6s ease-out infinite;
 }
 @keyframes quietpulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(30, 74, 148, 0.35);
+    box-shadow: 0 0 0 0 rgba(98, 33, 111, 0.35);
   }
   30%,
   100% {
-    box-shadow: 0 0 0 10px rgba(30, 74, 148, 0);
+    box-shadow: 0 0 0 10px rgba(98, 33, 111, 0);
   }
 }
-/* On the navy band the dot swaps to steel so it stays visible. */
-.bg-inverse .pulse-dot {
-  background: var(--steel);
+.bg-inverse .pulse-dot,
+.section-dark .pulse-dot {
+  background: var(--lavender-400);
 }
-.bg-inverse .pulse-dot::after {
-  box-shadow: 0 0 0 0 rgba(143, 161, 188, 0.3);
+.bg-inverse .pulse-dot::after,
+.section-dark .pulse-dot::after {
+  box-shadow: 0 0 0 0 rgba(201, 184, 216, 0.3);
   animation-name: quietpulse-inv;
 }
 @keyframes quietpulse-inv {
   0% {
-    box-shadow: 0 0 0 0 rgba(143, 161, 188, 0.3);
+    box-shadow: 0 0 0 0 rgba(201, 184, 216, 0.3);
   }
   30%,
   100% {
-    box-shadow: 0 0 0 10px rgba(143, 161, 188, 0);
+    box-shadow: 0 0 0 10px rgba(201, 184, 216, 0);
   }
 }
 
@@ -423,85 +685,6 @@ html {
 }
 
 /* ============================================================
-   Process rail — a quiet "signal" travels the wire, and completed
-   nodes carry a soft violet glow. Both purely decorative; the global
-   reduced-motion rule below neutralises the animation.
-   ============================================================ */
-.proc-signal {
-  position: absolute;
-  left: 50%;
-  top: -22%;
-  height: 22%;
-  width: 3px;
-  transform: translateX(-50%);
-  border-radius: 2px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--navy-600) 45%,
-    var(--violet) 62%,
-    transparent
-  );
-  opacity: 0;
-  animation: procSignal 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-@keyframes procSignal {
-  0% {
-    top: -22%;
-    opacity: 0;
-  }
-  14%,
-  86% {
-    opacity: 0.6;
-  }
-  100% {
-    top: 100%;
-    opacity: 0;
-  }
-}
-.proc-node-done {
-  box-shadow: 0 0 0 5px var(--violet-soft);
-}
-
-/* ============================================================
-   Stat band — a faint "ledger flow": fine steel connectors with
-   travelling dashes and softly pulsing violet nodes. Decorative;
-   sits behind the numbers and is neutralised under reduced motion.
-   ============================================================ */
-.stat-flow {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-}
-.stat-flow-line {
-  fill: none;
-  stroke: var(--steel);
-  stroke-width: 1;
-  stroke-dasharray: 3 12;
-  opacity: 0.2;
-  animation: statFlow var(--flow-d, 7s) linear infinite;
-}
-@keyframes statFlow {
-  to {
-    stroke-dashoffset: -150;
-  }
-}
-.stat-flow-node {
-  fill: var(--violet);
-  animation: statNode 4.5s ease-in-out infinite;
-}
-@keyframes statNode {
-  0%,
-  100% {
-    opacity: 0.14;
-  }
-  50% {
-    opacity: 0.45;
-  }
-}
-
-/* ============================================================
    Global reduced-motion discipline — every custom motion
    primitive snaps to its end state; scene canvas never loads.
    ============================================================ */
@@ -527,7 +710,17 @@ html {
   }
   .cursor-glow,
   .ambient-violet::before,
-  .spotlight::before {
+  .spotlight::before,
+  .sheen::before {
     display: none !important;
+  }
+  .marquee {
+    animation: none !important;
+    transform: none !important;
+  }
+  .terminal [data-tline] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }

@@ -1,8 +1,8 @@
 import type { Config } from "tailwindcss";
 
-// "Institutional Light" theme extension — tokens live as CSS vars in globals.css.
-// Breakpoints are Tailwind defaults plus xs; `lg` is back to 1024 (the old 1100
-// existed only for the retired split-shell layout).
+// "Figma Purple" theme extension — tokens live as CSS vars in globals.css.
+// navy/steel/inverse keys are TEMP compat aliases (mapped to plum values in
+// :root) so not-yet-rebuilt components keep rendering; remove in Phase 6.
 export default {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -21,14 +21,31 @@ export default {
     },
     extend: {
       colors: {
-        canvas: "var(--canvas)",
+        canvas: {
+          DEFAULT: "var(--canvas)",
+          2: "var(--canvas-2)",
+        },
         surface: {
           DEFAULT: "var(--surface)",
           2: "var(--surface-2)",
         },
-        inverse: {
-          DEFAULT: "var(--inverse)",
-          2: "var(--inverse-2)",
+        tint: "var(--card-tint)",
+        plum: {
+          600: "var(--plum-600)",
+          700: "var(--plum-700)",
+          800: "var(--plum-800)",
+          900: "var(--plum-900)",
+          950: "var(--plum-950)",
+        },
+        violet: {
+          500: "var(--violet-500)",
+          600: "var(--violet-600)",
+          text: "var(--violet-text)",
+        },
+        lavender: {
+          200: "var(--lavender-200)",
+          300: "var(--lavender-300)",
+          400: "var(--lavender-400)",
         },
         ink: {
           DEFAULT: "var(--ink)",
@@ -36,6 +53,17 @@ export default {
           3: "var(--ink-3)",
           inv: "var(--ink-inv)",
           "inv-2": "var(--ink-inv-2)",
+        },
+        success: "var(--success)",
+        line: {
+          DEFAULT: "var(--line)",
+          soft: "var(--line-soft)",
+          inv: "var(--line-inv)",
+        },
+        // ---- TEMP compat aliases (Institutional Light keys) ----
+        inverse: {
+          DEFAULT: "var(--inverse)",
+          2: "var(--inverse-2)",
         },
         navy: {
           "050": "var(--navy-050)",
@@ -50,21 +78,18 @@ export default {
           DEFAULT: "var(--steel)",
           2: "var(--steel-2)",
         },
-        line: {
-          DEFAULT: "var(--line)",
-          soft: "var(--line-soft)",
-          inv: "var(--line-inv)",
-        },
       },
       borderRadius: {
         sm: "var(--r-sm)",
         md: "var(--r-md)",
         lg: "var(--r-lg)",
+        xl: "var(--r-xl)",
         pill: "var(--r-pill)",
       },
       boxShadow: {
         menu: "var(--shadow-menu)",
         card: "var(--shadow-card)",
+        float: "var(--shadow-float)",
       },
       fontFamily: {
         display: ["var(--font-display)", "sans-serif"],
@@ -80,9 +105,9 @@ export default {
         entrance: "900ms",
       },
       letterSpacing: {
-        tighter: "-0.025em",
-        tight: "-0.02em",
-        eyebrow: "0.14em",
+        tighter: "-0.02em",
+        tight: "-0.015em",
+        eyebrow: "0.13em",
       },
       keyframes: {
         spin: {

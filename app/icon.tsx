@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-/** Favicon — white monogram on institutional navy. */
+/** Favicon — white monogram on brand plum. */
 export default function Icon() {
   return new ImageResponse(
     (
@@ -14,8 +14,8 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0A1F44",
-          color: "#F2F5F9",
+          background: "#62216F",
+          color: "#F7F3F9",
           fontSize: 20,
           fontWeight: 700,
           fontFamily: "sans-serif",

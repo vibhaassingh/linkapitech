@@ -27,8 +27,8 @@ export function HeroPoster({ className }: { className?: string }) {
       fill="none"
     >
       {/* faint backdrop orbits */}
-      <circle cx={HUB.x} cy={HUB.y} r="215" stroke="#0B1B33" strokeOpacity="0.05" />
-      <circle cx={HUB.x} cy={HUB.y} r="150" stroke="#0B1B33" strokeOpacity="0.04" />
+      <circle cx={HUB.x} cy={HUB.y} r="215" stroke="#2D1235" strokeOpacity="0.05" />
+      <circle cx={HUB.x} cy={HUB.y} r="150" stroke="#2D1235" strokeOpacity="0.04" />
 
       {/* connection arcs */}
       {NODES.map((n, i) => {
@@ -38,7 +38,7 @@ export function HeroPoster({ className }: { className?: string }) {
           <path
             key={i}
             d={`M ${n.x} ${n.y} Q ${mx} ${my} ${HUB.x} ${HUB.y}`}
-            stroke="#0A1F44"
+            stroke="#42174C"
             strokeOpacity="0.22"
             strokeWidth="1.2"
           />
@@ -46,10 +46,10 @@ export function HeroPoster({ className }: { className?: string }) {
       })}
 
       {/* data pulses frozen mid-arc */}
-      <circle cx="278" cy="200" r="3" fill="#8FA1BC" />
-      <circle cx="527" cy="180" r="3" fill="#1E4A94" fillOpacity="0.8" />
-      <circle cx="540" cy="360" r="3" fill="#8FA1BC" />
-      <circle cx="282" cy="380" r="2.5" fill="#8FA1BC" fillOpacity="0.8" />
+      <circle cx="278" cy="200" r="3" fill="#C9B8D8" />
+      <circle cx="527" cy="180" r="3" fill="#8E24AA" fillOpacity="0.8" />
+      <circle cx="540" cy="360" r="3" fill="#C9B8D8" />
+      <circle cx="282" cy="380" r="2.5" fill="#C9B8D8" fillOpacity="0.8" />
 
       {/* bank nodes + labels */}
       {NODES.map((n, i) => {
@@ -59,8 +59,8 @@ export function HeroPoster({ className }: { className?: string }) {
         const tx = n.x < HUB.x ? n.x - 16 : n.x + 16;
         return (
           <g key={client.name}>
-            <circle cx={n.x} cy={n.y} r="10" stroke="#8FA1BC" strokeOpacity="0.9" />
-            <circle cx={n.x} cy={n.y} r="3.5" fill="#8FA1BC" />
+            <circle cx={n.x} cy={n.y} r="10" stroke="#C9B8D8" strokeOpacity="0.9" />
+            <circle cx={n.x} cy={n.y} r="3.5" fill="#C9B8D8" />
             <text
               x={tx}
               y={n.y + 4}
@@ -68,7 +68,7 @@ export function HeroPoster({ className }: { className?: string }) {
               fontFamily="var(--font-mono), monospace"
               fontSize="12"
               letterSpacing="0.1em"
-              fill="#5E6E86"
+              fill="#A78FB8"
             >
               {client.name.toUpperCase()}
             </text>
@@ -77,8 +77,8 @@ export function HeroPoster({ className }: { className?: string }) {
       })}
 
       {/* hub */}
-      <circle cx={HUB.x} cy={HUB.y} r="14" stroke="#0A1F44" strokeWidth="1.4" />
-      <circle cx={HUB.x} cy={HUB.y} r="5" fill="#0A1F44" />
+      <circle cx={HUB.x} cy={HUB.y} r="14" stroke="#42174C" strokeWidth="1.4" />
+      <circle cx={HUB.x} cy={HUB.y} r="5" fill="#42174C" />
       <text
         x={HUB.x}
         y={HUB.y + 38}
@@ -86,7 +86,7 @@ export function HeroPoster({ className }: { className?: string }) {
         fontFamily="var(--font-mono), monospace"
         fontSize="12"
         letterSpacing="0.14em"
-        fill="#0B1B33"
+        fill="#2D1235"
       >
         LINKAPI
       </text>

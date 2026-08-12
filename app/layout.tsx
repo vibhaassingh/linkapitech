@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { schibsted, inter, plexMono } from "./fonts";
+import { poppins, plexMono } from "./fonts";
 import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
 import { Analytics } from "@/lib/analytics";
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A1F44",
+  themeColor: "#250D29",
   colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${inter.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${poppins.variable} ${plexMono.variable}`}>
       <body className="font-sans antialiased">
         <CursorGlow />
         {children}

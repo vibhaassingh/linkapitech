@@ -9,7 +9,7 @@ const wrap = "flex flex-col gap-2 mb-5";
 const labelCls = "text-[13px] font-medium text-ink-2";
 const control =
   "w-full rounded-sm border border-line bg-surface px-4 py-3 text-[15px] text-ink outline-none transition-colors duration-ui placeholder:text-ink-3/60 hover:border-steel focus:border-navy-600 focus:ring-1 focus:ring-navy-600";
-const errCls = "text-[12.5px] text-[#b3261e]";
+const errCls = "text-[12.5px] text-[color:var(--error)]";
 
 interface Base {
   label: string;
