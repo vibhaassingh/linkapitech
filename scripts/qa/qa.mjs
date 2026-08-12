@@ -19,7 +19,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- the in-page audit ---------------------------------------------------
 const AUDIT = `(() => {
-  const out = { contrast: [], overflow: null, focus: [], headings: [], targets: [], gradientText: [] };
+  const out = { contrast: [], overflow: null, focus: [], headings: [], targets: [], gradientText: [], textSpill: [] };
 
   const parse = (c) => {
     const m = c.match(/rgba?\\(([^)]+)\\)/);
@@ -158,6 +158,55 @@ const AUDIT = `(() => {
     }
   }
 
+  // ---- ::placeholder contrast (invisible to the text-node walk above) ----
+  for (const el of [...document.querySelectorAll('input, textarea')].filter(visible)) {
+    const ph = el.getAttribute('placeholder');
+    if (!ph) continue;
+    const pcs = getComputedStyle(el, '::placeholder');
+    const fg = parse(pcs.color);
+    if (!fg || fg.a === 0) continue;
+    const bg = bgOf(el);
+    const base = bg.stops ? bg.stops : bg.color ? [bg.color] : null;
+    if (!base) continue;
+    const size = parseFloat(getComputedStyle(el).fontSize);
+    const need = size >= 24 ? 3 : 4.5;
+    let worst = null;
+    for (const stop of base) {
+      const fgc = fg.a < 1 ? over(fg, stop) : fg;
+      const r = ratio(fgc, stop);
+      if (!worst || r < worst.r) worst = { r, stop };
+    }
+    if (worst && worst.r < need) {
+      out.contrast.push({
+        status: 'fail', ratio: +worst.r.toFixed(2), need, size, weight: 400,
+        tag: 'PLACEHOLDER', txt: ph.slice(0, 40),
+        cls: (el.className || '').toString().slice(0, 60),
+        fg: pcs.color,
+        bg: 'rgb(' + [worst.stop.r, worst.stop.g, worst.stop.b].map(Math.round).join(',') + ')',
+      });
+    }
+  }
+
+  // ---- text overflowing its own container (document stays the same width) ----
+  for (const el of [...document.querySelectorAll('body *')].filter(visible)) {
+    if (el.children.length) continue;
+    const t = (el.textContent || '').trim();
+    if (t.length < 2) continue;
+    const cs = getComputedStyle(el);
+    if (cs.overflow !== 'visible' || cs.whiteSpace === 'nowrap') continue;
+    const p = el.parentElement;
+    if (!p) continue;
+    const pr = p.getBoundingClientRect(), r = el.getBoundingClientRect();
+    const pad = parseFloat(getComputedStyle(p).paddingRight) || 0;
+    if (r.right > pr.right - pad + 2 || r.left < pr.left - 2) {
+      out.textSpill.push({
+        tag: el.tagName, txt: t.slice(0, 34),
+        by: Math.round(Math.max(r.right - (pr.right - pad), pr.left - r.left)),
+        cls: (el.className || '').toString().slice(0, 56),
+      });
+    }
+  }
+
   // ---- horizontal overflow ----
   const de = document.documentElement;
   out.overflow = { scrollW: de.scrollWidth, clientW: de.clientWidth,
@@ -244,7 +293,7 @@ async function session({ w, h, mobile, reducedMotion }) {
   };
 }
 
-const report = { contrastFails: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
+const report = { contrastFails: [], textSpill: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
 
 for (const vp of VIEWPORTS) {
   const s = await session(vp);
@@ -279,6 +328,7 @@ for (const vp of VIEWPORTS) {
     if (skips.length || h1 !== 1)
       report.headings.push({ vp: vp.name, page: p, h1count: h1, skips });
     for (const t of a.targets) report.targets.push({ vp: vp.name, page: p, ...t });
+    for (const t of a.textSpill || []) report.textSpill.push({ vp: vp.name, page: p, ...t });
   }
   s.close();
   console.log(`swept ${vp.name} (${vp.w}px)`);
@@ -298,6 +348,11 @@ const cf = uniq(report.contrastFails, (x) => x.page + x.cls + x.txt);
 console.log(`\nCONTRAST failures (unique): ${cf.length}`);
 for (const c of cf.slice(0, 25))
   console.log(`  ${c.ratio}:1 (need ${c.need}) ${c.page} <${c.tag} ${c.size}px/${c.weight}> "${c.txt}"\n     fg=${c.fg} bg=${c.bg} cls=${c.cls}`);
+
+const ts = uniq(report.textSpill, (x) => x.page + x.cls + x.txt);
+console.log(`\nTEXT SPILLING ITS CONTAINER: ${ts.length}`);
+for (const t of ts.slice(0, 12))
+  console.log(`  ${t.page} <${t.tag}> +${t.by}px "${t.txt}" cls=${t.cls} [${t.vps.join(",")}]`);
 
 console.log(`\nHORIZONTAL OVERFLOW: ${report.overflow.length}`);
 for (const o of report.overflow)
