@@ -1,70 +1,112 @@
 import { pageMetadata } from "@/lib/metadata";
 import { PageHero } from "@/components/sections/PageHero";
-import { Reveal } from "@/components/motion/Reveal";
 import { ContactForm } from "@/components/sections/ContactForm";
-import { CONTACT } from "@/lib/site";
+import { Reveal } from "@/components/motion/Reveal";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { CONTACT, SITE } from "@/lib/site";
 
 export const metadata = pageMetadata({
-  title: "Contact LinkAPI Tech | Ghaziabad, Uttar Pradesh",
+  title: "Contact",
   description:
-    "Get in touch with LinkAPI Tech Pvt. Ltd. Call +91-9318373476 (plugin support) or +91-9891121770 (management), email partnership@linkapitech.com, or visit us at SRA 82 A, Shipra Indirapuram, Ghaziabad, Uttar Pradesh.",
+    "Talk to LinkAPI Tech about bringing banking inside your business. Partnerships, plugin support and management contacts, plus our registered office in Ghaziabad, Uttar Pradesh.",
   path: "/contact",
 });
+
+/** One icon per channel, in CONTACT.channels order. */
+const CHANNEL_ICONS: IconName[] = ["share", "plug", "building"];
 
 export default function ContactPage() {
   return (
     <>
       <PageHero
-        eyebrow="Contact"
-        title="Let's connect your systems."
-        lead="Tell us about your integration — we'll set up a short discovery call."
+        tone="dark"
+        align="center"
+        title="Let's build the next generation of banking together."
+        lead="Ready to bring banking inside your business? Tell us what you're looking to solve and our team will get back to you with tailored solutions and next steps."
       />
 
-      <section className="mx-auto grid w-full max-w-[1240px] gap-14 px-6 py-16 md:px-10 lg:grid-cols-[1fr_1.2fr]">
-        <Reveal>
-          <ul className="flex flex-col gap-7">
-            {CONTACT.channels.map((ch) => (
-              <li key={ch.phone}>
-                <p className="eyebrow">{ch.label}</p>
-                <p className="mt-2 text-[15px]">
-                  <a href={ch.phoneHref} className="tnum font-medium text-ink hover:text-navy-700">
-                    {ch.phone}
-                  </a>
-                </p>
-                <p className="text-[15px]">
-                  <a
-                    href={`mailto:${ch.email}`}
-                    className="break-all text-ink-2 transition-colors duration-ui hover:text-ink"
-                  >
-                    {ch.email}
-                  </a>
-                </p>
+      <section className="section-pad bg-surface">
+        <div className="mx-auto grid w-full max-w-[1240px] items-start gap-12 px-6 md:px-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+          {/* Contact details */}
+          <Reveal>
+            <span className="eyebrow-capsule">Contact details</span>
+
+            <ul className="mt-8 flex flex-col gap-4">
+              <li className="flex items-start gap-4 rounded-xl border border-line-soft bg-canvas p-5">
+                <span className="grad-fill grid h-10 w-10 shrink-0 place-items-center rounded-md text-ink-inv">
+                  <Icon name="bank" size={18} />
+                </span>
+                <div>
+                  <p className="text-[11.5px] font-semibold uppercase tracking-eyebrow text-violet-text">
+                    Registered address
+                  </p>
+                  <p className="mt-1 text-[15px] leading-relaxed text-ink">
+                    {CONTACT.address.line1}
+                    <br />
+                    {CONTACT.address.line2}
+                  </p>
+                </div>
               </li>
-            ))}
-            <li>
-              <p className="eyebrow">Office</p>
-              <p className="mt-2 max-w-[32ch] text-[15px] leading-relaxed text-ink-2">
-                {CONTACT.address.full}
+
+              {CONTACT.channels.map((ch, i) => (
+                <li
+                  key={ch.phone}
+                  className="flex items-start gap-4 rounded-xl border border-line-soft bg-canvas p-5"
+                >
+                  <span className="grad-fill grid h-10 w-10 shrink-0 place-items-center rounded-md text-ink-inv">
+                    <Icon name={CHANNEL_ICONS[i] ?? "user"} size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-semibold uppercase tracking-eyebrow text-violet-text">
+                      {ch.label}
+                    </p>
+                    <a
+                      href={`mailto:${ch.email}`}
+                      className="mt-1 block text-[15px] text-ink transition-colors duration-ui hover:text-plum-700 [overflow-wrap:anywhere]"
+                    >
+                      {ch.email}
+                    </a>
+                    <a
+                      href={ch.phoneHref}
+                      className="block text-[15px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
+                    >
+                      {ch.phone}
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-4 rounded-xl border border-line-soft bg-canvas p-5">
+              <p className="flex items-center gap-2.5 text-[15px] text-ink">
+                <Icon name="globe" size={17} className="text-violet-text" />
+                www.{SITE.domain}
               </p>
-            </li>
-            <li>
               <a
                 href={CONTACT.whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[14.5px] font-medium text-navy-600 transition-colors duration-ui hover:text-navy-900"
+                className="mt-3 inline-flex items-center gap-2.5 text-[15px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
               >
-                Message us on WhatsApp <span aria-hidden="true">→</span>
+                <Icon name="chat" size={17} className="text-violet-text" />
+                Message us on WhatsApp
               </a>
-            </li>
-          </ul>
-        </Reveal>
+            </div>
+          </Reveal>
 
-        <Reveal delay={140}>
-          <div className="rounded-lg border border-line bg-surface p-7 shadow-card md:p-10">
+          <Reveal delay={140}>
             <ContactForm />
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Map — lazy iframe, no third-party JS, keyboard-reachable link fallback. */}
+      <section aria-label="Our location" className="border-t border-line-soft">
+        <iframe
+          title="Map of LinkAPI Tech's registered office in Ghaziabad, Uttar Pradesh"
+          src="https://www.google.com/maps?q=Shipra+Indirapuram,+Ghaziabad,+Uttar+Pradesh&output=embed"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="block h-[380px] w-full border-0 md:h-[440px]"
+        />
       </section>
     </>
   );

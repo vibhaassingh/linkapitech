@@ -8,6 +8,12 @@ interface RevealProps {
   className?: string;
   /** transition delay in ms (use RevealGroup for index-based staggers) */
   delay?: number;
+  /**
+   * Entry direction. "up" (default) rises; "left"/"right" slide in from that
+   * side — used by the zig-zag timelines so each card enters from its own side.
+   * Handled by the [data-reveal="…"] rules in globals.css.
+   */
+  dir?: "up" | "left" | "right";
   as?: "div" | "section" | "li" | "span" | "p" | "header" | "article" | "footer";
   style?: CSSProperties;
   id?: string;
@@ -22,6 +28,7 @@ export function Reveal({
   children,
   className,
   delay = 0,
+  dir = "up",
   as: Tag = "div",
   style,
   id,
@@ -32,7 +39,7 @@ export function Reveal({
     <Comp
       id={id}
       ref={ref}
-      data-reveal=""
+      data-reveal={dir === "up" ? "" : dir}
       data-inview={inView || undefined}
       className={className}
       style={

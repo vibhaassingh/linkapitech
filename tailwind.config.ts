@@ -59,6 +59,8 @@ export default {
           DEFAULT: "var(--line)",
           soft: "var(--line-soft)",
           inv: "var(--line-inv)",
+          plum: "var(--line-plum)",
+          violet: "var(--line-violet)",
         },
         // ---- TEMP compat aliases (Institutional Light keys) ----
         inverse: {

@@ -47,10 +47,20 @@
   --terminal: #171b21;
   --error: #b3261e;
 
-  /* Hairlines */
+  /* Hairlines.
+     NOTE: every colour token here is a plain hex/rgba string, so Tailwind's
+     opacity modifier CANNOT be used on them — `bg-plum-600/40` compiles to
+     nothing at all. When a translucent brand colour is needed, add an explicit
+     token below and use it directly. */
   --line: rgba(29, 29, 31, 0.1);
   --line-soft: rgba(29, 29, 31, 0.06);
   --line-inv: rgba(247, 243, 249, 0.14);
+  /** Rails and dividers that should read as brand-tinted, not neutral. */
+  --line-plum: rgba(98, 33, 111, 0.35);
+  /** Emphasised card outline (the Figma's violet-bordered feature cards). */
+  --line-violet: rgba(142, 36, 170, 0.55);
+  /** Form placeholder text. */
+  --ink-placeholder: #8d8797;
 
   /* Gradients */
   --grad-tile: linear-gradient(135deg, var(--violet-500), #4a148c);

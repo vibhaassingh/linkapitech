@@ -1,44 +1,76 @@
 /**
- * About page content — LinkAPI's real copy, verbatim from CONTENT-MAPPING §2.3.
- * The four real pillars (Mission / Vision / Commitment / Performance) are kept.
+ * About page content — client Figma (2026-08, page 30). Where the Figma showed
+ * placeholder duplicates ("Transparency" twice, an unrelated insurance line),
+ * distinct copy is written in LinkAPI's own voice instead of reproducing it.
  */
+import type { IconName } from "@/components/ui/Icon";
 
-export const ABOUT_INTRO = {
-  eyebrow: "About us",
-  headingPlain: "Empowering businesses with seamless, innovative technology for a",
-  headingAccent: "dynamic digital future.",
+export const ABOUT_HERO = {
+  title: "Simplifying banking for a connected, digital-first economy.",
+  lead: "At LinkAPI Tech Pvt. Ltd., we build the technology that lets banking work the way modern businesses do — embedded, automated and always in sync. Since 2022 we've specialised in Bank–ERP connectivity, helping institutions and enterprises move money, reconcile transactions and serve customers without leaving the systems they already trust.",
+};
+
+export const OUR_STORY = {
+  heading: "Our Story",
   paragraphs: [
-    "At LinkAPI Tech Pvt. Ltd., we are dedicated to delivering innovative technology solutions that empower businesses to thrive in today's fast-paced digital world. As a trusted service provider, we offer corporate clients and businesses intuitive platforms and tools that streamline both external and internal operations.",
-    "We specialize in driving operational and process transformation through cutting-edge technology services. Whether it's enhancing revenue generation or optimizing costs, we partner with our clients to develop solutions that fit their unique needs.",
-    "Our approach is simple — supporting our clients to succeed today while preparing them for the opportunities of tomorrow.",
+    "Banking software and business software have lived in separate worlds for too long. Finance teams juggle bank portals, spreadsheets and ERPs, re-keying the same data and chasing reconciliations that should never have been manual.",
+    "LinkAPI Tech was founded to erase that divide. By combining rapid product development, customisable MSME banking solutions and easy-to-integrate APIs, we turn complex back-office operations into simple, scalable digital experiences — delivered as one plugin that lives inside your accounting system.",
   ],
 };
 
-export interface Pillar {
-  key: string;
+export const MISSION = {
+  heading: "Our Mission",
+  body: "To empower businesses and institutions to evolve and excel amid rapidly changing markets. As technology reshapes industries and regulations tighten, we help organisations adopt new business models, integrate digital channels, deepen customer loyalty and cut operational costs — through banking infrastructure that simply works.",
+};
+
+export const VISION = {
+  heading: "Our Vision",
+  body: "To lead the shift to connected banking — a future where every business runs its financial operations natively inside its own systems, unlocking new growth, efficiency and customer satisfaction.",
+};
+
+export interface Commitment {
   title: string;
   body: string;
+  icon: IconName;
 }
 
-export const PILLARS: Pillar[] = [
-  {
-    key: "mission",
-    title: "Our Mission",
-    body: "Our mission is to empower businesses and institutions to evolve and excel in the face of rapidly changing market conditions. By providing cutting-edge technology solutions, we enable our clients to embrace new business models, integrate digital channels, optimize customer loyalty strategies, and significantly reduce operational costs.",
-  },
-  {
-    key: "vision",
-    title: "Our Vision",
-    body: "Our vision is to be at the forefront of technological innovation, enabling businesses to transform their processes and harness the potential of digital transformation — a future where companies seamlessly integrate technology into daily operations, unlocking new avenues for growth, efficiency, and customer satisfaction.",
-  },
-  {
-    key: "commitment",
-    title: "Our Commitment",
-    body: "Our philosophy is built on three core pillars: delivering the highest quality products, ensuring total client satisfaction, and providing timely solutions. We strive to offer the best quality-to-price ratio in the industry, with a client-first approach focused on measurable impact and long-term success.",
-  },
-  {
-    key: "performance",
-    title: "Our Performance",
-    body: "The numbers behind the work — a processing footprint and customer base built across BFSI, Fintech, Agritech, and Edutech domains.",
-  },
-];
+/**
+ * The Figma's subhead was cut off mid-sentence ("uncompromising product
+ * quality…"); all three principles are stated in full here.
+ */
+export const COMMITMENT = {
+  heading: "Our Commitment",
+  lead: "Three principles guide everything we ship: uncompromising product quality, total client satisfaction, and delivery on the date we promised.",
+  items: [
+    {
+      title: "Product Quality",
+      body: "Built for regulated environments, reviewed at every sprint, and hardened before it ever touches production traffic.",
+      icon: "shield" as IconName,
+    },
+    {
+      title: "Client Satisfaction",
+      body: "A client-first engagement model with transparent updates, direct access to the team, and support that continues past go-live.",
+      icon: "heart" as IconName,
+    },
+    {
+      title: "Timely Delivery",
+      body: "Sprint-based execution with realistic scoping, so commitments are met without quietly trading away quality.",
+      icon: "calendar" as IconName,
+    },
+  ] as Commitment[],
+};
+
+export const APART = {
+  heading: "What Sets Us Apart?",
+  items: [
+    {
+      body: "A skilled, handpicked team of engineers, product managers and BFSI strategists",
+      icon: "user" as IconName,
+    },
+    { body: "Efficient delivery with clear, consistent communication", icon: "bolt" as IconName },
+    { body: "An agile, sprint-based build process with client review at every stage", icon: "heart" as IconName },
+    { body: "Adaptable engagement — fixed-bid or dedicated team, on your terms", icon: "share" as IconName },
+  ],
+};
+
+export const TRACK_RECORD = { heading: "Our Track Record" };

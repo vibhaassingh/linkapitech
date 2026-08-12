@@ -35,10 +35,11 @@ export const PROCESS: ProcessPhase[] = [
   },
 ];
 
-/** One rendered line of the sample request. */
+/** One rendered line of a sample request. Shared by every <Terminal>. */
 export type TermLine =
   | { t: "cmt"; text: string }
   | { t: "raw"; text: string }
+  | { t: "ok"; text: string }
   | { t: "open"; key: string }
   | {
       t: "kv";

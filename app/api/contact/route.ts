@@ -4,10 +4,11 @@ import { z } from "zod";
 export const runtime = "nodejs";
 
 const schema = z.object({
-  name: z.string().min(2),
+  firstName: z.string().min(2),
+  lastName: z.string().min(1),
   email: z.string().email(),
-  company: z.string().optional(),
-  budget: z.string().optional(),
+  phone: z.string().optional(),
+  company: z.string().min(2),
   message: z.string().min(10),
   website: z.string().optional(), // honeypot — checked after parse, not by schema
 });
@@ -36,14 +37,14 @@ export async function POST(req: Request) {
   }
 
   const { RESEND_API_KEY, CONTACT_TO_EMAIL } = process.env;
-  const { name, email, company, budget, message } = parsed.data;
+  const { firstName, lastName, email, phone, company, message } = parsed.data;
+  const name = `${firstName} ${lastName}`;
 
   if (!RESEND_API_KEY) {
     console.info("[contact] submission received (no email provider configured):", {
       name,
       email,
       company,
-      budget,
     });
     return NextResponse.json({ ok: true });
   }
@@ -59,8 +60,8 @@ export async function POST(req: Request) {
         from: "LinkAPI Website <onboarding@resend.dev>",
         to: [CONTACT_TO_EMAIL ?? "partnership@linkapitech.com"],
         reply_to: email,
-        subject: `New enquiry from ${name}`,
-        text: `Name: ${name}\nEmail: ${email}\nCompany: ${company ?? "-"}\nBudget: ${budget ?? "-"}\n\n${message}`,
+        subject: `Demo request from ${name} (${company})`,
+        text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "-"}\nCompany: ${company}\n\n${message}`,
       }),
     });
     if (!res.ok) throw new Error("delivery failed");

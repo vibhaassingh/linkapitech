@@ -1,92 +1,70 @@
+import Image from "next/image";
 import { pageMetadata } from "@/lib/metadata";
 import { PageHero } from "@/components/sections/PageHero";
+import { CtaBand } from "@/components/sections/CtaBand";
+import { OfferTimeline } from "@/components/sections/services/OfferTimeline";
+import { CoreServices } from "@/components/sections/services/CoreServices";
+import { PartnerProgram } from "@/components/sections/services/PartnerProgram";
 import { Reveal } from "@/components/motion/Reveal";
-import { Chip } from "@/components/ui/Chip";
-import { Button } from "@/components/ui/Button";
-import { SERVICES, serviceHeading } from "@/content/services";
+import { SERVICES_HERO, ENGAGEMENT } from "@/content/services";
 
 export const metadata = pageMetadata({
-  title: "Services | API Integration, Reconciliation & IT Consulting — LinkAPI Tech",
+  title: "Services",
   description:
-    "Explore LinkAPI Tech's core services: bank API integration, transaction reconciliation, WAN/LAN setup, data integration, custom security solutions, and BFSI sales augmentation — from UAT to production support.",
+    "API integration and bank connectivity, ERP reconciliation plugins, transaction reconciliation, adapters and parsers, custom security, and WAN/LAN support for banks, NBFCs and enterprises.",
   path: "/services",
 });
-
-// Real "What we offer?" checklist — LinkAPI's most specific content (CONTENT-MAPPING §2.4).
-const WHAT_WE_OFFER = [
-  "Comprehensive API integration support from UAT to production",
-  "Establishing secure connectivity (Basic Telnet Services)",
-  "Bank configuration setup and client-end empanelment",
-  "Technical coordination between bank and client's technology partner",
-  "Assisting with bank prerequisites (e.g., Static IP, SSL Certificates)",
-  "Ongoing post-live support on demand",
-];
 
 export default function ServicesPage() {
   return (
     <>
       <PageHero
-        eyebrow="Solutions"
-        title="The full integration surface, in one partner."
-        lead="Seven services covering how banks and businesses connect, operate, and grow — each scoped to real BFSI constraints and compliance needs."
+        align="left"
+        title={
+          <>
+            {SERVICES_HERO.titlePlain1}{" "}
+            <span className="accent-word">{SERVICES_HERO.titleAccent}</span>{" "}
+            {SERVICES_HERO.titlePlain2}
+          </>
+        }
+        lead={SERVICES_HERO.lead}
+        visual={
+          <Image
+            src="/illus/hub-isometric.webp"
+            alt="LinkAPI Tech at the centre of an integration network — banks and financial institutions, ERP systems, core banking, payment gateways, cloud infrastructure, third-party applications, and security and compliance."
+            width={1374}
+            height={1046}
+            priority
+            className="h-auto w-full max-w-[620px]"
+          />
+        }
       />
 
-      {/* 7 stacked service sections — anchor targets for the mega menu */}
-      <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
-        {SERVICES.map((s, i) => (
-          <section
-            key={s.id}
-            id={s.id}
-            className="grid gap-6 border-b border-line-soft py-14 [scroll-margin-top:96px] md:grid-cols-[220px_1fr_1fr] md:gap-10"
-          >
-            <Reveal>
-              <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
-                {s.num} {i === 0 && "· Flagship"}
-              </p>
-            </Reveal>
-            <Reveal delay={60}>
-              <h2 className="heading-3 text-ink">{serviceHeading(s)}</h2>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {s.tags.map((t) => (
-                  <Chip key={t}>{t}</Chip>
-                ))}
-              </div>
-            </Reveal>
-            <Reveal delay={120}>
-              <p className="leading-relaxed text-ink-2">{s.description}</p>
-            </Reveal>
-          </section>
-        ))}
-      </div>
+      <OfferTimeline />
+      <CoreServices />
+      <PartnerProgram />
 
-      {/* What we offer — the real API-integration delivery scope */}
-      <section className="mx-auto grid w-full max-w-[1240px] gap-12 px-6 py-20 md:px-10 lg:grid-cols-2 lg:gap-16">
-        <Reveal>
-          <h2 className="display-2 text-ink">What we offer.</h2>
-          <p className="mt-5 max-w-[46ch] leading-relaxed text-ink-2">
-            Our flagship API-integration engagement, end to end — the specific scope behind every
-            bank connection we deliver.
-          </p>
-          <div className="mt-8">
-            <Button href="/contact">Consult our Growth Experts</Button>
-          </div>
-        </Reveal>
-        <Reveal delay={120}>
-          <ul className="flex flex-col">
-            {WHAT_WE_OFFER.map((item, i) => (
-              <li
-                key={item}
-                className="flex items-start gap-4 border-b border-line-soft py-4 text-[15px] text-ink-2"
-              >
-                <span className="mt-0.5 font-mono text-xs text-ink-3">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+      {/* Engagement & pricing */}
+      <section id="pricing" className="section-pad bg-canvas">
+        <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
+          <Reveal>
+            <h2 className="display-2 text-ink">{ENGAGEMENT.heading}</h2>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="mt-10 rounded-xl border border-line-soft bg-surface p-8 shadow-card md:p-10">
+              <p className="max-w-[88ch] text-[17px] leading-[1.75] text-ink-2">
+                {ENGAGEMENT.lead}{" "}
+                <strong className="font-semibold text-violet-text">{ENGAGEMENT.boldA}</strong>{" "}
+                {ENGAGEMENT.midA}{" "}
+                <strong className="font-semibold text-violet-text">{ENGAGEMENT.boldB}</strong>{" "}
+                {ENGAGEMENT.tail}
+              </p>
+            </div>
+          </Reveal>
+        </div>
       </section>
+
+      <CtaBand ctaLabel="Request a Quote" />
     </>
   );
 }

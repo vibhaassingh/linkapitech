@@ -6,9 +6,10 @@ import {
 import { cn } from "@/lib/cn";
 
 const wrap = "flex flex-col gap-2 mb-5";
-const labelCls = "text-[13px] font-medium text-ink-2";
+const labelCls =
+  "text-[11.5px] font-semibold uppercase tracking-eyebrow text-ink-3";
 const control =
-  "w-full rounded-sm border border-line bg-surface px-4 py-3 text-[15px] text-ink outline-none transition-colors duration-ui placeholder:text-ink-3/60 hover:border-steel focus:border-navy-600 focus:ring-1 focus:ring-navy-600";
+  "w-full rounded-md border border-line bg-canvas px-4 py-3 text-[15px] text-ink outline-none transition-colors duration-ui placeholder:text-[color:var(--ink-placeholder)] hover:border-lavender-400 focus:border-plum-600 focus:bg-surface focus:ring-1 focus:ring-plum-600";
 const errCls = "text-[12.5px] text-[color:var(--error)]";
 
 interface Base {
@@ -16,61 +17,60 @@ interface Base {
   error?: string;
 }
 
-/** Boxed institutional text field. Forwards ref for react-hook-form. */
+/** Boxed text field. Forwards ref for react-hook-form. */
 export const TextField = forwardRef<
   HTMLInputElement,
   Base & InputHTMLAttributes<HTMLInputElement>
->(function TextField({ label, error, id, name, className, ...rest }, ref) {
-  const fieldId = id ?? name;
-  const errorId = error ? `${fieldId}-error` : undefined;
+>(function TextField({ label, error, className, id, ...rest }, ref) {
+  const inputId = id ?? rest.name;
+  const errId = error ? `${inputId}-error` : undefined;
   return (
     <div className={wrap}>
-      <label htmlFor={fieldId} className={labelCls}>
+      <label htmlFor={inputId} className={labelCls}>
         {label}
       </label>
       <input
-        id={fieldId}
-        name={name}
+        id={inputId}
         ref={ref}
-        className={cn(control, className)}
         aria-invalid={error ? true : undefined}
-        aria-describedby={errorId}
+        aria-describedby={errId}
+        className={cn(control, error && "border-[color:var(--error)]", className)}
         {...rest}
       />
       {error && (
-        <span id={errorId} role="alert" className={errCls}>
+        <p id={errId} className={errCls}>
           {error}
-        </span>
+        </p>
       )}
     </div>
   );
 });
 
-/** Boxed textarea variant. */
+/** Multi-line variant. */
 export const TextArea = forwardRef<
   HTMLTextAreaElement,
   Base & TextareaHTMLAttributes<HTMLTextAreaElement>
->(function TextArea({ label, error, id, name, className, ...rest }, ref) {
-  const fieldId = id ?? name;
-  const errorId = error ? `${fieldId}-error` : undefined;
+>(function TextArea({ label, error, className, id, rows = 4, ...rest }, ref) {
+  const inputId = id ?? rest.name;
+  const errId = error ? `${inputId}-error` : undefined;
   return (
     <div className={wrap}>
-      <label htmlFor={fieldId} className={labelCls}>
+      <label htmlFor={inputId} className={labelCls}>
         {label}
       </label>
       <textarea
-        id={fieldId}
-        name={name}
+        id={inputId}
         ref={ref}
-        className={cn(control, "min-h-[120px] resize-y", className)}
+        rows={rows}
         aria-invalid={error ? true : undefined}
-        aria-describedby={errorId}
+        aria-describedby={errId}
+        className={cn(control, "resize-y", error && "border-[color:var(--error)]", className)}
         {...rest}
       />
       {error && (
-        <span id={errorId} role="alert" className={errCls}>
+        <p id={errId} className={errCls}>
           {error}
-        </span>
+        </p>
       )}
     </div>
   );
