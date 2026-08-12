@@ -42,6 +42,18 @@
   --ink-inv: #f7f3f9;
   --ink-inv-2: #cdbbd4;
   /**
+   * Tertiary text on plum — captions, meta, disabled labels. Measured against
+   * the WHOLE plum range, worst case first:
+   *   --plum-700 #42174c → 4.84:1  ✓ AA body
+   *   --plum-800 #2d1235 → 5.64:1
+   *   --plum-900 #250d29 → 6.04:1
+   *   --plum-950 #1a0620 → 6.47:1
+   * Not for use on --grad-tile / .grad-fill (2.36:1 on the #8e24aa stop) —
+   * that surface has --ink-on-violet-2. The three-step hierarchy on plum-700
+   * reads 13.1 : 8.0 : 4.8, so each level is unmistakably a level down.
+   */
+  --ink-inv-3: #a38eb0;
+  /**
    * Secondary text on the VIOLET gradient (.grad-fill), which is far lighter
    * than the plum darks. --ink-inv-2 is calibrated for #42174c..#1a0620 and
    * only reaches 3.91:1 against the gradient's #8e24aa stop; this reaches
@@ -78,10 +90,42 @@
   /* Gradients */
   --grad-tile: linear-gradient(135deg, var(--violet-500), #4a148c);
   --grad-section: linear-gradient(180deg, var(--plum-700), var(--plum-950));
+  /**
+   * Per-band plum variants so the four dark sections are not identical clones:
+   * the light source walks across the page (right → left → centre) and the
+   * plum end-stops differ, so consecutive bands read as different rooms.
+   * `--grad-section` stays band A's value verbatim — .section-dark's default.
+   * Apply with the .band-a/.band-b/.band-c helpers below (they set
+   * background-image only, so .section-dark's colour/ink defaults survive).
+   */
+  --grad-section-a: linear-gradient(180deg, var(--plum-700), var(--plum-950));
+  --grad-section-b: radial-gradient(
+      100% 70% at 88% 8%,
+      rgba(142, 36, 170, 0.22),
+      transparent 58%
+    ),
+    linear-gradient(184deg, var(--plum-800) 0%, var(--plum-900) 52%, var(--plum-950) 100%);
+  --grad-section-c: radial-gradient(
+      90% 65% at 6% 92%,
+      rgba(142, 36, 170, 0.2),
+      transparent 60%
+    ),
+    linear-gradient(176deg, var(--plum-950) 0%, var(--plum-800) 58%, var(--plum-900) 100%);
+  /**
+   * Hero: two violet blooms, not one — the original upper-right key light plus
+   * a dimmer lower-left fill. A single bloom left the bottom-left corner of a
+   * tall hero visibly flat; the fill is 0.18 alpha (half the key) so it reads
+   * as bounce, not as a second sun.
+   */
   --grad-hero: radial-gradient(
       120% 90% at 78% 30%,
       rgba(142, 36, 170, 0.35),
       transparent 55%
+    ),
+    radial-gradient(
+      95% 80% at 8% 96%,
+      rgba(142, 36, 170, 0.18),
+      transparent 58%
     ),
     linear-gradient(175deg, var(--plum-900) 0%, var(--plum-800) 45%, var(--plum-950) 100%);
   --grad-wash: radial-gradient(
@@ -92,11 +136,31 @@
     radial-gradient(80% 90% at 92% 15%, rgba(142, 36, 170, 0.14), transparent 55%),
     linear-gradient(180deg, var(--canvas-2), var(--canvas));
 
-  /* Liquid glass */
+  /* Liquid glass — tier 2 is the historic `.glass`, kept as the default names */
   --glass-bg: rgba(255, 255, 255, 0.07);
   --glass-bg-strong: rgba(255, 255, 255, 0.11);
   --glass-line: rgba(255, 255, 255, 0.16);
   --glass-blur: 18px;
+  /**
+   * Three glass tiers. Depth is carried by BOTH blur and fill so the tiers stay
+   * distinguishable on a busy gradient (fill alone reads as noise, blur alone
+   * disappears against flat plum):
+   *   1 — chips, tags, inline pills (sits almost flat on the band)
+   *   2 — the default card  (identical values to legacy `.glass`)
+   *   3 — sheets, menus, modals, hero glass (legacy `.glass-strong`)
+   * Border alpha steps with the fill so the edge never out-shouts the surface.
+   */
+  --glass-1-bg: rgba(255, 255, 255, 0.05);
+  --glass-1-line: rgba(255, 255, 255, 0.1);
+  --glass-1-blur: 8px;
+  --glass-2-bg: rgba(255, 255, 255, 0.07);
+  --glass-2-line: rgba(255, 255, 255, 0.16);
+  --glass-2-blur: 18px;
+  --glass-3-bg: rgba(255, 255, 255, 0.11);
+  --glass-3-line: rgba(255, 255, 255, 0.22);
+  --glass-3-blur: 28px;
+  /** The "wet edge" as a background layer, so tiers need no pseudo-element. */
+  --glass-edge: linear-gradient(170deg, rgba(255, 255, 255, 0.13), transparent 24%);
 
   /* Radii — Figma Purple = generous */
   --r-sm: 8px;
@@ -105,11 +169,19 @@
   --r-xl: 24px;
   --r-pill: 999px;
 
-  /* Elevation — plum-tinted, soft */
+  /**
+   * Elevation — plum-tinted, and TWO-LAYER: a tight contact shadow (the "key",
+   * 1–3px, higher alpha) that anchors the element to the surface, plus a wide
+   * low-alpha ambient shadow that gives it room. A single blurred layer reads
+   * as a smudge; the contact layer is what makes a card look placed rather than
+   * pasted. Shadows never affect layout, so none of this can move a pixel.
+   */
   --shadow-menu: 0 16px 48px -16px rgba(37, 13, 41, 0.2),
     0 2px 8px rgba(37, 13, 41, 0.06);
-  --shadow-card: 0 2px 6px rgba(37, 13, 41, 0.05);
-  --shadow-float: 0 24px 64px -24px rgba(37, 13, 41, 0.25);
+  --shadow-card: 0 1px 2px rgba(37, 13, 41, 0.06),
+    0 10px 28px -14px rgba(37, 13, 41, 0.12);
+  --shadow-float: 0 2px 4px rgba(37, 13, 41, 0.07),
+    0 28px 68px -26px rgba(37, 13, 41, 0.28);
 
   /* Motion */
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
@@ -118,6 +190,74 @@
   --dur-ui: 200ms;
   --dur-menu: 320ms;
   --stagger: 80ms;
+
+  /* ------------------------------------------------------------------
+     Spring easings — GENERATED by lib/springs.ts, do not hand-edit.
+     Regenerate: see the header of that file (it is a dev utility and is
+     never imported by the app, so it costs zero client bytes).
+
+     A cubic-bezier physically cannot overshoot (its output is clamped to
+     0..1), so a "spring" written as a bezier is just an ease-out. These are
+     sampled unit-step responses of a mass-spring-damper, emitted as
+     `linear()`, whose stop list may exceed 1 — so the overshoot is real.
+     Each comment states the damping ratio and the MEASURED peak.
+
+     Usage is always duration + easing from the same tier:
+       transition: transform var(--dur-spring-snappy) var(--spring-snappy);
+     ------------------------------------------------------------------ */
+  /* k=420 c=30 m=1 · ζ=0.732 · peak 1.0342 @ 225ms — presses, toggles */
+  --spring-snappy: linear(0, .0417, .1423, .2725, .4113, .5448, .6647, .7666, .8492, .9132, .9605, .9935, 1.0149, 1.0273, 1.0331, 1.0342, 1.0322, 1.0285, 1.0239, 1.0191, 1.0146, 1.0107, 1.0073, 1);
+  --dur-spring-snappy: 350ms;
+  /* k=260 c=26 m=1 · ζ=0.806 · peak 1.0138 @ 329ms — sheets, cards, nav thumb */
+  --spring-smooth: linear(0, .0519, .1712, .3171, .4642, .598, .7117, .8032, .8735, .9252, .9614, .9856, 1.0005, 1.0089, 1.0128, 1.0138, 1.0131, 1.0114, 1.0094, 1.0073, 1.0055, 1.0039, 1.0027, 1.0017, 1.001, 1);
+  --dur-spring-smooth: 550ms;
+  /* k=170 c=22 m=1 · ζ=0.844 · peak 1.0072 @ 449ms — reveals, large surfaces.
+     (Damping is 22, not the 170/26 react-spring default: at ζ=0.997 that
+     preset never exceeds 1.0 — measured peak 0.9997 — so it is not a spring.) */
+  --spring-gentle: linear(0, .0932, .282, .4811, .6522, .7831, .8753, .9355, .9721, .9925, 1.0026, 1.0065, 1.0071, 1.0062, 1.0048, 1.0034, 1.0023, 1.0014, 1.0008, 1.0004, 1.0002, 1);
+  --dur-spring-gentle: 800ms;
+
+  /* ------------------------------------------------------------------
+     Scroll-driven variables, written from JS onto elements (never read
+     back). Declared here so `var()` and `calc()` are always valid even
+     before the first frame, and under reduced motion where nothing writes
+     them at all.
+       --sp              0→1 progress of a section through the viewport,
+                         written by useSectionProgress() onto that section.
+                         INHERITED: children read their nearest section's.
+       --scroll-velocity −1..1 lerped scroll velocity, written onto <html>
+                         by the velocity bus (Lenis on /, native elsewhere).
+     ------------------------------------------------------------------ */
+  --sp: 0;
+  --scroll-velocity: 0;
+
+  /* ------------------------------------------------------------------
+     Explicit translucent fills. REQUIRED because Tailwind's opacity
+     modifier does not work on var() colours (see the hairline note above):
+     `bg-plum-600/40` compiles to nothing at all. Mirrored into
+     tailwind.config.ts, so `bg-veil-2`, `bg-plum-a20` etc. all work.
+     ------------------------------------------------------------------ */
+  --plum-a08: rgba(98, 33, 111, 0.08);
+  --plum-a20: rgba(98, 33, 111, 0.2);
+  --violet-a24: rgba(142, 36, 170, 0.24);
+  /** White veils for plum surfaces (fills, hovers, dividers). */
+  --veil-1: rgba(255, 255, 255, 0.06);
+  --veil-2: rgba(255, 255, 255, 0.12);
+  --veil-3: rgba(255, 255, 255, 0.2);
+
+  /* Scrollbars. Only `scrollbar-color` is set at the surfaces below —
+     `scrollbar-width` is left alone so `.no-scrollbar` keeps winning. */
+  --scrollbar-thumb: rgba(201, 184, 216, 0.35);
+  --scrollbar-track: rgba(26, 6, 32, 0.35);
+
+  /**
+   * Film grain — 2% monochrome fractal-noise tile, ~0.5KB of data URI, laid on
+   * every .section-dark by the ::after below. Kept as a token so nothing else
+   * has to re-encode it. It is a BACKGROUND texture: the layer sits at
+   * z-index:-1 under the section's content, so it can never alter text
+   * contrast, and it is absolutely positioned, so it cannot shift layout.
+   */
+  --grain: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.85'%20numOctaves='3'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='140'%20height='140'%20filter='url(%23g)'/%3E%3C/svg%3E");
 
   /* Poppins carries both roles; --font-display stays a valid hook for
      the type-scale classes and tailwind's font-display key. */
@@ -168,6 +308,10 @@
   h4 {
     font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
     font-weight: 600;
+    /* Even the rag on headings — no one-word last line. Resolved at first
+       layout, so it cannot cause CLS; Chrome caps it at 6 lines and falls
+       back to normal wrapping beyond that, which is fine for a headline. */
+    text-wrap: balance;
   }
 }
 
@@ -191,9 +335,27 @@
   line-height: 1.25;
   font-weight: 600;
 }
-.body-lg {
+.body-lg,
+.lead {
   font-size: 1.0625rem;
   line-height: 1.7;
+  /* Kill orphans in lead paragraphs. `pretty` (unlike `balance`) has no line
+     cap and only adjusts the last few lines, so it is safe on body copy. */
+  text-wrap: pretty;
+}
+/* `.lead` is the hook for a lead paragraph that is NOT already .body-lg —
+   same measure-aware wrapping, so section agents have one name to reach for. */
+
+/* Optical tracking step. -0.02em is right at 2.6rem but goes slack once the
+   display renders large, so it tightens to -0.025em from 3.5rem up.
+   .display-1's clamp (1.2rem + 4.6vw) crosses 3.5rem/56px at a 800px
+   viewport, so the step is expressed as that width. It applies from first
+   paint at any given width — a media step can never cause CLS.
+   .display-2 tops out at 3rem, so it never reaches the step. */
+@media (min-width: 800px) {
+  .display-1 {
+    letter-spacing: -0.025em;
+  }
 }
 /* Two-tone headline accent word(s) — large text only (AA-large ✓). */
 .accent-word {
@@ -245,6 +407,66 @@
   font-feature-settings: "tnum";
 }
 
+/* ---- Odometer (components/ui/StatNumber.tsx) ------------------------------
+   The whole numeral is one inline-flex row of equal-height boxes — prefix,
+   digit columns, separators, suffix — so every character shares one baseline
+   by construction rather than by luck. Each digit column is a 1em window over
+   a ten-digit stack whose LAST entry is the target digit, so:
+     rest / SSR / no-JS / reduced motion  = translateY(-9em) = correct number;
+     the roll                             = animate FROM translateY(0).
+   Nothing here is layout-affecting and nothing changes size after the roll, so
+   the odometer contributes exactly 0 to CLS. */
+.odo {
+  display: inline-flex;
+  align-items: flex-start;
+}
+.odo-fix,
+.odo-col {
+  height: 1em;
+  line-height: 1em;
+}
+/* `pre` because a suffix legitimately starts with a space (" Cr+"), and a flex
+   item's leading whitespace would otherwise be collapsed away. */
+.odo-fix {
+  white-space: pre;
+}
+.odo-col {
+  overflow: hidden;
+  /* `clip` + a small margin where supported: the negative display tracking can
+     bring a glyph's ink within a fraction of a px of the box edge, and the
+     nearest neighbouring digit in the stack is 0.2em away, so 0.08em of slack
+     un-clips the ink without ever revealing the digit above or below. */
+  overflow: clip;
+  overflow-clip-margin: 0.08em;
+  /* Tabular ONLY here. The stack holds all ten digits, so a proportional "1"
+     would change the column's width mid-roll; commas and affixes stay
+     proportional in .odo-fix, which is what prevents the tabular-comma gap
+     ("5 , 000+") without any post-animation swap. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.odo-stack {
+  display: block;
+  transform: translateY(-9em);
+}
+.odo-stack > span {
+  display: block;
+  height: 1em;
+}
+/* Only a `from` keyframe: the implicit `to` is the element's own resting
+   transform, so a column can never land on the wrong digit. --spring-smooth
+   gives the landing its slight overshoot — the mechanical odometer "clack". */
+@keyframes odoRoll {
+  from {
+    transform: translateY(0);
+  }
+}
+.odo[data-roll] .odo-stack {
+  animation: odoRoll var(--dur-spring-smooth) var(--spring-smooth) both;
+  /* Right-to-left: --odo-i is 0 on the rightmost digit (StatNumber). */
+  animation-delay: calc(var(--odo-i, 0) * 40ms);
+}
+
 /* Ghost numerals — huge lavender gradient digits (Why LinkAPI, What We Do). */
 .ghost-num {
   font-weight: 700;
@@ -267,14 +489,58 @@
   padding-bottom: clamp(80px, 10vh, 140px);
 }
 
-/* Dark plum section shell — gradient bg, inverted ink defaults. */
+/* Dark plum section shell — gradient bg, inverted ink defaults, film grain.
+   `position: relative` + `isolation: isolate` exist for the grain layer: the
+   pseudo-element needs this box as its containing block, and the isolation both
+   lets it sit at z-index:-1 (above the band's background, below its content, so
+   it can never alter text contrast) and stops its overlay blend from reaching
+   page content above or below the band. Both are already true of every current
+   call site. Consequences to know:
+   - do NOT put `absolute`/`sticky` positioning utilities on a .section-dark
+     element (this rule is emitted after Tailwind's utilities and would win);
+   - the grain is on ::AFTER, deliberately: `.ambient-violet` — the other
+     section-level ambience class — owns ::before, and the two are meant to
+     compose on a dark band. The trade is that .section-dark must not be
+     combined with a ::after class (`.glass`/`.glass-3`'s wet edge,
+     `.pulse-dot`) on the SAME element; nest a wrapper for that.
+   Scrollbars inside the band go plum-tinted; `scrollbar-color` inherits, so a
+   nested overflow container is covered, and `scrollbar-width` is left alone so
+   `.no-scrollbar` (defined later) still wins where it is applied. */
 .section-dark {
+  position: relative;
+  isolation: isolate;
   background: var(--grad-section);
   color: var(--ink-inv);
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+.section-dark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: var(--grain);
+  background-size: 140px 140px;
+  mix-blend-mode: overlay;
+  opacity: 0.025;
 }
 .section-dark ::selection {
   background: var(--plum-600);
   color: var(--ink-inv);
+}
+/* Per-band plum variants — background-image only, so .section-dark's ink
+   colour, grain and selection styling all stay in force. Four distinct bands:
+   .section-dark alone (A), plus .band-b / .band-c; .band-a is spelled out so a
+   call site can be explicit about being the first band. */
+.band-a {
+  background-image: var(--grad-section-a);
+}
+.band-b {
+  background-image: var(--grad-section-b);
+}
+.band-c {
+  background-image: var(--grad-section-c);
 }
 
 /* Light lavender-washed hero shell (inner pages). */
@@ -292,8 +558,42 @@
   backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
 }
+/* ---- Glass tiers ----------------------------------------------------------
+   .glass-1 / -2 / -3 are the named depth steps; `.glass` and `.glass-strong`
+   remain working aliases of tiers 2 and 3 so ~30 files of existing markup keep
+   rendering. Two deliberate differences from `.glass`:
+   - the tiers do NOT set `position`, so a tier class is safe on an element that
+     is `absolute` (the PartnerProgram chips) — same reasoning as `.grad-tile`;
+   - consequently the wet edge is a background LAYER (--glass-edge), not
+     `::after`, which also leaves ::after free for `.sheen`/other decorations.
+   Longhand border properties (not the `border` shorthand) so a call site can
+   still override just the colour.
+   `.glass-strong` gains the tier-3 border and blur it always implied but never
+   had — standalone `.glass-strong` elements previously got a fill only. */
+.glass-1,
+.glass-2,
+.glass-3,
 .glass-strong {
-  background: var(--glass-bg-strong);
+  background-color: var(--glass-2-bg);
+  background-image: var(--glass-edge);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--glass-2-line);
+  backdrop-filter: blur(var(--glass-2-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-2-blur)) saturate(1.4);
+}
+.glass-1 {
+  background-color: var(--glass-1-bg);
+  border-color: var(--glass-1-line);
+  backdrop-filter: blur(var(--glass-1-blur)) saturate(1.25);
+  -webkit-backdrop-filter: blur(var(--glass-1-blur)) saturate(1.25);
+}
+.glass-3,
+.glass-strong {
+  background-color: var(--glass-3-bg);
+  border-color: var(--glass-3-line);
+  backdrop-filter: blur(var(--glass-3-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-3-blur)) saturate(1.5);
 }
 /* Inner top highlight — the "wet edge". */
 .glass::after {
@@ -312,6 +612,12 @@
 @supports not (backdrop-filter: blur(1px)) {
   .glass {
     background: rgba(66, 23, 76, 0.72);
+  }
+  .glass-1,
+  .glass-2,
+  .glass-3,
+  .glass-strong {
+    background-color: rgba(66, 23, 76, 0.72);
   }
 }
 
@@ -429,6 +735,171 @@ html {
   [data-reveal="left"][data-inview],
   [data-reveal="right"][data-inview] {
     transform: none;
+  }
+}
+
+/* ============================================================
+   Scroll-scrubbed motion — ENHANCEMENT ONLY.
+
+   The one-shot [data-reveal] system above stays the base layer: it is what
+   actually guarantees content appears. Everything in this block is wrapped in
+   @supports (animation-timeline: view()) and adds continuous, scroll-linked
+   nuance on top. No JS, no scroll listeners — the compositor drives these off
+   the same scrollTop that Lenis animates, so they follow smooth scroll for
+   free (asserted by scripts/qa/motion.mjs check 1).
+
+   RULES FOR CALL SITES
+   - Every class here animates transform / opacity / filter / border-radius
+     only. None of those affect layout, so none can cause CLS.
+   - `animation-range` uses view() progress: `cover` = leading edge enters the
+     scrollport → trailing edge leaves it; `entry` / `exit` are the sub-ranges.
+   - Under reduced motion the block at the very bottom of this file disables
+     all of them by name AND drops any stray scroll timeline to `auto`.
+   - .hero-recede sets `filter`, which makes the element a containing block for
+     `position: fixed` descendants. Do not put a fixed child inside it.
+   ============================================================ */
+@supports (animation-timeline: view()) {
+  /* Dark-band "sheet presentation": the band rises the last 28px and un-rounds
+     as it seats itself, over the first 22% of its transit. Ends flat, which is
+     also its resting state, so nothing is left mid-pose at the bottom of the
+     page. Scale is DOWN-only (0.985 → 1) so the band can never overhang the
+     viewport and widen the document. */
+  .sheet-enter {
+    animation: sheetEnter linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 22%;
+  }
+  @keyframes sheetEnter {
+    from {
+      transform: translateY(28px) scale(0.985);
+      border-radius: 28px;
+    }
+    to {
+      transform: none;
+      border-radius: 0;
+    }
+  }
+
+  /* The hero sinks back as the next section climbs over it — the other half of
+     the sheet metaphor. Driven by the exit range only, so nothing happens while
+     the hero is the page. */
+  .hero-recede {
+    transform-origin: 50% 0%;
+    animation: heroRecede linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 100%;
+  }
+  @keyframes heroRecede {
+    from {
+      transform: none;
+      border-radius: 0;
+      filter: brightness(1);
+    }
+    to {
+      transform: scale(0.985);
+      border-radius: 28px;
+      filter: brightness(0.86);
+    }
+  }
+
+  /* Parallax drift across the element's whole viewport transit: +22px below its
+     resting place on the way in, -22px above it on the way out, passing through
+     0 at mid-transit. Override the amount per element with --drift-range
+     (e.g. style={{ "--drift-range": "10px" }} for a foreground layer). */
+  .scrub-drift {
+    animation: scrubDrift linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+  @keyframes scrubDrift {
+    from {
+      transform: translateY(var(--drift-range, 22px));
+    }
+    to {
+      transform: translateY(calc(var(--drift-range, 22px) * -1));
+    }
+  }
+
+  /* Scrubbed version of the zig-zag side entrance. Deliberately declared ONLY
+     from 1024px, for the same reason [data-reveal="left"] is: at phone width
+     every card is in one column, so an outward transform pushes the card past
+     the viewport, widens the document and produces a horizontal scrollbar.
+     That bug has been fixed here once already — do not "simplify" this media
+     query away. Below 1024px the class is completely inert and the base
+     [data-reveal] vertical rise handles the entrance.
+     Requires the direction attribute; `.scrub-fade-side` alone does nothing. */
+  @media (min-width: 1024px) {
+    .scrub-fade-side[data-reveal="left"],
+    .scrub-fade-side[data-reveal="right"] {
+      animation: scrubFadeSide linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    .scrub-fade-side[data-reveal="left"] {
+      --side-from: -32px;
+    }
+    .scrub-fade-side[data-reveal="right"] {
+      --side-from: 32px;
+    }
+    @keyframes scrubFadeSide {
+      from {
+        opacity: 0;
+        transform: translateX(var(--side-from, 0px));
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+
+  /* Radial decoration hand-off: a section's glow enters low and small, sits at
+     full size mid-transit, and leaves high and small — so the outgoing
+     section's orb visually passes the light to the incoming one. Percentages
+     are relative to the orb's own box. --orb-x keeps any centring offset the
+     call site needs (a raw `-translate-x-1/2` would be overwritten). */
+  .orb-hand-off {
+    animation: orbHandOff linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+  @keyframes orbHandOff {
+    from {
+      transform: translate3d(var(--orb-x, 0px), 18%, 0) scale(0.82);
+      opacity: 0.35;
+    }
+    50% {
+      transform: translate3d(var(--orb-x, 0px), 0, 0) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: translate3d(var(--orb-x, 0px), -18%, 0) scale(0.82);
+      opacity: 0.35;
+    }
+  }
+
+  /* Horizontal snap track: each card reads its OWN position in the track with
+     `view(x)`, so the centre card is full size and its neighbours fall back —
+     no JS, no scroll handler, and it stays correct during a snap fling.
+     Put this on the cards; the track itself is the scroll container. */
+  .card-depth {
+    animation: cardDepth linear both;
+    animation-timeline: view(x);
+    animation-range: cover 0% cover 100%;
+  }
+  @keyframes cardDepth {
+    0% {
+      transform: scale(0.965);
+      opacity: 0.75;
+    }
+    50% {
+      transform: none;
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.965);
+      opacity: 0.75;
+    }
   }
 }
 
@@ -612,6 +1083,12 @@ html {
   font-size: 0.8125rem;
   line-height: 1.9;
   color: #c4cbd4;
+  /* A default OS scrollbar on a near-black code block is a bright grey slab.
+     `thin` is set here (not on .section-dark) because this is the one surface
+     that genuinely scrolls; `.no-scrollbar` is defined later in the file, so it
+     still wins on any element that opts out entirely. */
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
 }
 .terminal .t-key {
   color: #7fb4e8;
@@ -710,6 +1187,148 @@ html {
 }
 
 /* ============================================================
+   Sprung interaction primitives.
+
+   All four are transform/opacity-only and settle on a --spring-* easing, so
+   they inherit the overshoot without any JS. Under reduced motion the global
+   block collapses transition-duration to 0.001ms, which makes each one an
+   instant state change — the end state of every rule here is the correct
+   resting state, so nothing needs a special case.
+   ============================================================ */
+
+/* Button physics. A per-property transition list, not `transition-all`, because
+   the press needs the SPRING while colour and shadow keep the shorter UI ease —
+   one blanket duration cannot do both:
+     transform  → the :active scale, sprung, so the release overshoots slightly
+     translate  → the <Magnetic> pull, short and near-linear so it tracks the
+                  cursor instead of lagging behind it (release is handled by
+                  WAAPI in Magnetic.tsx, which overrides this)
+   Kept in CSS rather than in <Button> so Button stays a SERVER component: no
+   "use client", no React state, no per-page JS for a press effect. */
+.btn-spring {
+  transition-property: transform, translate, background-color, border-color,
+    color, box-shadow, opacity;
+  transition-duration: var(--dur-spring-snappy), 160ms, var(--dur-ui),
+    var(--dur-ui), var(--dur-ui), var(--dur-ui), var(--dur-ui);
+  transition-timing-function: var(--spring-snappy), ease-out,
+    var(--ease-out-expo), var(--ease-out-expo), var(--ease-out-expo),
+    var(--ease-out-expo), var(--ease-out-expo);
+}
+.btn-spring:active:not(:disabled) {
+  transform: scale(0.97);
+}
+/* The trailing glyph nudges on the same spring as the press. */
+.btn-glyph {
+  transition: transform var(--dur-spring-snappy) var(--spring-snappy);
+}
+.btn-spring:hover .btn-glyph,
+.btn-spring:focus-visible .btn-glyph {
+  transform: translateX(3px);
+}
+
+/* Sliding nav underline. The nav writes two variables and nothing else:
+     --thumb-x  left offset of the active item, px
+     --thumb-w  its width, px, UNITLESS (it feeds scaleX)
+     --thumb-o  0 to hide (e.g. no active route)
+   Width is animated as scaleX on a 1px base rather than as `width`, because
+   `width` is a layout property: animating it would relayout the nav on every
+   frame, while a transform stays on the compositor. */
+.nav-thumb {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 1px;
+  border-radius: var(--r-pill);
+  background: var(--plum-600);
+  transform-origin: left center;
+  transform: translate3d(var(--thumb-x, 0px), 0, 0) scaleX(var(--thumb-w, 0));
+  opacity: var(--thumb-o, 1);
+  transition: transform var(--dur-spring-smooth) var(--spring-smooth),
+    opacity var(--dur-ui) linear;
+  pointer-events: none;
+}
+.section-dark .nav-thumb {
+  background: var(--lavender-400);
+}
+
+/* Underline that draws left→right on hover/focus. Uses currentColor so it
+   works on any ink, and ::after so it composes with .sheen (::before). Sets
+   `position: relative`, so do not put it on an element that must be
+   `absolute`. */
+.link-draw {
+  position: relative;
+}
+.link-draw::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-spring-smooth) var(--spring-smooth);
+  pointer-events: none;
+}
+.link-draw:hover::after,
+.link-draw:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Opt-in icon stroke-draw. Two halves, by design:
+     - the parent (card, button, row) carries `.icon-draw` — it is the trigger;
+     - the <Icon> opts in with its `draw` prop, which emits `data-draw`.
+   The RESTING state is the fully drawn icon: hover replays the draw rather
+   than revealing a hidden icon, so an icon can never be stuck invisible for a
+   user who never hovers, and default rendering is byte-identical without the
+   parent class. dasharray is a generous constant — every path on the 24px
+   grid is shorter than 110, so a short path simply finishes drawing early and
+   holds, which is the intended flourish. */
+@keyframes iconDraw {
+  from {
+    stroke-dasharray: var(--icon-len, 110);
+    stroke-dashoffset: var(--icon-len, 110);
+  }
+  to {
+    stroke-dasharray: var(--icon-len, 110);
+    stroke-dashoffset: 0;
+  }
+}
+.icon-draw:hover [data-draw] > *,
+.icon-draw:focus-visible [data-draw] > *,
+.icon-draw:focus-within [data-draw] > * {
+  animation: iconDraw var(--dur-spring-gentle) var(--ease-out-expo) both;
+}
+
+/* Invalid-submit shake: two 3px cycles, then settle. Transform-only, so it
+   cannot nudge the form's layout, and it ends at 0 — which is why reduced
+   motion needs no special case. Pair it with an aria-live error message; the
+   shake is never the only signal. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  12.5% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  37.5% {
+    transform: translate3d(3px, 0, 0);
+  }
+  62.5% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  87.5% {
+    transform: translate3d(3px, 0, 0);
+  }
+}
+.shake {
+  animation: shake 400ms var(--ease-out-expo) both;
+}
+
+/* ============================================================
    Utilities
    ============================================================ */
 .no-scrollbar::-webkit-scrollbar {
@@ -749,6 +1368,48 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+    /* ----------------------------------------------------------------
+       THE LINE THAT MAKES SCROLL-DRIVEN MOTION SAFE.
+
+       `animation-duration: 0.001ms` above is MEANINGLESS for a
+       scroll-driven animation: its progress comes from a timeline
+       (`animation-timeline: view()`), not from elapsed time. Such an
+       element simply sits wherever its scroll position puts it — and for
+       anything below the fold that is the animation's START state, i.e.
+       permanently invisible or permanently offset content for exactly the
+       users who asked for less motion.
+
+       Forcing the timeline back to `auto` re-attaches the animation to the
+       document timeline, where the 0.001ms duration finally applies and
+       snaps it to its END state. Measured on a view()-scrubbed probe:
+       opacity 0.1 → 1. scripts/qa/motion.mjs check 2 asserts this, and it
+       also covers any future scroll animation nobody remembered to list in
+       the by-name block below.
+       ---------------------------------------------------------------- */
+    animation-timeline: auto !important;
+  }
+  /* Belt and braces for the scrub layer. Named explicitly because the
+     `animation-timeline: auto` fallback lands each animation on its END
+     keyframe, and for three of these the end state is NOT the resting state:
+     .hero-recede ends receded and dimmed, .scrub-drift ends 22px high,
+     .card-depth ends scaled down as a neighbour. `animation: none` is the
+     whole fix — it drops every keyframe-applied value back to the element's
+     own computed style. Deliberately NOT accompanied by `transform: none
+     !important`, which would also wipe legitimate layout transforms such as
+     the `-translate-x-1/2` centring on an orb. */
+  .sheet-enter,
+  .hero-recede,
+  .scrub-drift,
+  .scrub-fade-side,
+  .orb-hand-off,
+  .card-depth,
+  [data-draw] > *,
+  /* The odometer's resting transform IS the final number, so killing the
+     animation shows the finished figure instantly — no roll, no flash of a
+     wrong digit. React also never sets data-roll under reduced motion; this is
+     the second lock. */
+  .odo-stack {
+    animation: none !important;
   }
   html {
     scroll-behavior: auto;

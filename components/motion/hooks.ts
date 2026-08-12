@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
+/*
+ * Also in this folder (NOT re-exported from here on purpose — a re-export would
+ * pull them into every bundle that imports this module):
+ *   useSectionProgress  → ./useSectionProgress   writes --sp on a section
+ *   startVelocityBus    → ./velocity             publishes --scroll-velocity
+ *   useInView           → ./useInView            the reveal trigger
+ */
+
 /** Centralized reduced-motion flag (INTERACTIONS-AND-MOTION §7.1). */
 export function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -17,7 +25,54 @@ export function usePrefersReducedMotion() {
   return reduced;
 }
 
-/** Count-up on first view. (The reveal system now lives in useInView.ts.) */
+/**
+ * Trigger + settle clock for the per-digit odometer in <StatNumber>.
+ *
+ * Deliberately drives NO per-frame value: the roll itself is a pure CSS
+ * animation on each digit column, so all this decides is *when* it may start
+ * (first time the block is 40% in view) and when the last column has landed.
+ * That is two state updates per stat for the whole effect.
+ *
+ * `totalMs` must cover the slowest column: duration + (digits − 1) × stagger.
+ * Under reduced motion nothing ever rolls and `settled` is true immediately.
+ */
+export function useOdometer(totalMs: number) {
+  const ref = useRef<HTMLElement | null>(null);
+  const [rolling, setRolling] = useState(false);
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia(REDUCE).matches) {
+      setSettled(true);
+      return;
+    }
+    let timer = 0;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          io.unobserve(el);
+          setRolling(true);
+          timer = window.setTimeout(() => setSettled(true), totalMs);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [totalMs]);
+  return { ref, rolling, settled };
+}
+
+/**
+ * Count-up on first view — the numeric (non-odometer) counter, kept for inline
+ * figures in body copy where per-digit columns would be overkill.
+ * (The reveal system now lives in useInView.ts.)
+ */
 export function useCounter(target: number, duration = 1400) {
   const ref = useRef<HTMLElement | null>(null);
   const [value, setValue] = useState(0);

@@ -217,10 +217,21 @@ export function Icon({
   name,
   size = 20,
   className,
+  draw,
 }: {
   name: IconName;
   size?: number;
   className?: string;
+  /**
+   * Opt in to the stroke-draw flourish. Emits `data-draw`, which does NOTHING
+   * on its own — default rendering is byte-identical. The animation only runs
+   * when an ANCESTOR carrying `.icon-draw` is hovered or focused (see
+   * globals.css), so the trigger stays with the card/button that owns the
+   * interaction. The icon's resting state is always fully drawn, so hover
+   * REPLAYS the draw rather than revealing a hidden icon — an icon can never be
+   * left invisible for someone who never hovers, or under reduced motion.
+   */
+  draw?: boolean;
 }) {
   return (
     <svg
@@ -234,6 +245,7 @@ export function Icon({
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
+      data-draw={draw || undefined}
       className={cn("shrink-0", className)}
     >
       {P[name]}
