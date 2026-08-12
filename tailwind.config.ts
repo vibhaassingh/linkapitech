@@ -1,8 +1,10 @@
 import type { Config } from "tailwindcss";
 
-// Theme extension mirrors DESIGN-SYSTEM.md §6.2 (tokens live as CSS vars in globals.css).
-// Breakpoints follow HOMEPAGE-SECTIONS.md: primary globals 1100 / 768 / 480, others kept
-// for component-local tweaks. `lg` is intentionally 1100px (the split-shell collapse point).
+// "Figma Purple" theme extension — every value is a var() pointer at the tokens
+// in globals.css, so the palette is reskinned from one place.
+// NOTE: because these are var() colours, Tailwind's opacity modifier does not
+// work on them (`bg-plum-600/40` compiles to nothing) — add an explicit
+// translucent token in globals.css instead.
 export default {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -15,74 +17,89 @@ export default {
       xs: "480px",
       sm: "640px",
       md: "768px",
-      lg: "1100px",
+      lg: "1024px",
       xl: "1280px",
       "2xl": "1536px",
     },
     extend: {
       colors: {
-        bg: "var(--bg)",
-        "bg-2": "var(--bg-2)",
+        canvas: {
+          DEFAULT: "var(--canvas)",
+          2: "var(--canvas-2)",
+        },
+        surface: "var(--surface)",
+        tint: "var(--card-tint)",
+        plum: {
+          600: "var(--plum-600)",
+          700: "var(--plum-700)",
+          800: "var(--plum-800)",
+          900: "var(--plum-900)",
+          950: "var(--plum-950)",
+        },
+        violet: {
+          500: "var(--violet-500)",
+          600: "var(--violet-600)",
+          text: "var(--violet-text)",
+        },
+        lavender: {
+          200: "var(--lavender-200)",
+          300: "var(--lavender-300)",
+          400: "var(--lavender-400)",
+        },
         ink: {
           DEFAULT: "var(--ink)",
           2: "var(--ink-2)",
           3: "var(--ink-3)",
-          footer: "var(--ink-footer)",
+          inv: "var(--ink-inv)",
+          "inv-2": "var(--ink-inv-2)",
+          "on-violet-2": "var(--ink-on-violet-2)",
         },
-        accent: {
-          DEFAULT: "var(--accent)",
-          soft: "var(--accent-soft)",
-          deep: "var(--accent-deep)",
-          tint: "var(--accent-tint)",
-        },
+        success: "var(--success)",
         line: {
           DEFAULT: "var(--line)",
-          2: "var(--line-2)",
-        },
-        card: {
-          dark: "var(--card-dark)",
-          "dark-ink": "var(--card-dark-ink)",
+          soft: "var(--line-soft)",
+          inv: "var(--line-inv)",
+          plum: "var(--line-plum)",
+          violet: "var(--line-violet)",
         },
       },
       borderRadius: {
+        sm: "var(--r-sm)",
+        md: "var(--r-md)",
+        lg: "var(--r-lg)",
+        xl: "var(--r-xl)",
         pill: "var(--r-pill)",
-        card: "var(--r-card)",
-        input: "var(--r-input)",
-        chip: "var(--r-chip)",
+      },
+      boxShadow: {
+        menu: "var(--shadow-menu)",
+        card: "var(--shadow-card)",
+        float: "var(--shadow-float)",
       },
       fontFamily: {
-        sans: ["var(--font-onest)", "sans-serif"],
-        serif: ["var(--font-instrument-serif)", "serif"],
-      },
-      spacing: {
-        "6.5": "1.625rem",
+        display: ["var(--font-display)", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
       transitionTimingFunction: {
-        brand: "cubic-bezier(0.2, 0.9, 0.2, 1)",
+        "out-expo": "cubic-bezier(0.19, 1, 0.22, 1)",
+      },
+      transitionDuration: {
+        ui: "200ms",
+        menu: "320ms",
+        entrance: "900ms",
       },
       letterSpacing: {
-        tightest: "-0.045em",
-        tighter: "-0.035em",
-        eyebrow: "0.18em",
+        tighter: "-0.02em",
+        tight: "-0.015em",
+        eyebrow: "0.13em",
       },
       keyframes: {
-        "scroll-x": {
-          from: { transform: "translateX(0)" },
-          to: { transform: "translateX(-50%)" },
-        },
-        livepulse: {
-          "0%": { boxShadow: "0 0 0 0 rgba(74,37,69,.5)" },
-          "80%, 100%": { boxShadow: "0 0 0 12px rgba(74,37,69,0)" },
-        },
         spin: {
           from: { transform: "rotate(0deg)" },
           to: { transform: "rotate(360deg)" },
         },
       },
       animation: {
-        marquee: "scroll-x 45s linear infinite",
-        "marquee-slow": "scroll-x 70s linear infinite",
-        livepulse: "livepulse 2.4s ease-out infinite",
         "spin-slow": "spin 14s linear infinite",
       },
     },

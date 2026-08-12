@@ -1,144 +1,115 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { MixedHeading } from "@/components/ui/MixedHeading";
-import { CONTACT, NAV_LINKS, SOCIALS, SITE } from "@/lib/site";
-import { SERVICES, serviceHeading } from "@/content/services";
+import { Logo } from "./Logo";
+import { FOOTER_COLUMNS, SITE, CONTACT, SOCIALS } from "@/lib/site";
 
 /**
- * Closing dark footer panel (HOMEPAGE-SECTIONS Appendix). The reference's D&B
- * verification badge is Allgood-specific and dropped (PAGES-AND-ROUTING §4.2);
- * replaced with LinkAPI's own trust line. Social icons render only when real
- * profile URLs exist (SOCIALS is empty until the client supplies them).
+ * Light footer (Figma Purple): brand column + four link columns over the
+ * lavender canvas, hairline baseline. Every href resolves to a real page —
+ * the Figma's placeholder links (Careers, Blog, Status Page…) are mapped onto
+ * real destinations in lib/site.ts rather than shipped dead.
  */
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-ink-footer text-white">
-      <div className="mx-auto max-w-[1360px] px-6 pb-10 pt-[clamp(72px,8vw,128px)] md:px-10">
-        {/* Top band: statement + CTA */}
-        <div className="grid gap-10 border-b border-white/10 pb-14 md:grid-cols-[1.4fr_1fr] md:items-end">
+    <footer className="border-t border-line-soft bg-canvas">
+      <div className="mx-auto w-full max-w-[1240px] px-6 pb-10 pt-16 md:px-10 md:pt-20">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)] md:gap-8">
+          {/* Brand */}
           <div>
-            <span className="inline-flex items-center gap-2 text-xs uppercase tracking-eyebrow text-white/50">
-              <span className="pulse-dot" /> Open for new integrations · {year}
-            </span>
-            <MixedHeading
-              as="h2"
-              plain="Let's connect your"
-              accent={
-                <>
-                  systems<span className="text-accent-tint">.</span>
-                </>
-              }
-              className="mt-5 max-w-[16ch] text-[clamp(40px,5.6vw,92px)] leading-none tracking-tighter text-white"
-              accentClassName="text-white"
-            />
-            <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-white/60">
-              From bank connectivity to reconciliation and support — tell us what you need to
-              integrate, and we&apos;ll map the path to go-live.
+            <Link href="/" className="inline-block rounded-sm text-plum-950">
+              <Logo />
+            </Link>
+            <p className="mt-4 max-w-[30ch] text-[14.5px] leading-relaxed text-ink-2">
+              Powering secure banking &amp; enterprise integrations at scale.
             </p>
-          </div>
-          <div className="flex flex-col items-start gap-4 md:items-end">
-            <Button href="/#contact" variant="accent" magnetic>
-              Start a conversation
-            </Button>
-            <a
-              href={`mailto:${CONTACT.primaryEmail}`}
-              className="text-sm text-white/70 hover:text-accent-tint"
-            >
-              {CONTACT.primaryEmail}
-            </a>
-          </div>
-        </div>
 
-        {/* Nav + services */}
-        <div className="grid gap-10 border-b border-white/10 py-12 sm:grid-cols-2 md:grid-cols-4">
-          <FootCol title="Company">
-            {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className="footer-link">
-                {l.label}
-              </Link>
-            ))}
-          </FootCol>
-          <FootCol title="Services">
-            {SERVICES.slice(0, 6).map((s) => (
-              <Link key={s.id} href={`/services#${s.id}`} className="footer-link">
-                {serviceHeading(s)}
-              </Link>
-            ))}
-          </FootCol>
-          <FootCol title="Reach us">
-            <span className="text-sm text-white/60">{CONTACT.address.line1}</span>
-            <span className="text-sm text-white/60">{CONTACT.address.line2}</span>
-            {CONTACT.channels.map((c) => (
-              <a key={c.phone} href={c.phoneHref} className="footer-link">
-                {c.phone}
-              </a>
-            ))}
-          </FootCol>
-          <FootCol title="Email">
-            {CONTACT.channels.map((c) => (
-              <a key={c.email} href={`mailto:${c.email}`} className="footer-link break-all">
-                {c.email}
-              </a>
-            ))}
-            <a href={CONTACT.whatsapp} target="_blank" rel="noopener noreferrer" className="footer-link">
-              WhatsApp
-            </a>
-          </FootCol>
-        </div>
+            {SOCIALS.length > 0 && (
+              <ul className="mt-5 flex items-center gap-2.5">
+                {SOCIALS.map((s) => (
+                  <li key={s.href}>
+                    <a
+                      href={s.href}
+                      className="grid h-9 w-9 place-items-center rounded-pill bg-plum-600 text-ink-inv transition-colors duration-ui hover:bg-violet-600"
+                      aria-label={s.label}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="text-[13px] font-semibold"
+                      >
+                        {s.label.charAt(0)}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
 
-        {/* Verify strip */}
-        <div className="flex flex-col gap-3 border-b border-white/10 py-8 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between">
-          <span className="inline-flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full border border-accent-tint/40 text-accent-tint">
-              ✓
-            </span>
-            BFSI-grade delivery · 5000+ API implementations
-          </span>
-          {SOCIALS.length > 0 && (
-            <div className="flex items-center gap-4">
-              {SOCIALS.map((s) => (
-                <a key={s.href} href={s.href} className="footer-link" target="_blank" rel="noopener noreferrer">
-                  {s.label}
-                </a>
-              ))}
+            <div className="mt-6 space-y-1 text-[14px] text-ink-2">
+              <a
+                href={`mailto:${CONTACT.primaryEmail}`}
+                /* py-1 lifts the hit area to 26px — WCAG 2.2 SC 2.5.8 wants a
+                   24px minimum target and the bare line-box was 23.99px. */
+                className="block rounded-sm py-1 transition-colors duration-ui hover:text-plum-700 [overflow-wrap:anywhere]"
+              >
+                {CONTACT.primaryEmail}
+              </a>
+              <p className="max-w-[28ch] leading-relaxed text-ink-3">
+                {CONTACT.address.full}
+              </p>
             </div>
-          )}
-        </div>
-
-        {/* Legal row */}
-        <div className="flex flex-col gap-3 pt-8 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            © {year} {SITE.legalName}
-          </span>
-          <span>Ghaziabad, Uttar Pradesh, India</span>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="footer-link">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="footer-link">
-              Terms &amp; Conditions
-            </Link>
           </div>
-        </div>
-      </div>
 
-      {/* Signature wordmark, faded into the floor */}
-      <div className="footer-signature select-none px-6 pb-6 text-center" aria-hidden="true">
-        <span className="font-serif text-[clamp(64px,20vw,260px)] italic leading-none text-white/10">
-          LinkAPI
-        </span>
+          {FOOTER_COLUMNS.map((col) => {
+            /* The bank-integration hub is reachable only from the footer — the
+               five-link pill nav is fixed by the Figma. It joins Products, next
+               to Connected Banking, since it describes what LinkAPI delivers
+               rather than an audience. Derived here rather than in
+               lib/site.ts so the shared nav data stays untouched. */
+            const links =
+              col.heading === "Products"
+                ? [...col.links, { href: "/banks", label: "Bank integrations" }]
+                : col.links;
+            return (
+            <nav key={col.heading} aria-label={col.heading}>
+              <h2 className="text-[12px] font-semibold uppercase tracking-eyebrow text-ink">
+                {col.heading}
+              </h2>
+              <ul className="mt-4 space-y-2.5">
+                {links.map((l) => (
+                  <li key={l.href + l.label}>
+                    <Link
+                      href={l.href}
+                      className="rounded-sm text-[14.5px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            );
+          })}
+        </div>
+
+        <div className="mt-14 flex flex-col gap-3 border-t border-line-soft pt-6 text-[13px] text-ink-3 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {year} {SITE.legalName} All rights reserved.
+          </p>
+          <ul className="flex items-center gap-6">
+            <li>
+              <Link href="/privacy" className="rounded-sm hover:text-plum-700">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="rounded-sm hover:text-plum-700">
+                Terms
+              </Link>
+            </li>
+          </ul>
+        </div>
       </div>
     </footer>
-  );
-}
-
-function FootCol({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <span className="text-[11px] uppercase tracking-eyebrow text-white/55">{title}</span>
-      {children}
-    </div>
   );
 }

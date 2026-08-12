@@ -1,18 +1,20 @@
-import { Onest, Instrument_Serif } from "next/font/google";
+import { Poppins, IBM_Plex_Mono } from "next/font/google";
 
-// UI + body sans. Headings render at weight 500 (confident-but-light).
-export const onest = Onest({
+// Single-family discipline (Figma Purple): Poppins everywhere.
+// 700 = display headlines, 600 = headings/buttons/stat numerals,
+// 500 = labels/nav, 400 = body. Four files total — the perf budget
+// allows exactly four font files on the home route.
+export const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-onest",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
   display: "swap",
 });
 
-// Editorial accent — every sitewide usage is italic 400 (roman loaded for safety).
-export const instrumentSerif = Instrument_Serif({
+// Code terminals only (How We Work / SDK cards). Never for UI text.
+export const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: "400",
-  style: ["italic", "normal"],
-  variable: "--font-instrument-serif",
+  variable: "--font-mono",
   display: "swap",
 });

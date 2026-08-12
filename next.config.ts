@@ -8,7 +8,19 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
-    optimizePackageImports: ["gsap"],
+    optimizePackageImports: ["three"],
+  },
+  /**
+   * Retired routes (Figma Purple has no Work/Clients pages). Permanent so the
+   * old URLs' equity transfers to their closest replacements; the case-study
+   * content stays in content/cases.ts for reuse.
+   */
+  async redirects() {
+    return [
+      { source: "/work", destination: "/industries", permanent: true },
+      { source: "/work/:slug", destination: "/industries", permanent: true },
+      { source: "/clients", destination: "/about", permanent: true },
+    ];
   },
 };
 

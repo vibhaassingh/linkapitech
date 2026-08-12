@@ -1,6 +1,11 @@
 /**
- * Case studies — modelled once as typed data (PAGES-AND-ROUTING §3.3), rendered
- * both in the homepage Works deck and the /work/[slug] pages.
+ * ARCHIVED — not referenced by any route.
+ *
+ * The Figma Purple IA has no Work/case-study pages, and /work + /work/[slug]
+ * now redirect to /industries. This module is retained deliberately (owner
+ * decision, 2026-08-12: "retire + redirect, content stays in the repo for
+ * later reuse") so the narratives aren't lost if case studies return. Nothing
+ * imports it, so it is tree-shaken out of every bundle.
  *
  * LinkAPI has NO real client case studies (CONTENT-MAPPING §4.2), so these are
  * *aggregate, program-level* summaries built from LinkAPI's real quantified
@@ -217,11 +222,3 @@ export const CASES: CaseStudy[] = [
 
 export const CASE_SLUGS = CASES.map((c) => c.slug);
 export const getCase = (slug: string) => CASES.find((c) => c.slug === slug);
-
-/** Generated cover gradients per tone (no source imagery exists). */
-export const TONE_BG: Record<CaseTone, string> = {
-  lime: "linear-gradient(135deg,#2e1a33,#0d0d0d 72%)",
-  ink: "linear-gradient(135deg,#242424,#0d0d0d 72%)",
-  slate: "linear-gradient(135deg,#1c2733,#0d0d0d 72%)",
-  violet: "linear-gradient(135deg,#2a1c33,#0d0d0d 72%)",
-};

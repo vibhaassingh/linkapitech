@@ -1,4 +1,11 @@
 /**
+ * ARCHIVED — not referenced by any route.
+ *
+ * Superseded by the Figma's "Why LinkAPI Tech" section, which ships four
+ * client-authored reasons (see content/home.ts WHY_US). Retained because the
+ * copy here is real LinkAPI content that may be reusable; nothing imports it,
+ * so it is tree-shaken out of every bundle.
+ *
  * Benefits / Why Us — 6 cards (CONTENT-MAPPING §4.5). Cards 1–4 are LinkAPI's
  * four real "Why Us" reasons, condensed to the punchier card format. Cards 5–6
  * are authored from other real on-site content (Performance stats + Security

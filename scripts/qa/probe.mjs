@@ -1,0 +1,292 @@
+// Motion/gating probe over raw CDP — no npm deps (mirrors shot.mjs plumbing).
+// usage: node probe.mjs <baseUrl>
+import { spawn } from "node:child_process";
+
+const BASE = process.argv[2] ?? "http://localhost:3411";
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const results = [];
+const ok = (name, pass, detail = "") => results.push({ name, pass, detail });
+
+async function session({ width, height, reducedMotion, mobile }) {
+  const port = 9222 + Math.floor(Math.random() * 500);
+  const args = [
+    "--headless=new",
+    "--hide-scrollbars",
+    // A software GL backend so WebGL is actually available in headless.
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader",
+    `--remote-debugging-port=${port}`,
+    `--window-size=${width},${height}`,
+    `--user-data-dir=/tmp/cdp-probe-${port}`,
+    "about:blank",
+  ];
+  if (reducedMotion) args.unshift("--force-prefers-reduced-motion");
+  const chrome = spawn(CHROME, args, { stdio: "ignore" });
+
+  let wsUrl;
+  for (let i = 0; i < 80; i++) {
+    try {
+      const j = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
+      if (j.webSocketDebuggerUrl) {
+        wsUrl = j.webSocketDebuggerUrl;
+        break;
+      }
+    } catch {}
+    await sleep(250);
+  }
+  if (!wsUrl) throw new Error("chrome did not start");
+
+  const ws = new WebSocket(wsUrl);
+  await new Promise((r) => (ws.onopen = r));
+  let id = 0;
+  const pending = new Map();
+  const events = [];
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.id && pending.has(m.id)) {
+      pending.get(m.id)(m.result ?? m.error);
+      pending.delete(m.id);
+    } else if (m.method) events.push(m);
+  };
+  const send = (method, params = {}, sessionId) =>
+    new Promise((res) => {
+      const myId = ++id;
+      pending.set(myId, res);
+      ws.send(JSON.stringify({ id: myId, method, params, sessionId }));
+    });
+
+  const { targetId } = await send("Target.createTarget", { url: "about:blank" });
+  const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
+  const S = (m, p) => send(m, p, sessionId);
+  await S("Page.enable");
+  await S("Network.enable");
+  await S("Runtime.enable");
+  await S("Log.enable");
+  await S("Emulation.setDeviceMetricsOverride", {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: !!mobile,
+  });
+
+  const evalJs = async (expression) => {
+    const r = await S("Runtime.evaluate", {
+      expression,
+      returnByValue: true,
+      awaitPromise: true,
+    });
+    return r?.result?.value;
+  };
+
+  return {
+    S,
+    evalJs,
+    events,
+    async goto(path) {
+      await S("Page.navigate", { url: BASE + path });
+      await sleep(5200);
+    },
+    async mouseTo(x, y) {
+      await S("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, buttons: 0 });
+    },
+    close() {
+      ws.close();
+      chrome.kill();
+    },
+  };
+}
+
+// ---------- 1. desktop ----------
+{
+  const s = await session({ width: 1440, height: 900 });
+  await s.goto("/");
+  await s.mouseTo(1100, 420);
+  await sleep(3500);
+
+  const info = await s.evalJs(`(() => {
+    const c = document.querySelector('canvas');
+    if (!c) return { present: false };
+    const gl = c.getContext('webgl2') || c.getContext('webgl');
+    return {
+      present: true,
+      opacity: getComputedStyle(c).opacity,
+      bufW: c.width, bufH: c.height,
+      hasGl: !!gl,
+    };
+  })()`);
+  ok("desktop: hero canvas present", !!info?.present, JSON.stringify(info));
+  ok("desktop: WebGL layer live (opacity 1)", info?.opacity === "1", `opacity=${info?.opacity}`);
+  ok("desktop: sized drawing buffer", info?.bufW > 0 && info?.bufH > 0, `${info?.bufW}x${info?.bufH}`);
+
+  // three.js must arrive as a lazy chunk, not in the document's initial scripts
+  const threeInInitialHtml = await s.evalJs(`(async () => {
+    const html = await (await fetch(location.href)).text();
+    // collect <script src> from the server HTML only
+    const srcs = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(m => m[1]);
+    return srcs.length;
+  })()`);
+  const lazyReqs = s.events
+    .filter((e) => e.method === "Network.requestWillBeSent")
+    .map((e) => e.params?.request?.url ?? "")
+    .filter((u) => u.includes("/_next/static/chunks/"));
+  ok(
+    "desktop: chunks loaded (three arrives lazily)",
+    lazyReqs.length > 0,
+    `chunk requests=${lazyReqs.length}, initial scripts=${threeInInitialHtml}`,
+  );
+
+  // rAF must halt when the tab is hidden. setPageVisibilityOverride is not
+  // effective in this headless build, so instead count real rAF callbacks
+  // before and after faking `document.hidden` + firing visibilitychange.
+  // Count GL draw calls, not rAF callbacks: Lenis keeps its own rAF loop
+  // running permanently by design, so a global frame count cannot tell whether
+  // *this scene* stopped. drawArrays is issued only by the scene's renderer.
+  const rafCounts = await s.evalJs(`(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const protos = [window.WebGL2RenderingContext, window.WebGLRenderingContext]
+      .filter(Boolean).map(c => c.prototype);
+    window.__n = 0;
+    const patched = [];
+    for (const p of protos) {
+      for (const m of ['drawArrays', 'drawElements']) {
+        const orig = p[m];
+        if (!orig) continue;
+        patched.push([p, m, orig]);
+        p[m] = function (...a) { window.__n++; return orig.apply(this, a); };
+      }
+    }
+    await sleep(500);
+    const running = window.__n;
+
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await sleep(200);          // let the current frame drain
+    window.__n = 0;
+    await sleep(500);
+    const paused = window.__n;
+
+    Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await sleep(400);
+    window.__n = 0;
+    await sleep(500);
+    const resumed = window.__n;
+
+    for (const [p, m, orig] of patched) p[m] = orig;
+    return { running, paused, resumed };
+  })()`);
+  ok(
+    "desktop: scene draws while visible",
+    (rafCounts?.running ?? 0) > 5,
+    `gl draws/500ms=${rafCounts?.running}`,
+  );
+  ok(
+    "desktop: scene halts when tab hidden",
+    (rafCounts?.paused ?? 99) <= 1,
+    `gl draws/500ms=${rafCounts?.paused}`,
+  );
+  ok(
+    "desktop: scene resumes when tab visible",
+    (rafCounts?.resumed ?? 0) > 5,
+    `gl draws/500ms=${rafCounts?.resumed}`,
+  );
+
+  // magnetic pull
+  const box = await s.evalJs(`(() => {
+    const b = document.querySelector('[data-magnetic]');
+    if (!b) return null;
+    const r = b.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height, t: b.style.transform || 'none' };
+  })()`);
+  ok("desktop: a magnetic CTA exists", !!box, JSON.stringify(box));
+  if (box) {
+    await s.S("Emulation.setPageVisibilityOverride", { hidden: false }).catch(() => {});
+    await s.mouseTo(box.x + box.w * 0.85, box.y + box.h * 0.5);
+    await sleep(400);
+    const after = await s.evalJs(
+      `document.querySelector('[data-magnetic]').style.transform || 'none'`,
+    );
+    ok("magnetic: transform applied on hover", /translate3d/.test(after), `transform=${after}`);
+    await s.mouseTo(5, 5);
+    await sleep(400);
+    const rel = await s.evalJs(
+      `document.querySelector('[data-magnetic]').style.transform || 'none'`,
+    );
+    ok("magnetic: released on leave", rel === "none", `transform=${rel}`);
+  }
+
+  const errs = s.events
+    .filter((e) => e.method === "Log.entryAdded" && e.params?.entry?.level === "error")
+    .map((e) => e.params.entry.text);
+  ok("desktop: no console errors", errs.length === 0, errs.join(" | ").slice(0, 180));
+
+  s.close();
+}
+
+// ---------- 2. mobile ----------
+{
+  const s = await session({ width: 390, height: 844, mobile: true });
+  await s.goto("/");
+  await sleep(3000);
+  const op = await s.evalJs(`(() => {
+    const c = document.querySelector('canvas');
+    return c ? getComputedStyle(c).opacity : 'absent';
+  })()`);
+  ok("mobile: WebGL layer stays dormant", op !== "1", `opacity=${op}`);
+  s.close();
+}
+
+// ---------- 3. reduced motion ----------
+{
+  const s = await session({ width: 1440, height: 900, reducedMotion: true });
+  await s.goto("/");
+  await sleep(3000);
+  const op = await s.evalJs(`(() => {
+    const c = document.querySelector('canvas');
+    return c ? getComputedStyle(c).opacity : 'absent';
+  })()`);
+  ok("reduced-motion: WebGL layer stays dormant", op !== "1", `opacity=${op}`);
+
+  const hidden = await s.evalJs(`
+    [...document.querySelectorAll('[data-reveal]')]
+      .filter(e => getComputedStyle(e).opacity !== '1').length`);
+  ok("reduced-motion: no reveal left hidden", hidden === 0, `hidden=${hidden}`);
+
+  const ghost = await s.evalJs(`(() => {
+    const g = document.querySelector('.ghost-num');
+    return g ? getComputedStyle(g).transform : 'absent';
+  })()`);
+  ok(
+    "reduced-motion: ghost numerals not offset",
+    ghost === "none" || ghost === "absent" || /matrix\(1, 0, 0, 1, 0, 0\)/.test(ghost),
+    `transform=${ghost}`,
+  );
+
+  const box = await s.evalJs(`(() => {
+    const b = document.querySelector('[data-magnetic]');
+    if (!b) return null;
+    const r = b.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height };
+  })()`);
+  if (box) {
+    await s.mouseTo(box.x + box.w * 0.85, box.y + box.h * 0.5);
+    await sleep(350);
+    const t = await s.evalJs(
+      `document.querySelector('[data-magnetic]').style.transform || 'none'`,
+    );
+    ok("reduced-motion: magnetic disabled", t === "none", `transform=${t}`);
+  } else {
+    ok("reduced-motion: magnetic disabled", false, "no [data-magnetic] found");
+  }
+  s.close();
+}
+
+let fail = 0;
+for (const r of results) {
+  if (!r.pass) fail++;
+  console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}${r.detail ? `  [${r.detail}]` : ""}`);
+}
+console.log(`\n${results.length - fail}/${results.length} passed`);
+process.exit(fail ? 1 : 0);

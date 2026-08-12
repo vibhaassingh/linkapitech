@@ -1,11 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { useMagnetic } from "@/components/motion/hooks";
 
-type Variant = "primary" | "accent";
+type Variant = "primary" | "light" | "glass" | "outline" | "quiet" | "accent";
 
 interface ButtonProps {
   children: ReactNode;
@@ -13,6 +10,13 @@ interface ButtonProps {
   variant?: Variant;
   className?: string;
   showArrow?: boolean;
+  /** Trailing glyph override (e.g. a mail or speech icon, per the Figma CTAs). */
+  icon?: ReactNode;
+  /**
+   * Magnetic hover pull. Handled by the delegated <Magnetic> listener in the
+   * root layout via a data attribute, so this stays a server component.
+   * Off for `quiet` (an inline text link shouldn't drift).
+   */
   magnetic?: boolean;
   type?: "button" | "submit";
   onClick?: () => void;
@@ -21,18 +25,29 @@ interface ButtonProps {
 }
 
 const base =
-  "group relative inline-flex items-center justify-center gap-3.5 rounded-pill font-medium tracking-wide transition-all duration-500 ease-brand disabled:opacity-60 disabled:pointer-events-none";
+  "group inline-flex items-center justify-center gap-2.5 rounded-pill font-semibold transition-all duration-ui ease-out-expo disabled:opacity-60 disabled:pointer-events-none";
 
-const variants: Record<Variant, string> = {
+const styles: Record<Exclude<Variant, "accent">, string> = {
+  /** Brand plum fill — the default CTA on light surfaces. */
   primary:
-    "bg-ink px-8 py-5 text-[15px] text-white shadow-[0_14px_40px_-16px_rgba(15,15,14,.55)] hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-20px_rgba(15,15,14,.7)]",
-  accent:
-    "bg-accent px-6.5 py-4 text-[15px] font-semibold text-white hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-16px_rgba(74,37,69,.5)]",
+    "bg-plum-600 px-7 py-[14px] text-[15px] text-ink-inv shadow-card hover:bg-violet-600 hover:shadow-float",
+  /** White fill — the primary CTA on plum/dark surfaces. */
+  light:
+    "bg-surface px-7 py-[14px] text-[15px] text-plum-700 shadow-card hover:bg-white hover:shadow-float",
+  /** Liquid-glass secondary on plum surfaces. */
+  glass:
+    "glass sheen rounded-pill px-7 py-[14px] text-[15px] text-ink-inv hover:bg-white/[0.14]",
+  /** Hairline outline on light surfaces. */
+  outline:
+    "border border-line bg-transparent px-7 py-[13px] text-[15px] text-ink hover:border-plum-600 hover:text-plum-700",
+  /** Inline text link with arrow. */
+  quiet: "px-0 py-1 text-[15px] text-violet-text hover:text-plum-700",
 };
 
 /**
- * Primary dark pill (light surfaces) and accent lime pill (dark surfaces only),
- * per DESIGN-SYSTEM §5.1–5.2. Renders <Link> for internal paths, <a> otherwise.
+ * Pill button set (Figma Purple): plum fill, white-on-plum, glass secondary,
+ * hairline outline, quiet link. Renders <Link> for internal paths, <a>
+ * otherwise. ("accent" maps to primary for legacy call sites.)
  */
 export function Button({
   children,
@@ -40,47 +55,44 @@ export function Button({
   variant = "primary",
   className,
   showArrow = true,
-  magnetic = false,
+  icon,
+  magnetic,
   type = "button",
   onClick,
   disabled,
   ...rest
 }: ButtonProps) {
-  const magRef = useMagnetic<HTMLElement>(18);
-  const classes = cn(base, variants[variant], className);
+  const v: Exclude<Variant, "accent"> =
+    variant === "accent" ? "primary" : variant;
+  const classes = cn(base, styles[v], className);
+  // Default on for the pill variants; never for the inline text link.
+  const pull = (magnetic ?? v !== "quiet") ? { "data-magnetic": "" } : {};
 
   const inner = (
     <>
-      {variant === "primary" && (
-        <span className="pointer-events-none absolute inset-0 rounded-pill bg-[radial-gradient(circle_at_50%_50%,rgba(74,37,69,.5),transparent_65%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <span className="relative z-[2]">{children}</span>
+      {(showArrow || icon) && (
+        <span
+          aria-hidden="true"
+          className="relative z-[2] transition-transform duration-ui ease-out-expo group-hover:translate-x-0.5"
+        >
+          {icon ?? <Arrow />}
+        </span>
       )}
-      <span className="relative z-10">{children}</span>
-      {showArrow &&
-        (variant === "primary" ? (
-          <span className="relative z-10 grid h-6.5 w-6.5 place-items-center rounded-full bg-white text-ink transition-transform duration-500 ease-brand group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:-rotate-6 group-hover:bg-accent group-hover:text-white">
-            <Arrow />
-          </span>
-        ) : (
-          <span className="relative z-10 transition-transform duration-500 ease-brand group-hover:translate-x-1">
-            <Arrow />
-          </span>
-        ))}
     </>
   );
-
-  const attach = magnetic ? { ref: magRef as never } : {};
 
   if (href) {
     const internal = href.startsWith("/") && !href.startsWith("//");
     if (internal) {
       return (
-        <Link href={href} className={classes} {...attach} {...rest}>
+        <Link href={href} className={classes} {...pull} {...rest}>
           {inner}
         </Link>
       );
     }
     return (
-      <a href={href} className={classes} {...attach} {...rest}>
+      <a href={href} className={classes} {...pull} {...rest}>
         {inner}
       </a>
     );
@@ -92,7 +104,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={classes}
-      {...attach}
+      {...pull}
       {...rest}
     >
       {inner}
@@ -102,11 +114,17 @@ export function Button({
 
 function Arrow() {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M5 12h14M13 6l6 6-6 6"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.9"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

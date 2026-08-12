@@ -1,34 +1,50 @@
 import { pageMetadata } from "@/lib/metadata";
 import { JsonLd, organizationGraph } from "@/lib/jsonld";
-import { Hero } from "@/components/sections/Hero";
-import { SplitShell } from "@/components/sections/SplitShell";
-import { WorksDeck } from "@/components/sections/WorksDeck";
-import { ServiceAccordion } from "@/components/sections/ServiceAccordion";
-import { ProcessStepper } from "@/components/sections/ProcessStepper";
-import { Benefits } from "@/components/sections/Benefits";
-import { Testimonials } from "@/components/sections/Testimonials";
-import { ContactSection } from "@/components/sections/ContactSection";
+import { Hero } from "@/components/sections/home/Hero";
+import { LogoMarquee } from "@/components/sections/home/LogoMarquee";
+import { WhoWeAre } from "@/components/sections/home/WhoWeAre";
+import { WhatWeDo } from "@/components/sections/home/WhatWeDo";
+import { Ecosystem } from "@/components/sections/home/Ecosystem";
+import { Challenges } from "@/components/sections/home/Challenges";
+import { WhyUs } from "@/components/sections/home/WhyUs";
+import { StatBand } from "@/components/sections/home/StatBand";
+import { ErpBand } from "@/components/sections/home/ErpBand";
+import { ProcessRail } from "@/components/sections/home/ProcessRail";
+import { Testimonials } from "@/components/sections/home/Testimonials";
+import { HomeFaq } from "@/components/sections/home/HomeFaq";
+import { CtaBand } from "@/components/sections/CtaBand";
 
 export const metadata = pageMetadata({
-  title: "LinkAPI Tech Pvt. Ltd. | BFSI API Integration & Technology Services",
+  title: "LinkAPI Tech Pvt. Ltd. | Banking That Lives Inside Your Business",
   description:
-    "LinkAPI Tech Pvt. Ltd. is a technology service provider for corporates and BFSI businesses, delivering API integration, transaction reconciliation, WAN/LAN infrastructure, and data integration solutions. Based in Ghaziabad, India.",
+    "LinkAPI Tech connects banks, NBFCs and enterprises through ERP-native banking infrastructure — payments, collections and reconciliation inside the systems your business already uses. Based in Ghaziabad, India.",
   path: "/",
 });
 
+/** Homepage — section order follows the client Figma (page 36). */
 export default function HomePage() {
   return (
     <>
       <JsonLd data={organizationGraph()} />
       <Hero />
-      <SplitShell>
-        <WorksDeck />
-        <ServiceAccordion />
-        <ProcessStepper />
-        <Benefits />
-        <Testimonials />
-        <ContactSection />
-      </SplitShell>
+      <LogoMarquee />
+      <WhoWeAre />
+      <WhatWeDo />
+      <Ecosystem />
+      <Challenges />
+      <WhyUs />
+      <StatBand />
+      <ErpBand />
+      <ProcessRail />
+      <Testimonials />
+      <HomeFaq />
+      <CtaBand
+        ctaLabel="Book a Demo"
+        secondary={{
+          label: "partnership@linkapitech.com",
+          href: "mailto:partnership@linkapitech.com",
+        }}
+      />
     </>
   );
 }

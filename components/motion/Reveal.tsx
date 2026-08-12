@@ -1,36 +1,56 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { cn } from "@/lib/cn";
-import { useReveal } from "./hooks";
+import { useInView } from "./useInView";
 
 interface RevealProps {
   children: ReactNode;
   className?: string;
-  /** stagger delay in ms */
+  /** transition delay in ms (use RevealGroup for index-based staggers) */
   delay?: number;
-  as?: "div" | "section" | "li" | "span" | "p" | "header" | "article";
+  /**
+   * Entry direction. "up" (default) rises; "left"/"right" slide in from that
+   * side — used by the zig-zag timelines so each card enters from its own side.
+   * Handled by the [data-reveal="…"] rules in globals.css.
+   */
+  dir?: "up" | "left" | "right";
+  as?:
+    "div" | "section" | "li" | "span" | "p" | "header" | "article" | "footer";
   style?: CSSProperties;
   id?: string;
 }
 
-/** Convenience wrapper around the `.reveal` fade/slide/blur (System A). */
+/**
+ * Scroll reveal driven entirely through React state: `data-inview` is part of
+ * the rendered output, so re-renders can never wipe the revealed state (the
+ * failure mode of the old imperative classList system).
+ */
 export function Reveal({
   children,
   className,
   delay = 0,
+  dir = "up",
   as: Tag = "div",
   style,
   id,
 }: RevealProps) {
-  const ref = useReveal<HTMLElement>();
+  const { ref, inView } = useInView<HTMLElement>();
   const Comp = Tag as React.ElementType;
   return (
     <Comp
       id={id}
       ref={ref}
-      className={cn("reveal", className)}
-      style={{ ...(style ?? {}), "--reveal-delay": `${delay}ms` } as CSSProperties}
+      data-reveal={dir === "up" ? "" : dir}
+      data-inview={inView || undefined}
+      className={className}
+      style={
+        delay
+          ? ({
+              ...(style ?? {}),
+              "--reveal-delay": `${delay}ms`,
+            } as CSSProperties)
+          : style
+      }
     >
       {children}
     </Comp>

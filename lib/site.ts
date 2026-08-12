@@ -1,7 +1,7 @@
 /**
  * Site-wide configuration — LinkAPI Tech's real contact details, navigation,
- * and trust signals. Sourced from CONTENT-MAPPING.md §1–2 (all values verbatim
- * from linkapitech.com). Do not invent facts about LinkAPI here.
+ * and trust signals. Values come from CONTENT-MAPPING.md §1–2 (verbatim from
+ * linkapitech.com) and the client Figma (2026-08). Do not invent facts here.
  */
 
 export const SITE = {
@@ -10,8 +10,8 @@ export const SITE = {
   domain: "linkapitech.com",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://linkapitech.com",
   description:
-    "LinkAPI Tech is a technology service provider for corporates and BFSI businesses — delivering API integration, transaction reconciliation, WAN/LAN infrastructure, and data integration solutions from Ghaziabad, India.",
-  tagline: "Systems that connect. Business that grows.",
+    "LinkAPI Tech connects banks, NBFCs and enterprises through ERP-native banking infrastructure — so payments, collections and reconciliation happen where your business already works.",
+  tagline: "Banking that lives inside your business.",
 } as const;
 
 export interface ContactChannel {
@@ -30,16 +30,25 @@ export const CONTACT = {
   },
   channels: [
     {
+      // New in the Figma (2026-08). Note the plural "partnerships@" here vs
+      // the singular "partnership@" on the live site — both are reproduced as
+      // given. TODO: client to confirm which mailbox is canonical.
+      label: "Partnerships & Product",
+      phone: "+91 87000 45411",
+      phoneHref: "tel:+918700045411",
+      email: "partnerships@linkapitech.com",
+    },
+    {
       label: "Plugin Support & Inquiries",
       phone: "+91-9318373476",
       phoneHref: "tel:+919318373476",
       email: "partnership@linkapitech.com",
     },
     {
-      label: "Management-Related Queries",
+      label: "Management Queries",
       phone: "+91-9891121770",
       phoneHref: "tel:+919891121770",
-      email: "Operations@linkapitech.com",
+      email: "operations@linkapitech.com",
     },
   ] as ContactChannel[],
   primaryEmail: "partnership@linkapitech.com",
@@ -57,26 +66,77 @@ export const SOCIALS: { label: string; href: string }[] = [
   // TODO: client to confirm — add real profile URLs, or these stay hidden.
 ];
 
-/** Homepage section order — the 01–06 numbered-index motif (DESIGN-SYSTEM §3.4). */
-export const SECTIONS = [
-  { num: "01", id: "work", label: "Work" },
-  { num: "02", id: "services", label: "Services" },
-  { num: "03", id: "process", label: "Process" },
-  { num: "04", id: "why", label: "Why Us" },
-  { num: "05", id: "clients", label: "Clients" },
-  { num: "06", id: "contact", label: "Contact" },
-] as const;
+/* ============================================================
+   Navigation IA — flat five-link pill header (Figma 2026-08).
+   The mega menu is retired: the Figma nav has no panels, and every
+   destination below is a real page.
+   ============================================================ */
 
-/** Top-level page nav (source had Home/About/Services/Contact; Banks added for the bank pages). */
-export const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
+export interface NavLink {
+  href: string;
+  label: string;
+}
+
+export const NAV: NavLink[] = [
+  { href: "/about", label: "About Us" },
+  { href: "/solutions", label: "Solutions" },
+  { href: "/connected-banking", label: "Connected Banking" },
   { href: "/services", label: "Services" },
-  { href: "/banks", label: "Banks" },
-  { href: "/contact", label: "Contact" },
-] as const;
+  { href: "/industries", label: "Industries We Serve" },
+];
 
 export const CTA = {
-  label: "Consult our Growth Experts",
-  href: "/#contact",
+  label: "Contact Us",
+  href: "/contact",
 } as const;
+
+/**
+ * Footer columns — the Figma's four-column layout, but every href points at a
+ * page that exists. Its original labels (Careers, Blog, Press, Pricing, API
+ * Reference, Status Page, Community…) had no destinations, so they are mapped
+ * onto real sections rather than shipped as dead links.
+ */
+export interface FooterColumn {
+  heading: string;
+  links: NavLink[];
+}
+
+export const FOOTER_COLUMNS: FooterColumn[] = [
+  {
+    heading: "Products",
+    links: [
+      { href: "/connected-banking", label: "Connected Banking" },
+      { href: "/solutions#payments-collections", label: "Payments & Collections" },
+      { href: "/solutions#reconciliation", label: "Reconciliation Engine" },
+      { href: "/solutions#virtual-accounts", label: "Virtual Accounts" },
+      { href: "/solutions#governance", label: "Access & Governance" },
+    ],
+  },
+  {
+    heading: "Solutions",
+    links: [
+      { href: "/solutions", label: "Full Ecosystem" },
+      { href: "/industries#banks", label: "For Banks" },
+      { href: "/industries#nbfcs", label: "For NBFCs" },
+      { href: "/industries#smes", label: "For SMEs & Enterprises" },
+      { href: "/industries#fintech", label: "For Fintechs" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { href: "/about", label: "About Us" },
+      { href: "/services", label: "Services" },
+      { href: "/services#partner-program", label: "Partner Program" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+    ],
+  },
+];
+
