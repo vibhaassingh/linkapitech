@@ -12,7 +12,8 @@
     "qa:motion": "node scripts/qa/motion.mjs",
     "qa:webgl": "node scripts/qa/probe.mjs",
     "qa:kbd": "node scripts/qa/kbd1.mjs",
-    "qa:rm": "node scripts/qa/kbd2.mjs"
+    "qa:rm": "node scripts/qa/kbd2.mjs",
+    "gate": "bash scripts/qa/gate.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
