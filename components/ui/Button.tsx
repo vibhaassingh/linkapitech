@@ -12,7 +12,11 @@ interface ButtonProps {
   showArrow?: boolean;
   /** Trailing glyph override (e.g. a mail or speech icon, per the Figma CTAs). */
   icon?: ReactNode;
-  /** @deprecated old design's magnetic hover — accepted and ignored */
+  /**
+   * Magnetic hover pull. Handled by the delegated <Magnetic> listener in the
+   * root layout via a data attribute, so this stays a server component.
+   * Off for `quiet` (an inline text link shouldn't drift).
+   */
   magnetic?: boolean;
   type?: "button" | "submit";
   onClick?: () => void;
@@ -52,7 +56,7 @@ export function Button({
   className,
   showArrow = true,
   icon,
-  magnetic: _magnetic,
+  magnetic,
   type = "button",
   onClick,
   disabled,
@@ -60,6 +64,8 @@ export function Button({
 }: ButtonProps) {
   const v: Exclude<Variant, "accent"> = variant === "accent" ? "primary" : variant;
   const classes = cn(base, styles[v], className);
+  // Default on for the pill variants; never for the inline text link.
+  const pull = (magnetic ?? v !== "quiet") ? { "data-magnetic": "" } : {};
 
   const inner = (
     <>
@@ -79,20 +85,27 @@ export function Button({
     const internal = href.startsWith("/") && !href.startsWith("//");
     if (internal) {
       return (
-        <Link href={href} className={classes} {...rest}>
+        <Link href={href} className={classes} {...pull} {...rest}>
           {inner}
         </Link>
       );
     }
     return (
-      <a href={href} className={classes} {...rest}>
+      <a href={href} className={classes} {...pull} {...rest}>
         {inner}
       </a>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} className={classes} {...rest}>
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={classes}
+      {...pull}
+      {...rest}
+    >
       {inner}
     </button>
   );

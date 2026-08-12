@@ -1,12 +1,14 @@
 import type { CSSProperties } from "react";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { HeroField } from "@/components/three/HeroField";
 
 /**
  * Hero visual — concentric orbit arcs with three floating glass chips.
  *
  * Server-rendered SVG + DOM: crisp at any density, costs no JS, and paints
- * with the hero so it can never push the LCP. Phase 5 layers an optional
- * WebGL drift behind this on capable desktops.
+ * with the hero so it can never push the LCP. <HeroField> layers an optional
+ * WebGL haze between the arcs and the chips on capable desktops; the arcs and
+ * chips are the whole composition on their own, so it is purely additive.
  */
 const CHIPS: { icon: IconName; className: string; delay: string; label: string }[] = [
   {
@@ -62,6 +64,9 @@ export function HeroOrbit() {
         {/* innermost dome, softly filled */}
         <path d="M 170 340 A 80 80 0 0 1 330 340 Z" fill="url(#ho-core)" />
       </svg>
+
+      {/* Ambient WebGL haze — sits above the arcs, below the chips. */}
+      <HeroField />
 
       {/* Floating glass chips */}
       {CHIPS.map((c) => (

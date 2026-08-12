@@ -42,7 +42,9 @@ export default function OpengraphImage() {
 
         <div style={{ display: "flex", gap: 40, fontSize: 23, color: "#CDBBD4" }}>
           <span>70,000+ businesses onboarded</span>
-          <span>₹60,000 Cr+ monthly volume</span>
+          {/* No ₹ here: ImageResponse fetches glyphs per-character and the
+              rupee sign 400s, which would render as tofu in the social card. */}
+          <span>INR 60,000 Cr+ monthly volume</span>
           <span>35+ APIs · 5+ banks live</span>
         </div>
       </div>

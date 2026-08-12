@@ -5,6 +5,7 @@ import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
 import { Analytics } from "@/lib/analytics";
 import { CursorGlow } from "@/components/motion/CursorGlow";
+import { Magnetic } from "@/components/motion/Magnetic";
 
 export const metadata: Metadata = {
   metadataBase,
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${poppins.variable} ${plexMono.variable}`}>
       <body className="font-sans antialiased">
         <CursorGlow />
+        <Magnetic />
         {children}
         <Analytics />
       </body>

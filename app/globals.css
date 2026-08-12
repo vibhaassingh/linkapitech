@@ -571,6 +571,18 @@ html {
   }
 }
 
+/* Ghost numerals drift a little slower than the copy beside them as their row
+   reveals, so the big digits read as a background plane. Transform-only, and
+   it settles the moment the row is in view (no scroll listener involved). */
+.ghost-num {
+  transform: translateY(10px);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+  transition-delay: 120ms;
+}
+[data-inview] .ghost-num {
+  transform: translateY(0);
+}
+
 /* Gentle float for hero glass chips. */
 .chip-float {
   animation: chipFloat 7s ease-in-out infinite;
@@ -769,6 +781,10 @@ html {
   }
   .terminal [data-tline] {
     opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .ghost-num {
     transform: none !important;
     transition: none !important;
   }
