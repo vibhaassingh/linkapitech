@@ -53,6 +53,7 @@ OWNERSHIP = [
 
     # --- S4 chrome ---
     ("S4", "components/chrome/*"),
+    ("S4", "components/chrome/chrome.css"),
     ("S4", "app/(marketing)/layout.tsx"),
     ("S4", "app/(site)/layout.tsx"),
     ("S4", "app/layout.tsx"),
