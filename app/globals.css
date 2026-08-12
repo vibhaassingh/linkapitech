@@ -110,23 +110,9 @@
      the type-scale classes and tailwind's font-display key. */
   --font-display: var(--font-sans);
 
-  /* ---- TEMP compat aliases (Institutional Light key names) ----
-     Old components still reference navy/steel/inverse Tailwind keys
-     until Phases 2–4 replace them. Mapped into the plum palette so
-     interim builds render coherently. Remove in Phase 6. */
-  --surface-2: #f1eaf5;
-  --inverse: var(--plum-950);
-  --inverse-2: var(--plum-800);
-  --navy-950: var(--plum-950);
-  --navy-900: var(--plum-900);
-  --navy-700: var(--plum-700);
-  --navy-600: var(--plum-600);
-  --navy-200: var(--lavender-300);
-  --navy-100: #e9dff0;
-  --navy-050: var(--card-tint);
-  --steel: #a99bb5;
-  --steel-2: #d3c8dc;
-  --violet: var(--violet-500);
+  /* Ambient violet light — the cursor glow, section wash and card sheen.
+     Pre-multiplied alpha because Tailwind's opacity modifier does not work on
+     var() colours (see the hairline note above). */
   --violet-soft: rgba(142, 36, 170, 0.1);
   --violet-glow: rgba(142, 36, 170, 0.16);
 }
@@ -159,7 +145,6 @@
     outline-offset: 2px;
   }
   /* On plum surfaces the plum ring vanishes — swap to inverse ink. */
-  .bg-inverse :focus-visible,
   .section-dark :focus-visible {
     outline-color: var(--ink-inv);
   }
@@ -201,8 +186,7 @@
 .accent-word {
   color: var(--violet-text);
 }
-.section-dark .accent-word,
-.bg-inverse .accent-word {
+.section-dark .accent-word {
   color: var(--lavender-400);
 }
 
@@ -221,14 +205,14 @@
   color: var(--violet-text);
   background: var(--surface);
 }
-.section-dark .eyebrow-capsule,
-.bg-inverse .eyebrow-capsule {
+.section-dark .eyebrow-capsule {
   border-color: var(--glass-line);
   color: var(--ink-inv);
   background: var(--glass-bg);
   backdrop-filter: blur(8px);
 }
-/* Legacy plain eyebrow (still used by inner pages until Phase 4). */
+/* Plain (non-capsule) eyebrow — used for the mobile menu's section labels,
+   where a pill outline would compete with the nav rows. */
 .eyebrow {
   font-size: 0.75rem;
   font-weight: 500;
@@ -689,11 +673,9 @@ html {
     box-shadow: 0 0 0 10px rgba(98, 33, 111, 0);
   }
 }
-.bg-inverse .pulse-dot,
 .section-dark .pulse-dot {
   background: var(--lavender-400);
 }
-.bg-inverse .pulse-dot::after,
 .section-dark .pulse-dot::after {
   box-shadow: 0 0 0 0 rgba(201, 184, 216, 0.3);
   animation-name: quietpulse-inv;

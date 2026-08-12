@@ -20,7 +20,8 @@ export interface SectionHeading {
 
 /** Per-section eyebrow/heading copy for the homepage. */
 export const HOME_SECTIONS: Record<string, SectionHeading> = {
-  who: { heading: "Who We Are ?" },
+  // Figma spaced the question mark ("Who We Are ?"); closed up for English.
+  who: { heading: "Who We Are?" },
   what: { heading: "What We Do" },
   ecosystem: {
     heading: "Product Ecosystem at a Glance",
@@ -43,7 +44,9 @@ export const HOME_SECTIONS: Record<string, SectionHeading> = {
   },
   faq: {
     eyebrow: "Frequently asked questions",
-    heading: "Questions? We hear often.",
+    // Figma read "Questions ? we here often." — a typo for "hear" with a
+    // stray question mark. The intended phrase is a noun, not a question.
+    heading: "Questions we hear often.",
   },
 };
 

@@ -1,6 +1,11 @@
 /**
- * Case studies — modelled once as typed data (PAGES-AND-ROUTING §3.3), rendered
- * both in the homepage Works deck and the /work/[slug] pages.
+ * ARCHIVED — not referenced by any route.
+ *
+ * The Figma Purple IA has no Work/case-study pages, and /work + /work/[slug]
+ * now redirect to /industries. This module is retained deliberately (owner
+ * decision, 2026-08-12: "retire + redirect, content stays in the repo for
+ * later reuse") so the narratives aren't lost if case studies return. Nothing
+ * imports it, so it is tree-shaken out of every bundle.
  *
  * LinkAPI has NO real client case studies (CONTENT-MAPPING §4.2), so these are
  * *aggregate, program-level* summaries built from LinkAPI's real quantified

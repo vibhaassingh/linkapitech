@@ -1,8 +1,10 @@
 import type { Config } from "tailwindcss";
 
-// "Figma Purple" theme extension — tokens live as CSS vars in globals.css.
-// navy/steel/inverse keys are TEMP compat aliases (mapped to plum values in
-// :root) so not-yet-rebuilt components keep rendering; remove in Phase 6.
+// "Figma Purple" theme extension — every value is a var() pointer at the tokens
+// in globals.css, so the palette is reskinned from one place.
+// NOTE: because these are var() colours, Tailwind's opacity modifier does not
+// work on them (`bg-plum-600/40` compiles to nothing) — add an explicit
+// translucent token in globals.css instead.
 export default {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -25,10 +27,7 @@ export default {
           DEFAULT: "var(--canvas)",
           2: "var(--canvas-2)",
         },
-        surface: {
-          DEFAULT: "var(--surface)",
-          2: "var(--surface-2)",
-        },
+        surface: "var(--surface)",
         tint: "var(--card-tint)",
         plum: {
           600: "var(--plum-600)",
@@ -61,24 +60,6 @@ export default {
           inv: "var(--line-inv)",
           plum: "var(--line-plum)",
           violet: "var(--line-violet)",
-        },
-        // ---- TEMP compat aliases (Institutional Light keys) ----
-        inverse: {
-          DEFAULT: "var(--inverse)",
-          2: "var(--inverse-2)",
-        },
-        navy: {
-          "050": "var(--navy-050)",
-          100: "var(--navy-100)",
-          200: "var(--navy-200)",
-          600: "var(--navy-600)",
-          700: "var(--navy-700)",
-          900: "var(--navy-900)",
-          950: "var(--navy-950)",
-        },
-        steel: {
-          DEFAULT: "var(--steel)",
-          2: "var(--steel-2)",
         },
       },
       borderRadius: {

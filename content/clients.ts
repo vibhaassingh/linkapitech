@@ -6,7 +6,10 @@
  * the Figma specifies — bank marks read as themselves on the white band.
  *
  * TODO: client to confirm — supply licensed vector logos (SVG) for each mark,
- * and confirm usage rights for every brand listed here.
+ * and confirm written usage rights for every brand shown. Note these marks sit
+ * under "Trusted by India's leading banks and enterprises", which asserts a
+ * customer relationship, so each one needs the brand's actual permission — a
+ * stronger bar than the ERP marks below, which only assert interoperability.
  */
 export interface ClientMark {
   name: string;
@@ -32,7 +35,12 @@ export const CLIENTS: ClientMark[] = [
   { name: "RBL Bank", logo: "/logos/rbl-color.webp", ratio: 295 / 123, scale: 1 },
 ];
 
-/** ERP platforms LinkAPI's plugins integrate with (Figma 2026-08). */
+/**
+ * ERP platforms LinkAPI's plugins integrate with (Figma 2026-08). These marks
+ * state a factual integration rather than a customer relationship, so they are
+ * ordinary nominative use — but the section heading must stay "ERPs we
+ * integrate with" and never imply partnership or endorsement.
+ */
 export interface ErpMark {
   name: string;
   logo: string;
