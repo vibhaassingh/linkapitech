@@ -81,13 +81,40 @@ def capture(base_url: str, routes) -> bool:
     return ok
 
 
+def best_aligned_diff(a: Image.Image, b: Image.Image, search=48):
+    """Diff after compensating for a uniform vertical shift.
+
+    A raw pixel diff cannot tell "the page moved down 14px" from "the page was
+    redesigned": text is thin and high-contrast, so a small uniform translation
+    makes nearly every text pixel differ. Three separate hypotheses about a
+    ~8% diff (border-radius keyframes, var() in keyframes, text-wrap) were all
+    falsified before the real answer turned out to be translation. So search a
+    small offset window and report the best alignment — what is left after that
+    is genuine change.
+    """
+    w = min(a.width, b.width)
+    h = min(a.height, b.height) - search
+    if h <= 0:
+        return None, 0
+    best, best_dy = None, 0
+    for dy in range(-search, search + 1, 2):
+        ac = a.crop((0, search, w, search + h))
+        bc = b.crop((0, search + dy, w, search + dy + h))
+        diff = ImageChops.difference(ac, bc).convert("L")
+        changed = sum(diff.point(lambda p: 255 if p > CHANNEL_TOL else 0).histogram()[1:])
+        pct = 100.0 * changed / (w * h)
+        if best is None or pct < best:
+            best, best_dy = pct, dy
+    return best, best_dy
+
+
 def compare(name: str):
     a_path = os.path.join(BASELINE, name)
     b_path = os.path.join(CURRENT, name)
     if not os.path.exists(a_path):
-        return ("missing-baseline", 0.0, 0, None)
+        return ("missing-baseline", 0.0, 0, None, 0.0, 0)
     if not os.path.exists(b_path):
-        return ("missing-current", 0.0, 0, None)
+        return ("missing-current", 0.0, 0, None, 0.0, 0)
 
     a = Image.open(a_path).convert("RGB")
     b = Image.open(b_path).convert("RGB")
@@ -100,20 +127,24 @@ def compare(name: str):
     diff = ImageChops.difference(ac, bc)
     bbox = diff.getbbox()
     if bbox is None and dh == 0:
-        return ("identical", 0.0, 0, None)
+        return ("identical", 0.0, 0, None, 0.0, 0)
 
     # Count pixels whose summed channel delta clears the noise floor.
     gray = diff.convert("L").point(lambda p: 255 if p > CHANNEL_TOL else 0)
     changed = sum(gray.histogram()[1:])
     pct = 100.0 * changed / (w * h)
 
-    if abs(dh) > REVIEW_DH or pct > REVIEW_PCT:
+    # Score on the shift-compensated diff; the raw number is kept for context.
+    aligned, dy = best_aligned_diff(a, b)
+    score = aligned if aligned is not None else pct
+
+    if abs(dh) > REVIEW_DH or score > REVIEW_PCT:
         verdict = "REDESIGN"
-    elif abs(dh) > REFINE_DH or pct > REFINE_PCT:
+    elif abs(dh) > REFINE_DH or score > REFINE_PCT:
         verdict = "review"
     else:
         verdict = "refinement"
-    return (verdict, pct, dh, (a, b, bbox))
+    return (verdict, score, dh, (a, b, bbox), pct, dy)
 
 
 def write_strip(name: str, a: Image.Image, b: Image.Image, bbox):
@@ -159,11 +190,11 @@ def main():
     for route in routes:
         for w in WIDTHS:
             name = f"{slug(route)}-{w}.png"
-            verdict, pct, dh, imgs = compare(name)
+            verdict, pct, dh, imgs, raw, dy = compare(name)
             strip = None
             if verdict in ("review", "REDESIGN") and imgs:
                 strip = write_strip(name, imgs[0], imgs[1], imgs[2])
-            rows.append((name, verdict, pct, dh, strip))
+            rows.append((name, verdict, pct, dh, strip, raw, dy))
             worst = max(worst, {"identical": 0, "refinement": 0, "review": 1,
                                 "REDESIGN": 2, "missing-baseline": 1,
                                 "missing-current": 1}[verdict])
@@ -173,8 +204,8 @@ def main():
     rows.sort(key=lambda r: (order[r[1]], -r[2]))
 
     print(f"\n=== pixel diff vs baseline ({len(rows)} captures) ===")
-    for name, verdict, pct, dh, strip in rows:
-        note = f"{pct:5.2f}% px"
+    for name, verdict, pct, dh, strip, raw, dy in rows:
+        note = f"{pct:5.2f}% aligned (raw {raw:5.2f}%, shift {dy:+d}px)"
         if dh:
             note += f"  height {dh:+d}px"
         print(f"  {verdict:16s} {name:34s} {note}")

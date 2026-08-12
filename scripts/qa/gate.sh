@@ -122,6 +122,27 @@ if node scripts/qa/kbd1.mjs; then ok "keyboard clean"; else bad "keyboard findin
 step "reduced motion across pages"
 if node scripts/qa/kbd2.mjs; then ok "reduced-motion clean"; else bad "reduced-motion findings"; fi
 
+step "composited-animation audit (authoritative: runs GPU-composited)"
+LH=/tmp/gate-lh.json
+if npx lighthouse "$BASE/" --only-categories=performance --form-factor=mobile \
+     --screenEmulation.mobile --throttling-method=simulate --quiet \
+     --chrome-flags="--headless=new --no-sandbox" --output=json --output-path="$LH" >/dev/null 2>&1; then
+  read -r NCA TBT PERF <<<"$(python3 - "$LH" <<'PY2'
+import json, sys
+d = json.load(open(sys.argv[1])); a = d["audits"]
+items = (a.get("non-composited-animations", {}).get("details") or {}).get("items", [])
+print(len(items),
+      round(a["total-blocking-time"]["numericValue"]),
+      round(d["categories"]["performance"]["score"] * 100))
+PY2
+)"
+  if [ "$NCA" = "0" ]; then ok "0 non-composited animations (TBT ${TBT}ms, perf ${PERF})"
+  else bad "$NCA non-composited animation(s) — see $LH"; fi
+  if [ "${TBT:-999}" -le 200 ]; then ok "TBT ${TBT}ms within budget"; else bad "TBT ${TBT}ms over 200ms"; fi
+else
+  warn "lighthouse run failed — composited-animation audit skipped"
+fi
+
 if [ $SKIP_PIXDIFF -eq 0 ]; then
   step "pixel diff vs baseline (refinement vs redesign)"
   python3 scripts/qa/pixdiff.py --base "$BASE"

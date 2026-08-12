@@ -205,16 +205,24 @@ async function session({ width, height, reducedMotion, mobile }) {
     await s.S("Emulation.setPageVisibilityOverride", { hidden: false }).catch(() => {});
     await s.mouseTo(box.x + box.w * 0.85, box.y + box.h * 0.5);
     await sleep(400);
-    const after = await s.evalJs(
-      `document.querySelector('[data-magnetic]').style.transform || 'none'`,
-    );
-    ok("magnetic: transform applied on hover", /translate3d/.test(after), `transform=${after}`);
+    // The pull is written to the `translate` PROPERTY, not `transform` — that
+    // split is deliberate: `translate` composes with `transform`, which is what
+    // lets Button's :active { transform: scale(.97) } still fire while the
+    // cursor is pulling it. Asserting `transform` here reported a false failure.
+    const after = await s.evalJs(`(() => {
+      const b = document.querySelector('[data-magnetic]');
+      return { translate: b.style.translate || 'none', transform: b.style.transform || 'none' };
+    })()`);
+    const pulled = after.translate !== "none" || /translate3d/.test(after.transform);
+    ok("magnetic: pull applied on hover", pulled, JSON.stringify(after));
     await s.mouseTo(5, 5);
     await sleep(400);
-    const rel = await s.evalJs(
-      `document.querySelector('[data-magnetic]').style.transform || 'none'`,
-    );
-    ok("magnetic: released on leave", rel === "none", `transform=${rel}`);
+    const rel = await s.evalJs(`(() => {
+      const b = document.querySelector('[data-magnetic]');
+      return (b.style.translate || 'none') + ' / ' + (b.style.transform || 'none');
+    })()`);
+    // Release is sprung via WAAPI, so allow a settling window.
+    ok("magnetic: released on leave", /^(none|0px) \/ none$/.test(rel) || rel === "none / none", `translate/transform=${rel}`);
   }
 
   const errs = s.events
