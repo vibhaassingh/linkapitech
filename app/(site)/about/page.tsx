@@ -5,7 +5,7 @@ import { RevealGroup } from "@/components/motion/RevealGroup";
 import { StatNumber } from "@/components/ui/StatNumber";
 import { Button } from "@/components/ui/Button";
 import { ABOUT_INTRO, PILLARS } from "@/content/about";
-import { IMPACT_STATS, PERFORMANCE_STATS } from "@/content/stats";
+import { IMPACT_STATS, GROWTH_STATS } from "@/content/stats";
 
 export const metadata = pageMetadata({
   title: "About LinkAPI Tech | Empowering Businesses with Technology Solutions",
@@ -59,7 +59,7 @@ export default function AboutPage() {
               </p>
               {pillar.key === "performance" && (
                 <div className="mt-8 grid grid-cols-2 gap-6">
-                  {PERFORMANCE_STATS.map((s) => (
+                  {GROWTH_STATS.map((s) => (
                     <StatNumber
                       key={s.label}
                       stat={s}

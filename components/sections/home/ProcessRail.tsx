@@ -1,105 +1,49 @@
-"use client";
-
-import { useRef } from "react";
-import { useScrollFill } from "@/components/motion/hooks";
+import { Reveal } from "@/components/motion/Reveal";
 import { RevealGroup } from "@/components/motion/RevealGroup";
 import { SectionHeader } from "./SectionHeader";
-import { PROCESS, PROCESS_SIGNOFF } from "@/content/process";
+import { Terminal } from "./Terminal";
+import { PROCESS } from "@/content/process";
 import { HOME_SECTIONS } from "@/content/home";
-import { cn } from "@/lib/cn";
 
 /**
- * Delivery process — four numbered phases along a scroll-filled rail
- * (vertical on all breakpoints; the fill is written straight to a CSS var,
- * no per-frame React state). No durations are shown: none exist in the
- * source and inventing them is forbidden.
+ * "How We Work" — the four delivery stages down a connector rail, with the
+ * sample request beside them. Server-rendered: no scroll-driven fill here (the
+ * Figma shows a static rail), so this stays out of the client bundle.
  */
 export function ProcessRail() {
-  const railRef = useRef<HTMLDivElement | null>(null);
-  const stepRefs = useRef(PROCESS.map(() => ({ current: null as HTMLElement | null })));
-  const passed = useScrollFill(railRef, stepRefs.current);
-
   return (
-    <section id="process" className="section-pad border-t border-line-soft">
-      <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
-        <SectionHeader meta={HOME_SECTIONS.process} />
+    <section id="process" className="section-dark section-pad">
+      <div className="mx-auto grid w-full max-w-[1240px] items-start gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+        <div>
+          <SectionHeader meta={HOME_SECTIONS.process} inverse />
 
-        <div className="relative mt-14 md:mt-16">
-          {/* rail */}
-          <div
-            ref={railRef}
-            className="absolute bottom-6 left-[7px] top-2 w-px bg-line-soft md:left-1/2"
-            aria-hidden="true"
-          >
-            <div
-              className="w-full origin-top bg-navy-600"
-              style={{ height: "100%", transform: "scaleY(var(--fill, 0))" }}
-            />
-            <span className="proc-signal" />
-          </div>
-
-          <div className="flex flex-col gap-14 md:gap-20">
-            {PROCESS.map((phase, i) => {
-              const done = i < passed;
-              const left = i % 2 === 0;
-              return (
-                <div
-                  key={phase.num}
-                  ref={(el) => {
-                    stepRefs.current[i].current = el;
-                  }}
-                  className={cn(
-                    "relative pl-10 md:w-[calc(50%-40px)] md:pl-0",
-                    left ? "md:mr-auto md:text-right" : "md:ml-auto",
-                  )}
-                >
-                  {/* node */}
+          <RevealGroup className="mt-10" as="ol" step={110}>
+            {PROCESS.map((p, i) => (
+              <li key={p.num} className="relative flex gap-5 pb-9 last:pb-0">
+                {/* connector — stops at the last node */}
+                {i < PROCESS.length - 1 && (
                   <span
-                    className={cn(
-                      "absolute left-0 top-1.5 grid h-4 w-4 place-items-center rounded-pill border transition-all duration-ui md:top-2",
-                      left ? "md:left-auto md:-right-[48px]" : "md:-left-[48px]",
-                      done ? "proc-node-done border-navy-600 bg-navy-600" : "border-steel-2 bg-surface",
-                    )}
                     aria-hidden="true"
-                  >
-                    <span
-                      className={cn("h-1.5 w-1.5 rounded-pill", done ? "bg-surface" : "bg-steel-2")}
-                    />
-                  </span>
-
-                  <p className="font-mono text-xs uppercase tracking-eyebrow text-ink-3">
-                    {phase.phaseLabel}
+                    className="absolute bottom-2 left-[19px] top-11 w-px bg-line-inv"
+                  />
+                )}
+                <span className="glass relative z-[1] grid h-10 w-10 shrink-0 place-items-center rounded-pill text-[13px] font-semibold text-ink-inv">
+                  <span className="relative z-[1]">{p.num}</span>
+                </span>
+                <div className="min-w-0 pt-1.5">
+                  <h3 className="text-[17px] font-semibold text-ink-inv">{p.title}</h3>
+                  <p className="mt-1.5 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-inv-2">
+                    {p.description}
                   </p>
-                  <h3 className="heading-3 mt-2 text-ink">
-                    {phase.title}
-                    {phase.accent ? ` ${phase.accent}` : ""}
-                  </h3>
-                  <p className="mt-3 leading-relaxed text-ink-2">{phase.description}</p>
-                  <ul
-                    className={cn(
-                      "mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px] text-ink-3",
-                      left && "md:justify-end",
-                    )}
-                  >
-                    {phase.deliverables.map((d) => (
-                      <li key={d} className="flex items-center gap-2">
-                        <span className="h-1 w-1 rounded-pill bg-steel" aria-hidden="true" />
-                        {d}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-              );
-            })}
-          </div>
+              </li>
+            ))}
+          </RevealGroup>
         </div>
 
-        <RevealGroup className="mt-16 md:text-center" step={0}>
-          <p className="mx-auto max-w-[48ch] text-[15px] leading-relaxed text-ink-2">
-            {PROCESS_SIGNOFF.lead}{" "}
-            <span className="font-medium text-ink">{PROCESS_SIGNOFF.accent}</span>
-          </p>
-        </RevealGroup>
+        <Reveal delay={200} className="lg:pt-4">
+          <Terminal />
+        </Reveal>
       </div>
     </section>
   );

@@ -349,13 +349,20 @@
   }
 }
 
-/* Gradient icon tile (violet → deep purple). */
+/* Gradient icon tile (violet → deep purple). Deliberately sets no `display`:
+   this class is defined after @tailwind utilities, so a `display` here would
+   beat `hidden`/`md:grid` at equal specificity and the tile could never be
+   hidden responsively. Call sites bring their own `grid place-items-center`. */
 .grad-tile {
   background: var(--grad-tile);
   color: #fff;
   border-radius: var(--r-md);
-  display: grid;
-  place-items: center;
+}
+/* Gradient fill for elements that own their own shape/radius (pills, avatars,
+   the ecosystem hub). Tailwind's bg-[var(--grad-tile)] would land on
+   background-COLOR, where a gradient is invalid and silently drops. */
+.grad-fill {
+  background-image: var(--grad-tile);
 }
 
 /* ============================================================
@@ -531,6 +538,29 @@ html {
     transform: rotate(360deg);
   }
 }
+/* Ecosystem constellation — dashes drift toward the hub, hub breathes. */
+.eco-wire {
+  animation: ecoWire 3.4s linear infinite;
+  animation-delay: var(--wire-delay, 0s);
+}
+@keyframes ecoWire {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.eco-hub {
+  animation: ecoHub 5s ease-in-out infinite;
+}
+@keyframes ecoHub {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(142, 36, 170, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(142, 36, 170, 0);
+  }
+}
+
 /* Gentle float for hero glass chips. */
 .chip-float {
   animation: chipFloat 7s ease-in-out infinite;
@@ -714,9 +744,18 @@ html {
   .sheen::before {
     display: none !important;
   }
+  /* A frozen marquee would clip every logo past the first two, so hand the
+     row over to native horizontal scrolling and drop the duplicate copy. */
   .marquee {
     animation: none !important;
     transform: none !important;
+    width: auto !important;
+  }
+  .marquee-mask {
+    overflow-x: auto !important;
+  }
+  .marquee-dup {
+    display: none !important;
   }
   .terminal [data-tline] {
     opacity: 1 !important;

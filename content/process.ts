@@ -1,58 +1,78 @@
 /**
- * Process stepper — 4 phases (CONTENT-MAPPING §5.3), consolidated from the
- * source's bare 6-step icon list and tailored to API-integration delivery.
- * No real timeline exists in the source, so phases are labelled "Phase N / 4"
- * rather than inventing week counts (PLAN §6 / CONTENT-MAPPING §4.4).
+ * "How We Work" — the Figma's four-stage flow (2026-08). The Figma's own
+ * subhead said "six-stage" while showing four steps; four is what ships.
  */
 export interface ProcessPhase {
   num: string;
   title: string;
-  accent?: string;
   description: string;
-  phaseLabel: string;
-  deliverables: string[];
 }
 
 export const PROCESS: ProcessPhase[] = [
   {
     num: "01",
-    title: "Discovery &",
-    accent: "Analysis",
+    title: "Integrate",
     description:
-      "We map your systems, endpoints, and data flows — and surface the compliance and security requirements that will shape the integration before a line of code is written.",
-    phaseLabel: "Phase 01 / 04",
-    deliverables: ["Systems Audit", "Endpoint Map", "Compliance Review"],
+      "Plug into our REST APIs with detailed SDKs and clear reference docs for every stack.",
   },
   {
     num: "02",
-    title: "Solution Design &",
-    accent: "Architecture",
+    title: "Configure",
     description:
-      "We design the integration approach — the adapters, connectors, and security protocols — and agree the architecture with your team so there are no surprises during the build.",
-    phaseLabel: "Phase 02 / 04",
-    deliverables: ["Integration Design", "Adapter Spec", "Security Plan"],
+      "Set up banking rails, payment flows and webhooks through an intuitive dashboard.",
   },
   {
     num: "03",
-    title: "Development &",
-    accent: "Integration",
+    title: "Test & Verify",
     description:
-      "Comprehensive API integration support from UAT to production — we build and configure bank and API connectivity, handling empanelment and the technical coordination in between.",
-    phaseLabel: "Phase 03 / 04",
-    deliverables: ["Bank Config", "UAT Build", "Connectivity"],
+      "Run scenarios in a full-fidelity sandbox environment with real-time debugging tools.",
   },
   {
     num: "04",
-    title: "Testing, Go-Live &",
-    accent: "Support",
+    title: "Go Live",
     description:
-      "We test thoroughly, cut over to production, and stay on afterward. Ongoing post-live support is available on demand, so the system keeps performing well past launch.",
-    phaseLabel: "Phase 04 / 04",
-    deliverables: ["Production Cutover", "Testing", "Ongoing Support"],
+      "Deploy to production and start processing, with ongoing post-live support on demand.",
   },
 ];
 
-export const PROCESS_SIGNOFF = {
-  lead: "Beyond go-live —",
-  accent: "ongoing post-live support, on demand.",
+/** One rendered line of the sample request. */
+export type TermLine =
+  | { t: "cmt"; text: string }
+  | { t: "raw"; text: string }
+  | { t: "open"; key: string }
+  | {
+      t: "kv";
+      key: string;
+      value: string;
+      kind: "num" | "str";
+      indent?: boolean;
+      last?: boolean;
+    };
+
+/**
+ * Sample request rendered in the terminal beside the steps. Deliberately uses
+ * a neutral demo domain — the Figma's sample carried a real bank's address.
+ */
+export const PROCESS_SAMPLE: { method: string; path: string; lines: TermLine[] } = {
+  method: "POST",
+  path: "/v1/payments/create",
+  lines: [
+    { t: "cmt", text: "// Request payload" },
+    { t: "raw", text: "{" },
+    { t: "kv", key: "amount", value: "50000", kind: "num" },
+    { t: "kv", key: "currency", value: '"INR"', kind: "str" },
+    { t: "kv", key: "order_id", value: '"order_9K2xPz"', kind: "str" },
+    { t: "open", key: "customer" },
+    { t: "kv", key: "id", value: '"cust_8372"', kind: "str", indent: true },
+    {
+      t: "kv",
+      key: "email",
+      value: '"finance@acme-demo.com"',
+      kind: "str",
+      indent: true,
+      last: true,
+    },
+    { t: "raw", text: "  }" },
+    { t: "raw", text: "}" },
+  ],
 };

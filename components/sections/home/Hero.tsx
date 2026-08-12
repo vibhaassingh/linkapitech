@@ -1,48 +1,65 @@
 import { Button } from "@/components/ui/Button";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/motion/Reveal";
-import { HeroVisual } from "@/components/three/HeroVisual";
+import { HeroOrbit } from "@/components/three/HeroOrbit";
 import { HERO } from "@/content/home";
 
 /**
- * Institutional hero — text column left, connective-arc network visual right.
- * The H1 is the LCP element; the visual is a static SVG poster upgraded to a
- * lazy Three.js scene on capable desktops (Phase 4).
+ * Homepage hero — plum gradient, capsule eyebrow, two CTAs, and the orbit
+ * visual on the right. The H1 and sub are deliberately NOT reveal-gated: the
+ * headline is the LCP element and must paint on first frame.
  */
 export function Hero() {
   return (
-    <section className="ambient-violet relative overflow-hidden">
-      <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 px-6 pb-[clamp(56px,7vw,96px)] pt-[clamp(120px,15vh,180px)] md:px-10 lg:grid-cols-[1.05fr_1fr]">
+    <section className="relative overflow-hidden bg-[var(--plum-900)]">
+      {/* gradient + radial glow */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{ background: "var(--grad-hero)" }}
+      />
+
+      <div className="relative z-[1] mx-auto grid w-full max-w-[1240px] items-center gap-12 px-6 pb-20 pt-[140px] md:px-10 md:pb-28 md:pt-[168px] lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         <div>
-          <Reveal>
-            <Eyebrow>{HERO.eyebrow}</Eyebrow>
-          </Reveal>
-          {/* H1 and sub are LCP candidates — never reveal-gated, paint with first render. */}
-          <h1 className="display-1 mt-5 text-ink">{HERO.headline}</h1>
-          <p className="body-lg mt-6 max-w-[52ch] text-ink-2">{HERO.sub}</p>
-          <Reveal delay={280}>
-            <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-7">
-              <Button href={HERO.cta.href}>{HERO.cta.label}</Button>
-              <Button href={HERO.secondaryCta.href} variant="quiet">
-                {HERO.secondaryCta.label}
-              </Button>
-            </div>
-          </Reveal>
-          <Reveal delay={380}>
-            <p className="mt-10 flex items-center gap-3 text-[13px] text-ink-3">
-              <span className="pulse-dot" aria-hidden="true" />
-              <span className="font-mono uppercase tracking-eyebrow">{HERO.support.label}</span>
-              <a href={HERO.support.href} className="tnum font-medium text-ink-2 hover:text-ink">
-                {HERO.support.value}
-              </a>
-            </p>
+          <span className="eyebrow-capsule">{HERO.eyebrow}</span>
+
+          <h1 className="display-1 mt-7 max-w-[19ch] text-ink-inv">{HERO.headline}</h1>
+
+          <p className="mt-6 max-w-[54ch] text-[16.5px] leading-relaxed text-ink-inv-2">
+            {HERO.sub}
+          </p>
+
+          <Reveal delay={220} className="mt-9 flex flex-wrap items-center gap-3">
+            <Button href={HERO.cta.href} variant="light">
+              {HERO.cta.label}
+            </Button>
+            <Button href={HERO.secondaryCta.href} variant="glass" icon={<SpeakIcon />}>
+              {HERO.secondaryCta.label}
+            </Button>
           </Reveal>
         </div>
 
-        <Reveal delay={200} className="hidden lg:block">
-          <HeroVisual />
-        </Reveal>
+        <HeroOrbit />
       </div>
     </section>
+  );
+}
+
+function SpeakIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+      <circle cx="9.5" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M3.5 19.5c0-3.2 2.7-5 6-5s6 1.8 6 5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17.5 7.5a4 4 0 0 1 0 5M20 5.5a7 7 0 0 1 0 9"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
