@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "qa": "node scripts/qa/qa.mjs",
+    "qa:motion": "node scripts/qa/motion.mjs",
+    "qa:webgl": "node scripts/qa/probe.mjs",
+    "qa:kbd": "node scripts/qa/kbd1.mjs",
+    "qa:rm": "node scripts/qa/kbd2.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
