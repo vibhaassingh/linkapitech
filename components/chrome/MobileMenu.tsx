@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useScrollLock } from "@/components/motion/SmoothScrollProvider";
-import { SOLUTIONS_MENU, WORK_MENU, NAV_PAGES, CTA, CONTACT } from "@/lib/site";
+import { NAV, CTA, CONTACT } from "@/lib/site";
 import { cn } from "@/lib/cn";
 
 interface MobileMenuProps {
@@ -13,10 +13,10 @@ interface MobileMenuProps {
 }
 
 /**
- * Full-screen mobile navigation sheet (<1024px). role=dialog + aria-modal,
- * focus moved in on open and restored on close, Tab cycles inside, Esc
- * closes, body scroll locked while open. Solutions/Work render as
- * disclosure accordions.
+ * Mobile navigation sheet (<1024px). Flat list — the Figma nav has no
+ * sub-levels, so the accordions are gone. Keeps the a11y scaffolding:
+ * role=dialog + aria-modal, focus moved in on open and restored on close,
+ * Tab cycles inside, Esc closes, scroll locked while open.
  */
 export function MobileMenu({ open, onClose }: MobileMenuProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -36,7 +36,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Focus in on open; restore on close; Esc + simple focus cycle.
+  // Focus in on open; restore on close; Esc + focus cycle.
   useEffect(() => {
     if (!open) return;
     restoreRef.current = document.activeElement as HTMLElement | null;
@@ -80,41 +80,29 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
       aria-modal="true"
       aria-label="Navigation"
       hidden={!open}
-      className="fixed inset-0 top-[72px] z-40 overflow-y-auto bg-canvas lg:hidden"
+      className="fixed inset-0 top-[76px] z-40 overflow-y-auto bg-canvas lg:hidden"
     >
-      <nav aria-label="Mobile primary" className="flex min-h-full flex-col px-6 pb-10 pt-4">
-        <Disclosure label="Solutions">
-          {SOLUTIONS_MENU.flatMap((col) => col.links).map((link) => (
-            <MobileLink key={link.href} href={link.href} label={link.label} />
-          ))}
-        </Disclosure>
-
-        <Disclosure label="Work">
-          {WORK_MENU.map((link) => (
-            <MobileLink key={link.href} href={link.href} label={link.label} />
-          ))}
-          <MobileLink href="/work" label="All work →" />
-        </Disclosure>
-
-        {NAV_PAGES.map((p) => (
-          <Link
-            key={p.href}
-            href={p.href}
-            className="border-b border-line-soft py-4 font-display text-[17px] font-semibold text-ink"
-          >
-            {p.label}
-          </Link>
-        ))}
-        <Link
-          href="/contact"
-          className="border-b border-line-soft py-4 font-display text-[17px] font-semibold text-ink"
-        >
-          Contact
-        </Link>
+      <nav aria-label="Mobile primary" className="flex min-h-full flex-col px-6 pb-12 pt-6">
+        {NAV.map((item) => {
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "border-b border-line-soft py-4 text-[18px] font-semibold",
+                active ? "text-violet-text" : "text-ink",
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
 
         <Link
           href={CTA.href}
-          className="mt-8 inline-flex items-center justify-center gap-2 rounded-sm bg-navy-900 px-6 py-4 text-[15px] font-medium text-ink-inv"
+          className="mt-8 inline-flex items-center justify-center rounded-pill bg-plum-600 px-6 py-4 text-[15px] font-semibold text-ink-inv"
         >
           {CTA.label}
         </Link>
@@ -122,12 +110,13 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
         <div className="mt-10">
           <p className="eyebrow mb-3">Reach us</p>
           {CONTACT.channels.map((ch) => (
-            <p key={ch.phone} className="mb-2 text-sm text-ink-2">
-              <a href={ch.phoneHref} className="tnum font-medium text-ink">
+            <p key={ch.phone} className="mb-3 text-sm leading-relaxed text-ink-2">
+              <a href={ch.phoneHref} className="font-medium text-ink">
                 {ch.phone}
               </a>
-              {" · "}
-              <a href={`mailto:${ch.email}`} className="break-all">
+              <br />
+              {/* break-all would orphan a single character; wrap at the @ instead */}
+              <a href={`mailto:${ch.email}`} className="[overflow-wrap:anywhere]">
                 {ch.email}
               </a>
             </p>
@@ -135,42 +124,5 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
         </div>
       </nav>
     </div>
-  );
-}
-
-function Disclosure({ label, children }: { label: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const id = `mobile-group-${label.toLowerCase()}`;
-  return (
-    <div className={cn("acc-row border-b border-line-soft", open && "is-open")}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between py-4 text-left font-display text-[17px] font-semibold text-ink"
-      >
-        {label}
-        <span
-          aria-hidden="true"
-          className={cn("text-ink-3 transition-transform duration-ui", open && "rotate-45")}
-        >
-          +
-        </span>
-      </button>
-      <div id={id} className="acc-panel">
-        <div className="acc-panel-min">
-          <div className="acc-inner flex flex-col pb-4">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MobileLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link href={href} className="rounded-sm px-1 py-2.5 text-[15px] text-ink-2">
-      {label}
-    </Link>
   );
 }

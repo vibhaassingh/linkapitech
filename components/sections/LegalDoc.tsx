@@ -5,7 +5,7 @@ import { Reveal } from "@/components/motion/Reveal";
 /** Numbered-clause legal document — 680px prose column, institutional styling. */
 export function LegalDocView({ doc }: { doc: LegalDoc }) {
   return (
-    <section className="mx-auto w-full max-w-[1240px] px-6 pb-24 pt-[clamp(48px,7vh,80px)] md:px-10">
+    <section className="mx-auto w-full max-w-[1240px] px-6 pb-24 pt-[132px] md:px-10 md:pt-[152px]">
       <Reveal>
         <Eyebrow>{doc.title}</Eyebrow>
       </Reveal>

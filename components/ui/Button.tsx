@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "outline" | "quiet" | "accent";
+type Variant = "primary" | "light" | "glass" | "outline" | "quiet" | "accent";
 
 interface ButtonProps {
   children: ReactNode;
@@ -10,7 +10,9 @@ interface ButtonProps {
   variant?: Variant;
   className?: string;
   showArrow?: boolean;
-  /** @deprecated old design's magnetic hover — accepted and ignored until the last legacy consumer is rebuilt */
+  /** Trailing glyph override (e.g. a mail or speech icon, per the Figma CTAs). */
+  icon?: ReactNode;
+  /** @deprecated old design's magnetic hover — accepted and ignored */
   magnetic?: boolean;
   type?: "button" | "submit";
   onClick?: () => void;
@@ -19,21 +21,29 @@ interface ButtonProps {
 }
 
 const base =
-  "group inline-flex items-center justify-center gap-2.5 rounded-sm font-medium transition-colors duration-ui ease-out-expo disabled:opacity-60 disabled:pointer-events-none";
+  "group inline-flex items-center justify-center gap-2.5 rounded-pill font-semibold transition-all duration-ui ease-out-expo disabled:opacity-60 disabled:pointer-events-none";
 
 const styles: Record<Exclude<Variant, "accent">, string> = {
+  /** Brand plum fill — the default CTA on light surfaces. */
   primary:
-    "bg-navy-900 px-7 py-[15px] text-[15px] text-ink-inv hover:bg-navy-700",
+    "bg-plum-600 px-7 py-[14px] text-[15px] text-ink-inv shadow-card hover:bg-violet-600 hover:shadow-float",
+  /** White fill — the primary CTA on plum/dark surfaces. */
+  light:
+    "bg-surface px-7 py-[14px] text-[15px] text-plum-700 shadow-card hover:bg-white hover:shadow-float",
+  /** Liquid-glass secondary on plum surfaces. */
+  glass:
+    "glass sheen rounded-pill px-7 py-[14px] text-[15px] text-ink-inv hover:bg-white/[0.14]",
+  /** Hairline outline on light surfaces. */
   outline:
-    "border border-line bg-transparent px-7 py-[14px] text-[15px] text-ink hover:border-ink",
-  quiet:
-    "px-0 py-1 text-[15px] text-navy-600 hover:text-navy-900",
+    "border border-line bg-transparent px-7 py-[13px] text-[15px] text-ink hover:border-plum-600 hover:text-plum-700",
+  /** Inline text link with arrow. */
+  quiet: "px-0 py-1 text-[15px] text-violet-text hover:text-plum-700",
 };
 
 /**
- * Institutional button set: navy fill, hairline outline, quiet link-with-arrow.
- * Renders <Link> for internal paths, <a> otherwise. ("accent" maps to primary
- * for the few not-yet-rebuilt legacy call sites.)
+ * Pill button set (Figma Purple): plum fill, white-on-plum, glass secondary,
+ * hairline outline, quiet link. Renders <Link> for internal paths, <a>
+ * otherwise. ("accent" maps to primary for legacy call sites.)
  */
 export function Button({
   children,
@@ -41,6 +51,7 @@ export function Button({
   variant = "primary",
   className,
   showArrow = true,
+  icon,
   magnetic: _magnetic,
   type = "button",
   onClick,
@@ -52,13 +63,13 @@ export function Button({
 
   const inner = (
     <>
-      <span>{children}</span>
-      {showArrow && (
+      <span className="relative z-[2]">{children}</span>
+      {(showArrow || icon) && (
         <span
           aria-hidden="true"
-          className="transition-transform duration-ui ease-out-expo group-hover:translate-x-0.5"
+          className="relative z-[2] transition-transform duration-ui ease-out-expo group-hover:translate-x-0.5"
         >
-          <Arrow />
+          {icon ?? <Arrow />}
         </span>
       )}
     </>
@@ -93,7 +104,7 @@ function Arrow() {
       <path
         d="M5 12h14M13 6l6 6-6 6"
         stroke="currentColor"
-        strokeWidth="1.7"
+        strokeWidth="1.9"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

@@ -16,7 +16,7 @@ export function CaseGrid() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <SectionHeader meta={HOME_SECTIONS.work} />
           <Link
-            href="/work"
+            href="/industries"
             className="mb-2 inline-flex items-center gap-2 text-[14.5px] font-medium text-navy-600 transition-colors duration-ui hover:text-navy-900"
           >
             All work <span aria-hidden="true">→</span>
@@ -29,7 +29,7 @@ export function CaseGrid() {
             return (
               <Link
                 key={c.slug}
-                href={`/work/${c.slug}`}
+                href="/industries"
                 className="spotlight group flex flex-col justify-between overflow-hidden rounded-md border border-line bg-surface p-8 shadow-card transition-all duration-ui hover:-translate-y-0.5 hover:border-steel md:p-10"
               >
                 <div>
