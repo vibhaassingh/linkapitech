@@ -753,8 +753,18 @@ html {
    free (asserted by scripts/qa/motion.mjs check 1).
 
    RULES FOR CALL SITES
-   - Every class here animates transform / opacity / filter / border-radius
-     only. None of those affect layout, so none can cause CLS.
+   - Every class here animates transform / opacity / filter ONLY. Two separate
+     constraints are riding on that list, and they are not the same test:
+       * CLS — none of those properties affect layout, so none can shift content.
+       * COMPOSITING — only those run on the compositor thread. Anything else in
+         a keyframe drops the whole animation onto the main thread.
+     border-radius satisfies the first and fails the second, which is exactly
+     how it got added back once already: a profile showed its effect on style
+     recalc was inside the noise, and that was mistaken for a clean bill of
+     health. It is not the same measurement. The authoritative check is
+     Lighthouse's `non-composited-animations` audit, asserted == 0 by
+     scripts/qa/gate.sh; with the radius restored it named all five scrubbed
+     sections, reason "Unsupported CSS Properties: border-*-radius".
    - `animation-range` uses view() progress: `cover` = leading edge enters the
      scrollport → trailing edge leaves it; `entry` / `exit` are the sub-ranges.
    - Under reduced motion the block at the very bottom of this file disables
@@ -763,24 +773,25 @@ html {
      `position: fixed` descendants. Do not put a fixed child inside it.
    ============================================================ */
 @supports (animation-timeline: view()) {
-  /* Dark-band "sheet presentation": the band rises the last 28px and un-rounds
-     as it seats itself, over the first 22% of its transit. Ends flat, which is
-     also its resting state, so nothing is left mid-pose at the bottom of the
-     page. Scale is DOWN-only (0.985 → 1) so the band can never overhang the
-     viewport and widen the document. */
+  /* Dark-band "sheet presentation": the band rises the last 28px and settles,
+     over the first 22% of its transit. Ends at rest, so nothing is left
+     mid-pose at the bottom of the page. Scale is DOWN-only (0.985 → 1) so the
+     band can never overhang the viewport and widen the document. The corner
+     rounding this originally carried is gone for the compositing reason above;
+     the rise and the scale are what sell the sheet. */
   .sheet-enter {
     animation: sheetEnter linear both;
     animation-timeline: view();
     animation-range: cover 0% cover 22%;
   }
+  /* NO border-radius here, and it must not be added back — see the note above
+     the @supports block. Transform-only keeps this on the compositor. */
   @keyframes sheetEnter {
     from {
       transform: translateY(28px) scale(0.985);
-      border-radius: 28px;
     }
     to {
       transform: none;
-      border-radius: 0;
     }
   }
 
@@ -794,19 +805,17 @@ html {
     animation-range: exit 0% exit 100%;
   }
   /* The brightness dip that used to live here as `filter: brightness()` is
-     deliberately gone. Not for performance — Lighthouse reports 0
-     non-composited animations either way — but because a filter makes the
-     element a backdrop root, which costs the hero's glass chips their
-     backdrop-filter blur in Chromium. If the darkening is wanted back it needs
-     to be an opacity-animated veil element, not a filter on the section. */
+     deliberately gone — not for compositing (filter IS compositable) but
+     because a filter makes the element a backdrop root, which costs the hero's
+     glass chips their backdrop-filter blur in Chromium. If the darkening is
+     wanted back it needs to be an opacity-animated veil element, not a filter
+     on the section. */
   @keyframes heroRecede {
     from {
       transform: none;
-      border-radius: 0;
     }
     to {
       transform: scale(0.985);
-      border-radius: 28px;
     }
   }
 
@@ -1098,18 +1107,14 @@ html {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
 }
-.terminal .t-key {
-  color: #7fb4e8;
-}
-.terminal .t-str {
-  color: #7ed492;
-}
-.terminal .t-num {
-  color: #e8c57f;
-}
-.terminal .t-cmt {
-  color: var(--terminal-cmt);
-}
+/* The `.terminal .t-key/.t-str/.t-num/.t-cmt` colour rules that used to sit
+   here are gone. They were dead: at (0,2,0) they outrank any Tailwind utility,
+   so Terminal.tsx sets the syntax colours as `--t-*` custom properties on the
+   element and the spans read them via [color:var(--t-key)] instead. Keeping
+   them was actively risky — they still carried the pre-audit #7fb4e8 (7.90:1)
+   after the live value was corrected to #93b8dd (8.35:1), so re-adding a class
+   name would have silently reverted the contrast fix. */
+
 /* Staggered line reveal once in view. */
 .terminal [data-tline] {
   opacity: 0;
@@ -1138,16 +1143,9 @@ html {
 .acc-panel-min {
   min-height: 0;
 }
-.acc-inner {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.32s var(--ease-out-expo) 0.06s,
-    transform 0.32s var(--ease-out-expo) 0.06s;
-}
-.acc-row.is-open .acc-inner {
-  opacity: 1;
-  transform: none;
-}
+/* `.acc-inner` / `.acc-row.is-open .acc-inner` removed as dead: HomeFaq drives
+   the panel's overshoot from the row itself, and the class was dropped from the
+   node precisely to avoid two things transforming the same element. */
 
 /* ============================================================
    Quiet pulse dot (live-channel hints).

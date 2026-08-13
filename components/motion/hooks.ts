@@ -119,53 +119,11 @@ export function useCounter(target: number, duration = 1400) {
   return { ref, value, settled };
 }
 
-/**
- * Scroll-driven fill for the process rail (§5.8). Writes `--fill` (0→1) directly
- * to `railRef`'s style and returns the number of steps whose center has passed
- * the trigger line — never uses React state for the per-frame value.
+/*
+ * `useScrollFill` used to live here — a scroll-listener hook that wrote `--fill`
+ * (0→1) to the process rail. It is removed as dead code: ProcessRail now drives
+ * the rail from a CSS scroll-driven animation instead, so the hook had zero
+ * consumers and every scroll event it registered was pure cost. The discipline
+ * it established (never put a per-frame value through React state) is carried
+ * forward in ProcessRail's own comment.
  */
-export function useScrollFill(
-  railRef: { current: HTMLElement | null },
-  stepRefs: { current: HTMLElement | null }[],
-  triggerFraction = 0.62,
-) {
-  const [passed, setPassed] = useState(0);
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    if (window.matchMedia(REDUCE).matches) {
-      rail.style.setProperty("--fill", "1");
-      setPassed(stepRefs.length);
-      return;
-    }
-    let raf = 0;
-    const calc = () => {
-      raf = 0;
-      const line = window.innerHeight * triggerFraction;
-      const r = rail.getBoundingClientRect();
-      const total = r.height || 1;
-      const fill = Math.max(0, Math.min(1, (line - r.top) / total));
-      rail.style.setProperty("--fill", String(fill));
-      let count = 0;
-      stepRefs.forEach((s) => {
-        const el = s.current;
-        if (!el) return;
-        const rr = el.getBoundingClientRect();
-        if (rr.top + rr.height / 2 <= line) count += 1;
-      });
-      setPassed(count);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(calc);
-    };
-    calc();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [railRef, stepRefs, triggerFraction]);
-  return passed;
-}

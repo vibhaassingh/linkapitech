@@ -67,9 +67,21 @@ await S("Emulation.setDeviceMetricsOverride", {
 await S("Page.navigate", { url });
 await sleep(5000);
 
-// force every reveal visible so nothing is captured mid-transition
+// Two normalisations, both so the capture is a function of OUR code alone:
+//
+//   [data-reveal] — force every reveal visible, so nothing is caught
+//   mid-transition.
+//
+//   iframe — blank third-party embeds. /contact carries a lazy Google Maps
+//   embed, and whether its tiles arrive before the capture depends on the
+//   network, not on this repo. Two runs 20 minutes apart off identical source
+//   differed on 17.6% of contact-1440's pixels: a 440px band flipped between
+//   Maps' land colour (#e5e3df) and bare --canvas. `visibility: hidden` blanks
+//   it WITHOUT collapsing it, so page height and every other element's position
+//   are untouched — which matters, since pixdiff treats a height change as a
+//   redesign signal.
 await S("Runtime.evaluate", {
-  expression: `document.documentElement.insertAdjacentHTML('beforeend','<style>[data-reveal]{opacity:1!important;transform:none!important;transition:none!important}</style>')`,
+  expression: `document.documentElement.insertAdjacentHTML('beforeend','<style>[data-reveal]{opacity:1!important;transform:none!important;transition:none!important}iframe{visibility:hidden!important}</style>')`,
 });
 await sleep(400);
 
