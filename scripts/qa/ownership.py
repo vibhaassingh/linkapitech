@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 """Audit which packet touched which file, against the declared ownership map.
 
-    python3 scripts/qa/ownership.py <since-ref>        e.g. HEAD~1, a8a880a
+    python3 scripts/qa/ownership.py <since-ref> [--until <ref>] [--frozen]
+
+`--frozen` asserts that no B0-owned or shared-primitive file changed in the
+range. It is only meaningful over the FLEET PHASE window, so pass --until to end
+the range at the fleet commit:
+
+    python3 scripts/qa/ownership.py <b0-commit> --until <fleet-commit> --frozen
+
+Without --until the range runs to the working tree, which flags the
+orchestrator's own later fixes to B0 files (e.g. the AA and reduced-motion
+corrections the fleet escalated). Those are legitimate; a section agent doing it
+mid-phase is not, and that is what this catches.
 
 The elevation runs seven section agents in parallel. They are collision-free
 only because every file has exactly ONE owner, which is an assumption worth
@@ -120,13 +131,24 @@ def owner_of(path: str):
 
 
 def main():
-    since = sys.argv[1] if len(sys.argv) > 1 else "HEAD~1"
     frozen = "--frozen" in sys.argv
+    until = None
+    argv = sys.argv[1:]
+    if "--until" in argv:
+        i = argv.index("--until")
+        until = argv[i + 1] if i + 1 < len(argv) else None
+        del argv[i:i + 2]
+    positional = [a for a in argv if not a.startswith("--")]
+    since = positional[0] if positional else "HEAD~1"
 
+    rng = [since] if until is None else [f"{since}..{until}"]
     changed = subprocess.run(
-        ["git", "diff", "--name-only", since],
+        ["git", "diff", "--name-only", *rng],
         capture_output=True, text=True, check=True,
     ).stdout.split()
+    if frozen and until is None:
+        print("NOTE: --frozen without --until measures to the working tree, so the\n"
+              "      orchestrator's own post-phase fixes to B0 files will be flagged.\n")
     if not changed:
         print(f"No files changed since {since}.")
         return 0

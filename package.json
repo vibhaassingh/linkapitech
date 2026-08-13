@@ -13,7 +13,8 @@
     "qa:webgl": "node scripts/qa/probe.mjs",
     "qa:kbd": "node scripts/qa/kbd1.mjs",
     "qa:rm": "node scripts/qa/kbd2.mjs",
-    "gate": "bash scripts/qa/gate.sh"
+    "gate": "bash scripts/qa/gate.sh",
+    "qa:cascade": "node scripts/qa/cascade.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

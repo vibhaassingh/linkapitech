@@ -53,8 +53,13 @@ step "contract completeness (defined AND wired)"
 if python3 scripts/qa/contract.py; then ok "contract complete"; else bad "contract has orphan/unwired items"; fi
 
 if [ -n "$SINCE" ]; then
-  step "ownership audit since $SINCE (--frozen: B0 and shared primitives are locked)"
-  if python3 scripts/qa/ownership.py "$SINCE" --frozen; then ok "ownership clean"; else bad "ownership violation"; fi
+  # No --frozen here on purpose. The frozen assertion only means something over
+  # the fleet-phase window and needs an explicit --until:
+  #   python3 scripts/qa/ownership.py <b0> --until <fleet> --frozen
+  # Run against the working tree it would flag every later orchestrator fix to a
+  # B0 file — including the AA and reduced-motion corrections the fleet escalated.
+  step "ownership audit since $SINCE (one owner per file)"
+  if python3 scripts/qa/ownership.py "$SINCE"; then ok "ownership clean"; else bad "ownership violation"; fi
 fi
 
 # ---------------------------------------------------------------- 2. build
@@ -115,6 +120,9 @@ if node scripts/qa/motion.mjs "$BASE"; then ok "motion clean"; else bad "motion 
 
 step "WebGL gating + magnetic"
 if node scripts/qa/probe.mjs "$BASE"; then ok "webgl gating clean"; else bad "webgl gating findings"; fi
+
+step "cascade conflicts (an animation silently overriding an inline transform)"
+if node scripts/qa/cascade.mjs "$BASE"; then ok "no cascade conflicts"; else bad "an animation clobbers an inline transform"; fi
 
 step "keyboard + mobile menu"
 if node scripts/qa/kbd1.mjs; then ok "keyboard clean"; else bad "keyboard findings"; fi
