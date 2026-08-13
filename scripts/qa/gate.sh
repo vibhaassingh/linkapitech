@@ -130,26 +130,56 @@ if node scripts/qa/kbd1.mjs; then ok "keyboard clean"; else bad "keyboard findin
 step "reduced motion across pages"
 if node scripts/qa/kbd2.mjs; then ok "reduced-motion clean"; else bad "reduced-motion findings"; fi
 
-step "composited-animation audit (authoritative: runs GPU-composited)"
-LH=/tmp/gate-lh.json
-if npx lighthouse "$BASE/" --only-categories=performance --form-factor=mobile \
-     --screenEmulation.mobile --throttling-method=simulate --quiet \
-     --chrome-flags="--headless=new --no-sandbox" --output=json --output-path="$LH" >/dev/null 2>&1; then
-  read -r NCA TBT PERF <<<"$(python3 - "$LH" <<'PY2'
-import json, sys
+# Runs over SEVERAL routes, not just "/". This check used to probe the homepage
+# alone, and that blind spot hid three non-composited animations on
+# /connected-banking through a full green gate — found only when Lighthouse was
+# later pointed at the other routes by hand.
+#
+# ALLOWED_ANIM is an allowlist of animations permitted to be non-composited,
+# each of which needs a reason recorded here:
+#
+#   ecoWire — SVG dash-flow, animates stroke-dashoffset. There is no composited
+#     way to march dashes along a path; translating a longer dashed path only
+#     works for straight segments, and the ecosystem/orbit ring is an ellipse.
+#     Measured cost is nil: /connected-banking has the LOWEST TBT of every route
+#     (20ms) at perf 96. Kept as a documented exception, not an oversight.
+#
+# Anything not on that list fails, so a new offender cannot ride in silently.
+step "composited-animation audit over key routes (authoritative: runs GPU-composited)"
+ALLOWED_ANIM="ecoWire"
+LH_FAIL=0
+for r in / /services /connected-banking /contact /banks/axis; do
+  LH="/tmp/gate-lh$(echo "$r" | tr '/' '-').json"
+  if ! npx lighthouse "$BASE$r" --only-categories=performance --form-factor=mobile \
+       --screenEmulation.mobile --throttling-method=simulate --quiet \
+       --chrome-flags="--headless=new --no-sandbox" --output=json --output-path="$LH" >/dev/null 2>&1; then
+    warn "lighthouse failed on $r — composited audit skipped for it"
+    continue
+  fi
+  read -r BAD_N ALLOW_N TBT PERF NAMES <<<"$(ALLOWED="$ALLOWED_ANIM" python3 - "$LH" <<'PY2'
+import json, os, sys
 d = json.load(open(sys.argv[1])); a = d["audits"]
+allowed = set(filter(None, os.environ.get("ALLOWED", "").split(",")))
 items = (a.get("non-composited-animations", {}).get("details") or {}).get("items", [])
-print(len(items),
+bad, ok_ = [], []
+for it in items:
+    subs = (it.get("subItems") or {}).get("items", []) or [{}]
+    for s in subs:
+        name = s.get("animation") or "(unnamed)"
+        (ok_ if name in allowed else bad).append(name)
+print(len(bad), len(ok_),
       round(a["total-blocking-time"]["numericValue"]),
-      round(d["categories"]["performance"]["score"] * 100))
+      round(d["categories"]["performance"]["score"] * 100),
+      ",".join(sorted(set(bad))) or "-")
 PY2
 )"
-  if [ "$NCA" = "0" ]; then ok "0 non-composited animations (TBT ${TBT}ms, perf ${PERF})"
-  else bad "$NCA non-composited animation(s) — see $LH"; fi
-  if [ "${TBT:-999}" -le 200 ]; then ok "TBT ${TBT}ms within budget"; else bad "TBT ${TBT}ms over 200ms"; fi
-else
-  warn "lighthouse run failed — composited-animation audit skipped"
-fi
+  if [ "$BAD_N" = "0" ]; then
+    ok "$r: 0 disallowed non-composited animations (${ALLOW_N} allowlisted, TBT ${TBT}ms, perf ${PERF})"
+  else
+    bad "$r: $BAD_N non-composited animation(s) not on the allowlist: $NAMES — see $LH"; LH_FAIL=1
+  fi
+  if [ "${TBT:-999}" -le 200 ]; then ok "$r: TBT ${TBT}ms within budget"; else bad "$r: TBT ${TBT}ms over 200ms"; fi
+done
 
 if [ $SKIP_PIXDIFF -eq 0 ]; then
   step "pixel diff vs baseline (refinement vs redesign)"
