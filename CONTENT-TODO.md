@@ -40,6 +40,12 @@ Ordered by risk, highest first.
 | `lib/site.ts` (`SOCIALS`) | Empty, so no social icons render. Supply real profile URLs or they stay hidden. |
 | `content/faq.ts` | Eight answers drafted from the Figma's five questions plus real service copy. LinkAPI to review before publishing. |
 
+## 5. Product decisions with a measured cost
+
+| Where | Decision needed |
+|---|---|
+| `app/(site)/contact/page.tsx` | The **Google Maps embed** costs ~488KB of third-party Google script and is the sole reason `/contact` scores **perf 82 / LCP 3.8s** on the live domain, where every other route sits at 95–100. `loading="lazy"` does not help: Chrome's lazy threshold is generous under throttled conditions, so the iframe loads regardless. Three options — (a) replace it with a **facade** (static placeholder that swaps in the real map on click, per Lighthouse's third-party-facades guidance) which recovers the score but shows a placeholder until a visitor interacts; (b) drop the map and keep the address plus an "open in Maps" link; (c) accept 82 on this one page. This is a visitor-facing product call, not an engineering one, so it is parked here rather than decided in code. Note also that the embed sets Google cookies, which may matter for the privacy copy. |
+
 ## Not blocking, but worth knowing
 
 - `content/cases.ts` and `content/benefits.ts` are **archived** — no route imports them, so they are tree-shaken out of every bundle. Retained per the retire-and-redirect decision (2026-08-12) in case case studies return. `/work`, `/work/:slug` and `/clients` now 308 to `/industries` and `/about`.

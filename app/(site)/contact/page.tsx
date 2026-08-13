@@ -114,7 +114,17 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Map — lazy iframe, no third-party JS, keyboard-reachable link fallback. */}
+      {/* Map — Google Maps embed, keyboard-reachable via the address links above.
+          MEASURED COST, and the old claim here that this adds "no third-party JS"
+          was simply wrong: the embed pulls ~488KB of Google script (places.js,
+          main.js, init_embed.js, util.js, common.js) and is why this page scores
+          perf 82 / LCP 3.8s on the live domain while every other route sits at
+          95-100. `loading="lazy"` does NOT save it — Chrome's lazy threshold is
+          very generous under throttled conditions, so the iframe loads anyway.
+          The fix is a facade (static placeholder that swaps in the iframe on
+          click, per Lighthouse's third-party-facades guidance). That changes what
+          a visitor sees until they interact, so it is a product decision and is
+          flagged in CONTENT-TODO.md rather than made here. */}
       <section aria-label="Our location" className="border-t border-line-soft">
         <iframe
           title="Map of LinkAPI Tech's registered office in Ghaziabad, Uttar Pradesh"
