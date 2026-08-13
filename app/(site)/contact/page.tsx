@@ -4,6 +4,25 @@ import { ContactForm } from "@/components/sections/ContactForm";
 import { Reveal } from "@/components/motion/Reveal";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { CONTACT, SITE } from "@/lib/site";
+import { cn } from "@/lib/cn";
+
+/**
+ * Card craft for the contact rail: 20px radius (card step of the radius scale)
+ * and `.icon-draw`, so the gradient tile's icon replays its stroke draw on
+ * hover. No hover lift here — these cards are not links, and lifting a static
+ * panel promises an interaction that does not exist. The links inside carry
+ * `.link-draw` instead.
+ */
+const DETAIL_CARD =
+  "icon-draw flex items-start gap-4 rounded-lg border border-line-soft bg-canvas p-5";
+
+/**
+ * `w-fit` matters: `.link-draw` draws its rule from edge to edge of the box, so
+ * on a full-width `block` anchor the underline would run past the text. Kept
+ * `block` (not `inline-block`) so the email and phone still stack.
+ */
+const DETAIL_LINK =
+  "link-draw block w-fit text-[15px] transition-colors duration-ui hover:text-plum-700";
 
 export const metadata = pageMetadata({
   title: "Contact",
@@ -32,9 +51,9 @@ export default function ContactPage() {
             <span className="eyebrow-capsule">Contact details</span>
 
             <ul className="mt-8 flex flex-col gap-4">
-              <li className="flex items-start gap-4 rounded-xl border border-line-soft bg-canvas p-5">
+              <li className={DETAIL_CARD}>
                 <span className="grad-fill grid h-10 w-10 shrink-0 place-items-center rounded-md text-ink-inv">
-                  <Icon name="bank" size={18} />
+                  <Icon name="bank" size={18} draw />
                 </span>
                 <div>
                   <p className="text-[11.5px] font-semibold uppercase tracking-eyebrow text-violet-text">
@@ -49,12 +68,9 @@ export default function ContactPage() {
               </li>
 
               {CONTACT.channels.map((ch, i) => (
-                <li
-                  key={ch.phone}
-                  className="flex items-start gap-4 rounded-xl border border-line-soft bg-canvas p-5"
-                >
+                <li key={ch.phone} className={DETAIL_CARD}>
                   <span className="grad-fill grid h-10 w-10 shrink-0 place-items-center rounded-md text-ink-inv">
-                    <Icon name={CHANNEL_ICONS[i] ?? "user"} size={18} />
+                    <Icon name={CHANNEL_ICONS[i] ?? "user"} size={18} draw />
                   </span>
                   <div className="min-w-0">
                     <p className="text-[11.5px] font-semibold uppercase tracking-eyebrow text-violet-text">
@@ -62,14 +78,14 @@ export default function ContactPage() {
                     </p>
                     <a
                       href={`mailto:${ch.email}`}
-                      className="mt-1 block text-[15px] text-ink transition-colors duration-ui hover:text-plum-700 [overflow-wrap:anywhere]"
+                      className={cn(
+                        DETAIL_LINK,
+                        "mt-1 text-ink [overflow-wrap:anywhere]",
+                      )}
                     >
                       {ch.email}
                     </a>
-                    <a
-                      href={ch.phoneHref}
-                      className="block text-[15px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
-                    >
+                    <a href={ch.phoneHref} className={cn(DETAIL_LINK, "text-ink-2")}>
                       {ch.phone}
                     </a>
                   </div>
@@ -77,16 +93,16 @@ export default function ContactPage() {
               ))}
             </ul>
 
-            <div className="mt-4 rounded-xl border border-line-soft bg-canvas p-5">
+            <div className="icon-draw mt-4 rounded-lg border border-line-soft bg-canvas p-5">
               <p className="flex items-center gap-2.5 text-[15px] text-ink">
-                <Icon name="globe" size={17} className="text-violet-text" />
+                <Icon name="globe" size={17} className="text-violet-text" draw />
                 www.{SITE.domain}
               </p>
               <a
                 href={CONTACT.whatsapp}
-                className="mt-3 inline-flex items-center gap-2.5 text-[15px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
+                className="link-draw mt-3 inline-flex w-fit items-center gap-2.5 text-[15px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
               >
-                <Icon name="chat" size={17} className="text-violet-text" />
+                <Icon name="chat" size={17} className="text-violet-text" draw />
                 Message us on WhatsApp
               </a>
             </div>

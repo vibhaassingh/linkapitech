@@ -1,5 +1,15 @@
+import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
+
+/**
+ * Per-slab parallax ranges for `.scrub-drift`. Three different amplitudes are
+ * what create the depth read: the near slab travels most, the far one least.
+ * (`--drift-range` is B0's knob; ±22px is the class default.)
+ */
+const SLAB_NEAR: CSSProperties = { "--drift-range": "22px" } as CSSProperties;
+const SLAB_MID: CSSProperties = { "--drift-range": "14px" } as CSSProperties;
+const SLAB_FAR: CSSProperties = { "--drift-range": "7px" } as CSSProperties;
 
 interface CtaBandProps {
   /** Capsule label above the headline. */
@@ -15,6 +25,17 @@ interface CtaBandProps {
  * Shared closing CTA band: plum gradient, capsule eyebrow, one headline that
  * repeats site-wide, and a page-specific button. The tilted glass slabs are
  * the Figma's decorative corners.
+ *
+ * Motion: `.sheet-enter` presents the band as a sheet, and the three slabs
+ * drift at three different rates (`.scrub-drift` + `--drift-range`) so the
+ * corner decoration reads as depth rather than as flat wallpaper. Both are
+ * B0 view()-timeline utilities — scroll-driven, `@supports`-gated and
+ * reduced-motion-safe by definition, so no extra gating is needed here.
+ *
+ * DO NOT REMOVE `overflow-hidden`: the slabs are 130–150% tall and sit at
+ * negative insets, and the drift pushes them further out. Clipping is the only
+ * thing stopping them from widening the document — that exact horizontal
+ * overflow bug has been fixed here once already.
  */
 export function CtaBand({
   eyebrow = "Start your journey",
@@ -23,11 +44,22 @@ export function CtaBand({
   secondary,
 }: CtaBandProps) {
   return (
-    <section className="section-dark relative overflow-hidden">
-      {/* decorative tilted glass slabs (Figma corners) */}
+    <section className="section-dark sheet-enter relative overflow-hidden">
+      {/* decorative tilted glass slabs (Figma corners) — near, mid, far */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 -top-16 h-[130%] w-[280px] rotate-[14deg] bg-white/[0.045]" />
-        <div className="absolute -right-20 -top-24 h-[150%] w-[320px] rotate-[14deg] bg-white/[0.035]" />
+        <div
+          style={SLAB_NEAR}
+          className="scrub-drift absolute -left-24 -top-16 h-[130%] w-[280px] rotate-[14deg] bg-white/[0.045]"
+        />
+        <div
+          style={SLAB_MID}
+          className="scrub-drift absolute -right-20 -top-24 h-[150%] w-[320px] rotate-[14deg] bg-white/[0.035]"
+        />
+        {/* Far slab: widest, faintest, slowest — reads as the back plane. */}
+        <div
+          style={SLAB_FAR}
+          className="scrub-drift absolute -right-56 -top-32 h-[170%] w-[420px] rotate-[14deg] bg-white/[0.022]"
+        />
       </div>
 
       <div className="relative z-[1] mx-auto w-full max-w-[1240px] px-6 py-24 text-center md:px-10 md:py-28">

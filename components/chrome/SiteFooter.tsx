@@ -7,12 +7,18 @@ import { FOOTER_COLUMNS, SITE, CONTACT, SOCIALS } from "@/lib/site";
  * lavender canvas, hairline baseline. Every href resolves to a real page —
  * the Figma's placeholder links (Careers, Blog, Status Page…) are mapped onto
  * real destinations in lib/site.ts rather than shipped dead.
+ *
+ * `.chrome-curtain` makes it `sticky; bottom: 0` so the page appears to lift
+ * off it at the end of the scroll (the opaque, elevated `<main>` covers it
+ * until then). Sticky keeps the footer in flow, so its full height is still
+ * reserved and CLS stays 0 — see components/chrome/chrome.css §3 for the
+ * z-order contract this depends on.
  */
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-line-soft bg-canvas">
+    <footer className="chrome-curtain border-t border-line-soft bg-canvas">
       <div className="mx-auto w-full max-w-[1240px] px-6 pb-10 pt-16 md:px-10 md:pt-20">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)] md:gap-8">
           {/* Brand */}
@@ -25,11 +31,12 @@ export function SiteFooter() {
             </p>
 
             {SOCIALS.length > 0 && (
-              <ul className="mt-5 flex items-center gap-2.5">
+              <ul className="mt-5 flex items-center gap-3">
                 {SOCIALS.map((s) => (
                   <li key={s.href}>
                     <a
                       href={s.href}
+                      data-magnetic
                       className="grid h-9 w-9 place-items-center rounded-pill bg-plum-600 text-ink-inv transition-colors duration-ui hover:bg-violet-600"
                       aria-label={s.label}
                     >
@@ -75,12 +82,15 @@ export function SiteFooter() {
               <h2 className="text-[12px] font-semibold uppercase tracking-eyebrow text-ink">
                 {col.heading}
               </h2>
-              <ul className="mt-4 space-y-2.5">
+              <ul className="mt-4 space-y-3">
                 {links.map((l) => (
                   <li key={l.href + l.label}>
+                    {/* .link-draw goes on the inline <Link>, never on a block
+                        one: its ::after spans the element box, so a block link
+                        would draw a rule across the whole column. */}
                     <Link
                       href={l.href}
-                      className="rounded-sm text-[14.5px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
+                      className="link-draw rounded-sm text-[14.5px] text-ink-2 transition-colors duration-ui hover:text-plum-700"
                     >
                       {l.label}
                     </Link>
@@ -98,12 +108,18 @@ export function SiteFooter() {
           </p>
           <ul className="flex items-center gap-6">
             <li>
-              <Link href="/privacy" className="rounded-sm hover:text-plum-700">
+              <Link
+                href="/privacy"
+                className="link-draw rounded-sm transition-colors duration-ui hover:text-plum-700"
+              >
                 Privacy
               </Link>
             </li>
             <li>
-              <Link href="/terms" className="rounded-sm hover:text-plum-700">
+              <Link
+                href="/terms"
+                className="link-draw rounded-sm transition-colors duration-ui hover:text-plum-700"
+              >
                 Terms
               </Link>
             </li>

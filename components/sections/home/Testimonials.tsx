@@ -1,11 +1,37 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Reveal } from "@/components/motion/Reveal";
 import { SectionHeader } from "./SectionHeader";
 import { TESTIMONIALS } from "@/content/testimonials";
 import { HOME_SECTIONS } from "@/content/home";
 import { cn } from "@/lib/cn";
+
+const SPRING_SNAPPY = "var(--spring-snappy, cubic-bezier(0.34,1.56,0.64,1))";
+const DUR_SNAPPY = "var(--dur-spring-snappy, 350ms)";
+
+/**
+ * Dot morph. The active pill is the only one that widens, so the row's total
+ * width is constant whichever dot is active — the Previous/Next buttons never
+ * move, and the ~0.5px the spring overshoots past 20px is absorbed inside the
+ * row. Retimed from `transition-all duration-ui` so the morph springs.
+ */
+const DOT_SPRING: CSSProperties = {
+  transitionProperty: "width, background-color",
+  transitionDuration: DUR_SNAPPY,
+  transitionTimingFunction: SPRING_SNAPPY,
+};
+
+/**
+ * Press feedback: transform springs, colours stay on the 200ms UI ramp (a
+ * 350ms spring on a hover colour reads sluggish).
+ */
+const PRESS_SPRING: CSSProperties = {
+  transition:
+    `transform ${DUR_SNAPPY} ${SPRING_SNAPPY},` +
+    " color var(--dur-ui, 200ms) ease, background-color var(--dur-ui, 200ms) ease," +
+    " border-color var(--dur-ui, 200ms) ease, box-shadow var(--dur-ui, 200ms) ease",
+};
 
 /**
  * Client-stories carousel.
@@ -18,6 +44,17 @@ import { cn } from "@/lib/cn";
  *
  * Mechanics: a scroll-snap track, so touch/trackpad swiping is native and the
  * arrows just nudge scrollLeft. Cards stay in the DOM and in tab order.
+ *
+ * Depth: each card carries B0's `.card-depth`, whose own `view(x)` timeline
+ * scales/fades it by its position in the track — the centred card sits at
+ * scale 1, its neighbours recede. No JS drives it, so swipe, arrow and
+ * keyboard scrolling all get the same treatment for free, and the whole effect
+ * is behind `@supports (animation-timeline: view())` and reduced-motion-safe by
+ * B0's definition. Transforms do not affect `offsetLeft`/`clientWidth`, so the
+ * scroll maths below is unchanged by it.
+ *
+ * `overscroll-x-contain` adds the iOS rubber-band stop at the track ends: the
+ * bounce is absorbed here instead of chaining to the page/back-gesture.
  */
 export function Testimonials() {
   const trackRef = useRef<HTMLUListElement | null>(null);
@@ -65,14 +102,14 @@ export function Testimonials() {
           <ul
             ref={trackRef}
             onScroll={onScroll}
-            className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2"
+            className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain pb-2"
           >
             {TESTIMONIALS.map((t) => (
               <li
                 key={t.name}
-                className="w-[86%] shrink-0 snap-center sm:w-[60%] lg:w-[calc((100%-40px)/3)]"
+                className="card-depth w-[86%] shrink-0 snap-center sm:w-[60%] lg:w-[calc((100%-40px)/3)]"
               >
-                <figure className="flex h-full flex-col rounded-xl border border-line-soft bg-canvas p-7 shadow-card md:p-8">
+                <figure className="flex h-full flex-col rounded-lg border border-line-soft bg-canvas p-7 shadow-card md:p-8">
                   <QuoteMark />
                   <blockquote className="mt-5 flex-1 text-[15.5px] italic leading-relaxed text-ink-2">
                     &ldquo;{t.quote}&rdquo;
@@ -107,7 +144,8 @@ export function Testimonials() {
             type="button"
             onClick={() => scrollToIndex(active - 1)}
             disabled={active === 0}
-            className="inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-5 py-2.5 text-[14px] font-medium text-ink transition-colors duration-ui hover:border-plum-600 hover:text-plum-700 disabled:pointer-events-none disabled:opacity-40"
+            style={PRESS_SPRING}
+            className="inline-flex scale-100 items-center gap-2 rounded-pill border border-line bg-surface px-5 py-2.5 text-[14px] font-medium text-ink hover:border-plum-600 hover:text-plum-700 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
           >
             <Chevron dir="left" />
             Previous
@@ -117,8 +155,9 @@ export function Testimonials() {
             {TESTIMONIALS.map((t, i) => (
               <span
                 key={t.name}
+                style={DOT_SPRING}
                 className={cn(
-                  "h-[6px] rounded-pill transition-all duration-ui",
+                  "h-[6px] rounded-pill",
                   i === active ? "w-5 bg-plum-600" : "w-[6px] bg-lavender-300",
                 )}
               />
@@ -129,7 +168,8 @@ export function Testimonials() {
             type="button"
             onClick={() => scrollToIndex(active + 1)}
             disabled={active === TESTIMONIALS.length - 1}
-            className="inline-flex items-center gap-2 rounded-pill bg-plum-600 px-5 py-2.5 text-[14px] font-semibold text-ink-inv transition-colors duration-ui hover:bg-violet-600 disabled:pointer-events-none disabled:opacity-40"
+            style={PRESS_SPRING}
+            className="inline-flex scale-100 items-center gap-2 rounded-pill bg-plum-600 px-5 py-2.5 text-[14px] font-semibold text-ink-inv hover:bg-violet-600 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
           >
             Next
             <Chevron dir="right" />

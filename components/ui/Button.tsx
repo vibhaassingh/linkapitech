@@ -24,8 +24,16 @@ interface ButtonProps {
   "aria-label"?: string;
 }
 
+/**
+ * `btn-spring` (globals.css) carries the physics: a sprung `:active` scale of
+ * .97 and the glyph nudge, plus an explicit per-property transition list so
+ * colour/shadow keep the 200ms UI ease while transform gets --spring-snappy.
+ * It replaces `transition-all duration-ui ease-out-expo`, which could only ever
+ * give every property the same curve. All of it is CSS, so <Button> remains a
+ * server component.
+ */
 const base =
-  "group inline-flex items-center justify-center gap-2.5 rounded-pill font-semibold transition-all duration-ui ease-out-expo disabled:opacity-60 disabled:pointer-events-none";
+  "btn-spring group inline-flex items-center justify-center gap-2.5 rounded-pill font-semibold disabled:opacity-60 disabled:pointer-events-none";
 
 const styles: Record<Exclude<Variant, "accent">, string> = {
   /** Brand plum fill — the default CTA on light surfaces. */
@@ -72,10 +80,7 @@ export function Button({
     <>
       <span className="relative z-[2]">{children}</span>
       {(showArrow || icon) && (
-        <span
-          aria-hidden="true"
-          className="relative z-[2] transition-transform duration-ui ease-out-expo group-hover:translate-x-0.5"
-        >
+        <span aria-hidden="true" className="btn-glyph relative z-[2]">
           {icon ?? <Arrow />}
         </span>
       )}

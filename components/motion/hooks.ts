@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
+/*
+ * Also in this folder (NOT re-exported from here on purpose — a re-export would
+ * pull them into every bundle that imports this module):
+ *   useSectionProgress  → ./useSectionProgress   writes --sp on a section
+ *   startVelocityBus    → ./velocity             publishes --scroll-velocity
+ *   useInView           → ./useInView            the reveal trigger
+ */
+
 /** Centralized reduced-motion flag (INTERACTIONS-AND-MOTION §7.1). */
 export function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -17,7 +25,54 @@ export function usePrefersReducedMotion() {
   return reduced;
 }
 
-/** Count-up on first view. (The reveal system now lives in useInView.ts.) */
+/**
+ * Trigger + settle clock for the per-digit odometer in <StatNumber>.
+ *
+ * Deliberately drives NO per-frame value: the roll itself is a pure CSS
+ * animation on each digit column, so all this decides is *when* it may start
+ * (first time the block is 40% in view) and when the last column has landed.
+ * That is two state updates per stat for the whole effect.
+ *
+ * `totalMs` must cover the slowest column: duration + (digits − 1) × stagger.
+ * Under reduced motion nothing ever rolls and `settled` is true immediately.
+ */
+export function useOdometer(totalMs: number) {
+  const ref = useRef<HTMLElement | null>(null);
+  const [rolling, setRolling] = useState(false);
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia(REDUCE).matches) {
+      setSettled(true);
+      return;
+    }
+    let timer = 0;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          io.unobserve(el);
+          setRolling(true);
+          timer = window.setTimeout(() => setSettled(true), totalMs);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [totalMs]);
+  return { ref, rolling, settled };
+}
+
+/**
+ * Count-up on first view — the numeric (non-odometer) counter, kept for inline
+ * figures in body copy where per-digit columns would be overkill.
+ * (The reveal system now lives in useInView.ts.)
+ */
 export function useCounter(target: number, duration = 1400) {
   const ref = useRef<HTMLElement | null>(null);
   const [value, setValue] = useState(0);
@@ -64,53 +119,11 @@ export function useCounter(target: number, duration = 1400) {
   return { ref, value, settled };
 }
 
-/**
- * Scroll-driven fill for the process rail (§5.8). Writes `--fill` (0→1) directly
- * to `railRef`'s style and returns the number of steps whose center has passed
- * the trigger line — never uses React state for the per-frame value.
+/*
+ * `useScrollFill` used to live here — a scroll-listener hook that wrote `--fill`
+ * (0→1) to the process rail. It is removed as dead code: ProcessRail now drives
+ * the rail from a CSS scroll-driven animation instead, so the hook had zero
+ * consumers and every scroll event it registered was pure cost. The discipline
+ * it established (never put a per-frame value through React state) is carried
+ * forward in ProcessRail's own comment.
  */
-export function useScrollFill(
-  railRef: { current: HTMLElement | null },
-  stepRefs: { current: HTMLElement | null }[],
-  triggerFraction = 0.62,
-) {
-  const [passed, setPassed] = useState(0);
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    if (window.matchMedia(REDUCE).matches) {
-      rail.style.setProperty("--fill", "1");
-      setPassed(stepRefs.length);
-      return;
-    }
-    let raf = 0;
-    const calc = () => {
-      raf = 0;
-      const line = window.innerHeight * triggerFraction;
-      const r = rail.getBoundingClientRect();
-      const total = r.height || 1;
-      const fill = Math.max(0, Math.min(1, (line - r.top) / total));
-      rail.style.setProperty("--fill", String(fill));
-      let count = 0;
-      stepRefs.forEach((s) => {
-        const el = s.current;
-        if (!el) return;
-        const rr = el.getBoundingClientRect();
-        if (rr.top + rr.height / 2 <= line) count += 1;
-      });
-      setPassed(count);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(calc);
-    };
-    calc();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [railRef, stepRefs, triggerFraction]);
-  return passed;
-}

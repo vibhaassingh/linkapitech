@@ -1,0 +1,266 @@
+/* ============================================================
+   Chrome-only CSS (packet S4: header, mobile sheet, footer curtain,
+   route transitions).
+
+   WHY THIS FILE EXISTS RATHER THAN MORE RULES IN globals.css
+   `app/globals.css` is the design system and is owned by B0 — read-only to
+   every later packet. What lives here is not vocabulary anyone else consumes:
+   it is the structural CSS for four chrome effects (a stacking/occlusion
+   contract, a scroll-driven elevation ramp, a sheet's enter animation, and the
+   view-transition timing). It is a PLAIN global stylesheet, not a CSS module,
+   because two of those need document-level selectors (`::view-transition-*`)
+   that a module cannot scope.
+
+   Imported ONCE, from app/layout.tsx, immediately after globals.css — so
+   these rules sit after Tailwind's utilities and after the design system, and
+   win ties without needing `!important`. Every `!important` below is
+   annotated with the thing it must out-rank (a running animation, or the
+   global reduced-motion block).
+
+   Contract classes consumed from globals.css (B0): `.nav-thumb` (+ its
+   --thumb-x / --thumb-w / --thumb-o inputs), `.link-draw`, and the
+   --spring-* / --dur-spring-* / --dur-menu / --ease-out-expo tokens.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1 · Header elevation ramp
+   The header used to flip a binary `stuck` class at scrollY > 24. Instead the
+   full menu shadow now lives on a pseudo-element whose OPACITY is ramped over
+   the first 120px of scroll by a scroll-driven animation: composited, zero JS,
+   and no per-frame work on the main thread. The pill keeps `shadow-card` as
+   its resting elevation, so the ramp only ever adds.
+
+   Lenis (marketing route) animates the real `scrollTop`, so `scroll(root
+   block)` tracks it exactly as it tracks native scrolling on inner pages —
+   the same assumption scripts/qa/motion.mjs check 1 verifies for `view()`.
+
+   Browsers without scroll-driven animations (Safari ≤ 18, Firefox) fall back
+   to the original binary behaviour via [data-stuck], which SiteHeader only
+   computes when the timeline is unavailable.
+   ------------------------------------------------------------ */
+.chrome-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: var(--shadow-menu);
+  opacity: 0;
+  transition: opacity var(--dur-menu) var(--ease-out-expo);
+}
+/* Fallback path only — see the @supports block below. */
+.chrome-pill[data-stuck="true"]::after,
+.chrome-pill[data-menu="true"]::after {
+  opacity: 1;
+}
+
+@keyframes chromeElevate {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .chrome-pill::after {
+    animation: chromeElevate linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 120px;
+  }
+  /* An open mobile sheet wants the pill fully separated from it whatever the
+     scroll offset. `animation: none` (not a bigger opacity) because a running
+     animation out-ranks any regular declaration — dropping the animation is
+     what lets the rule above apply, and avoids an !important. */
+  .chrome-pill[data-menu="true"]::after {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------
+   2 · Nav thumb — state only; all painting is B0's `.nav-thumb`.
+   The thumb must NOT animate on first placement (it would slide in from x=0
+   on every page load) or on resize (it would chase the layout). SiteHeader
+   sets data-animate="false" in the same style change as the new position, and
+   CSS Transitions resolve against the AFTER-change style — so no transition
+   is generated. Specificity (0,2,0) beats `.nav-thumb`, so no !important.
+   ------------------------------------------------------------ */
+.nav-thumb[data-animate="false"] {
+  transition: none;
+}
+
+/* ------------------------------------------------------------
+   3 · Footer curtain
+   The footer is `sticky; bottom: 0`, so it is pinned to the bottom of the
+   viewport from the first paint and <main> — opaque, elevated, and one layer
+   above it — covers it. Scrolling to the end slides main up and the footer is
+   revealed underneath, like a page lifting off it.
+
+   CLS = 0, by construction: `sticky` keeps the footer in flow (its full
+   height stays reserved, nothing is removed or repositioned in layout), and
+   its paint offset is a function of scroll only — scroll-induced movement of a
+   sticky box is excluded from layout-shift scoring. Nothing here sets a size,
+   a margin or a position that layout depends on.
+
+   Z-ORDER, which is the whole trick and the one cross-packet consequence:
+   a positioned (sticky) footer always paints above non-positioned in-flow
+   content, so main has to become a stacking context (z-index: 1) to cover it.
+   `.cursor-glow` (B0) is `fixed; z-index: 0`, which would then be buried, so
+   app/layout.tsx lifts it into `.chrome-glow-layer` above main. Consequence:
+   the glow now composites over the dark bands too, where positioned sections
+   used to occlude it. Contrast is unaffected (16% violet over plum-900 keeps
+   ink-inv at ~11:1).
+   ------------------------------------------------------------ */
+.chrome-main {
+  position: relative;
+  z-index: 1;
+  /* Matches the body canvas. Explicit, because anywhere a section is
+     transparent the pinned footer would otherwise show through mid-page. */
+  background: var(--canvas);
+  box-shadow: var(--shadow-float);
+}
+
+.chrome-curtain {
+  position: sticky;
+  bottom: 0;
+}
+
+/* Empty, zero-height wrapper: it exists only to raise the fixed decorative
+   glow above `.chrome-main`. No box, no margin, so no layout effect. */
+.chrome-glow-layer {
+  position: relative;
+  z-index: 2;
+}
+
+/* ------------------------------------------------------------
+   4 · Mobile sheet
+   The dialog stays MOUNTED with `hidden` (deliberate — the a11y suite asserts
+   it), which means it goes display:none → block on open. That is exactly why
+   the enter is an `animation` and not a `transition`: animations are canceled
+   on a display:none element and restart when it is displayed again, so the
+   slide runs from its first frame with no @starting-style and no double
+   render. There is deliberately no exit animation — `hidden` removes the box
+   immediately, and a closing sheet nobody waits for is not worth the risk of
+   stranding an interactive overlay on screen.
+   ------------------------------------------------------------ */
+@keyframes chromeSheetIn {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.chrome-sheet[data-open="true"] {
+  animation: chromeSheetIn var(--dur-spring-smooth) var(--spring-smooth) both;
+}
+
+/* Rows fade+rise behind the sheet's own travel, 30ms apart. The 40ms base
+   delay lets the sheet commit to its move before the contents settle. */
+@keyframes chromeRowIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.chrome-sheet[data-open="true"] .chrome-row {
+  animation: chromeRowIn 380ms var(--ease-out-expo) both;
+  animation-delay: calc(40ms + var(--row, 0) * 30ms);
+}
+
+/* Backdrop. The sheet itself is opaque (dark text on it has to stay legible
+   over both the plum hero and the lavender wash), so the glass moment is the
+   scrim: it blurs the strip of page still visible around the floating pill.
+   Purely decorative — no click-to-close, because the dialog's asserted
+   behaviour (Esc, the header toggle, focus trap) is not mine to change.
+   `visibility` is transitioned discretely so the closed scrim is not a
+   permanently composited full-viewport backdrop-filter layer. */
+.chrome-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: var(--plum-a20);
+  opacity: 0;
+  visibility: hidden;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: opacity var(--dur-menu) var(--ease-out-expo),
+    backdrop-filter var(--dur-menu) var(--ease-out-expo),
+    -webkit-backdrop-filter var(--dur-menu) var(--ease-out-expo),
+    visibility 0s linear var(--dur-menu);
+}
+.chrome-scrim[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  /* Become visible on the first frame of the fade IN, not the last. */
+  transition-delay: 0s;
+}
+
+/* ------------------------------------------------------------
+   5 · Cross-document / cross-route view transitions (EXPERIMENTAL)
+   Timing only. React's <ViewTransition> cancels the root snapshot, so only
+   the boundary (the routed content) animates and the chrome — header pill,
+   nav thumb, footer — stays live rather than freezing as a snapshot.
+   `--spring-smooth` runs at 240ms here: the easing is normalised 0..1, so the
+   spring's character survives a shorter window than its native 550ms.
+   Progressive enhancement: unsupported browsers ignore these rules entirely
+   and Next navigates normally (see components/chrome/RouteTransition.tsx).
+   ------------------------------------------------------------ */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 240ms;
+  animation-timing-function: var(--spring-smooth);
+}
+
+/* ------------------------------------------------------------
+   6 · Reduced motion
+   globals.css already collapses animation/transition DURATION globally, which
+   is enough for anything whose end state is its resting state. These are the
+   cases where it is not:
+     - a scroll-driven ramp collapsed to "duration 0" resolves to its END
+       state, which would leave the header permanently elevated — so the
+       animation is dropped and the discrete [data-stuck] fallback takes over
+       (SiteHeader attaches the scroll listener under reduced motion for
+       exactly this reason);
+     - `animation-delay` is NOT reset by the global block, so the staggered
+       rows would still pop in sequence;
+     - `::view-transition-*` are document pseudo-elements: `*` and `*::after`
+       never match them, so the global block cannot reach them at all. With no
+       animations the transition finishes on the next frame — i.e. instantly.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  /* Out-ranks the running scroll-driven animation. */
+  .chrome-pill::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .nav-thumb {
+    transition: none !important;
+  }
+  .chrome-sheet[data-open="true"],
+  .chrome-sheet[data-open="true"] .chrome-row {
+    animation: none !important;
+    animation-delay: 0ms !important;
+  }
+  .chrome-scrim {
+    transition: none !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

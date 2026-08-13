@@ -1,12 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Reveal } from "@/components/motion/Reveal";
 import { Button } from "@/components/ui/Button";
 import { FAQ } from "@/content/faq";
 import { HOME_SECTIONS } from "@/content/home";
 import { CONTACT } from "@/lib/site";
 import { cn } from "@/lib/cn";
+
+/**
+ * Spring easings, declared here rather than as utility classes.
+ *
+ * WHY INLINE: the panel height is still `.acc-panel`'s `grid-template-rows:
+ * 0fr → 1fr` — correct, but a grid track CANNOT overshoot (1.05fr is a
+ * different track, not an overshoot), so a spring on the height would be
+ * wasted. The spring therefore goes on the inner content's `translateY`, where
+ * the overshoot is visible and is what actually sells the open. `.acc-inner`'s
+ * own 6px/ease-out declarations in globals.css are not ours to edit, so the
+ * travel and easing are declared on the element instead (inline beats the
+ * class) and the `acc-inner` class is dropped from the node to avoid two
+ * competing sources of truth for the same transform.
+ *
+ * REDUCED MOTION: globals.css's
+ * `@media (prefers-reduced-motion: reduce) * { transition-duration: 0.001ms
+ * !important }` outranks these inline declarations (important author rules beat
+ * inline), so every transition below collapses to an instant state change. No
+ * JS involved, nothing to gate in this component.
+ */
+const PANEL_SPRING = (open: boolean): CSSProperties => ({
+  transform: open ? "translateY(0)" : "translateY(12px)",
+  opacity: open ? 1 : 0,
+  // 350ms spring + 60ms delay lands with .acc-panel's 420ms height transition.
+  transition:
+    "transform var(--dur-spring-snappy, 350ms) var(--spring-snappy, cubic-bezier(0.34,1.56,0.64,1)) 60ms," +
+    " opacity 320ms var(--ease-out-expo) 60ms",
+});
+
+/** Chevron rotation retimed to the snappy spring; the flip stays class-driven. */
+const CHEVRON_SPRING: CSSProperties = {
+  transitionProperty: "transform",
+  transitionDuration: "var(--dur-spring-snappy, 350ms)",
+  transitionTimingFunction:
+    "var(--spring-snappy, cubic-bezier(0.34,1.56,0.64,1))",
+};
 
 /**
  * FAQ — accordion (button + aria-expanded + grid-rows height animation) beside
@@ -27,7 +63,7 @@ export function HomeFaq() {
           </Reveal>
 
           <Reveal delay={140}>
-            <div className="mt-10 rounded-xl border border-line-soft bg-surface p-7">
+            <div className="mt-10 rounded-lg border border-line-soft bg-surface p-7">
               <h3 className="text-[18px] font-semibold text-ink">
                 Still have a question?
               </h3>
@@ -70,9 +106,12 @@ export function HomeFaq() {
                       {item.q}
                       <span
                         aria-hidden="true"
+                        style={CHEVRON_SPRING}
                         className={cn(
-                          "shrink-0 text-ink-3 transition-transform duration-ui",
-                          isOpen && "rotate-180",
+                          "shrink-0 text-ink-3",
+                          // Both states declare a rotation so the spring has
+                          // two transforms to interpolate, not `none` → matrix.
+                          isOpen ? "rotate-180" : "rotate-0",
                         )}
                       >
                         <Chevron />
@@ -81,7 +120,10 @@ export function HomeFaq() {
                   </h3>
                   <div id={panelId} className="acc-panel">
                     <div className="acc-panel-min">
-                      <p className="acc-inner max-w-[68ch] pb-6 text-[15px] leading-relaxed text-ink-2">
+                      <p
+                        style={PANEL_SPRING(isOpen)}
+                        className="max-w-[68ch] pb-6 text-[15px] leading-relaxed text-ink-2"
+                      >
                         {item.a}
                       </p>
                     </div>

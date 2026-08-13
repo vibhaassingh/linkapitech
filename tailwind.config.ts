@@ -35,11 +35,25 @@ export default {
           800: "var(--plum-800)",
           900: "var(--plum-900)",
           950: "var(--plum-950)",
+          // Pre-multiplied translucent plum — `bg-plum-600/8` does NOT work.
+          a08: "var(--plum-a08)",
+          a20: "var(--plum-a20)",
         },
         violet: {
           500: "var(--violet-500)",
           600: "var(--violet-600)",
           text: "var(--violet-text)",
+          soft: "var(--violet-soft)",
+          glow: "var(--violet-glow)",
+          a24: "var(--violet-a24)",
+        },
+        // White veils for plum surfaces. A separate scale rather than entries on
+        // `white`, because extending colors.white into an object would replace
+        // the built-in string and break every existing `bg-white`.
+        veil: {
+          1: "var(--veil-1)",
+          2: "var(--veil-2)",
+          3: "var(--veil-3)",
         },
         lavender: {
           200: "var(--lavender-200)",
@@ -52,6 +66,7 @@ export default {
           3: "var(--ink-3)",
           inv: "var(--ink-inv)",
           "inv-2": "var(--ink-inv-2)",
+          "inv-3": "var(--ink-inv-3)",
           "on-violet-2": "var(--ink-on-violet-2)",
         },
         success: "var(--success)",
@@ -80,13 +95,22 @@ export default {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
       },
+      // Spring easings pair with the matching duration — `ease-spring-smooth`
+      // must always be used with `duration-spring-smooth`, or the sampled
+      // overshoot lands at the wrong time. Values come from lib/springs.ts.
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.19, 1, 0.22, 1)",
+        "spring-snappy": "var(--spring-snappy)",
+        "spring-smooth": "var(--spring-smooth)",
+        "spring-gentle": "var(--spring-gentle)",
       },
       transitionDuration: {
         ui: "200ms",
         menu: "320ms",
         entrance: "900ms",
+        "spring-snappy": "350ms",
+        "spring-smooth": "550ms",
+        "spring-gentle": "800ms",
       },
       letterSpacing: {
         tighter: "-0.02em",

@@ -9,6 +9,7 @@ import {
 } from "react";
 import Lenis from "lenis";
 import { usePrefersReducedMotion } from "./hooks";
+import { startVelocityBus } from "./velocity";
 
 const LenisContext = createContext<Lenis | null>(null);
 export const useLenis = () => useContext(LenisContext);
@@ -46,6 +47,13 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       setLenis(null);
     };
   }, [reduced]);
+
+  // Publish `--scroll-velocity` on <html> for the scrub layer. Because Lenis
+  // animates the real scrollTop, the bus's scrollY-delta measurement IS Lenis's
+  // velocity here, in the same units inner pages get from native scrolling —
+  // see components/motion/velocity.ts. Refcounted and idempotent, so starting
+  // it here as well as at the root costs nothing; a no-op under reduced motion.
+  useEffect(() => startVelocityBus(), []);
 
   return (
     <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>

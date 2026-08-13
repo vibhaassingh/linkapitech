@@ -8,6 +8,34 @@ import { Icon } from "@/components/ui/Icon";
 import { SOLUTION_GROUPS, SDK_SAMPLE, type Product } from "@/content/solutions";
 import { cn } from "@/lib/cn";
 
+/**
+ * Product-card craft, shared so the four groups stay identical: 4px hover lift
+ * with a shadow bloom on `--spring-smooth`, and `.icon-draw` so the icon tile
+ * replays its stroke draw under the same hover. Matches the /about card
+ * vocabulary exactly.
+ *
+ * Only `transform` and `box-shadow` transition, so a lift can never move a
+ * neighbouring card (CLS 0). Under reduced motion the global block collapses
+ * `transition-duration` to 0.001ms, which turns the lift into an instant state
+ * change — and the resting state is the un-lifted card, so nothing is stranded.
+ */
+const CARD_LIFT =
+  "icon-draw transition-[transform,box-shadow] duration-[var(--dur-spring-smooth)] ease-[var(--spring-smooth)] hover:-translate-y-1 hover:shadow-float";
+
+/**
+ * The solid feature card. The sheen rides this card ONLY: `--surface` is
+ * #ffffff and the sweep is a white gradient, so on the light cards it would be
+ * an invisible extra layer (plus an `overflow: hidden` nobody asked for).
+ *
+ * The 80ms `animation-delay` on the ::before is what makes the lift LEAD the
+ * sheen rather than race it. It needs the `!` modifier because
+ * `.sheen:hover::before` sets the `animation` SHORTHAND, which resets
+ * `animation-delay` to 0 — and that rule is declared after `@tailwind
+ * utilities`, so at equal specificity it also wins on source order.
+ */
+const SOLID_CARD =
+  "grad-fill sheen text-ink-inv shadow-float before:![animation-delay:80ms]";
+
 export const metadata = pageMetadata({
   title: "Solutions",
   description:
@@ -37,7 +65,20 @@ export default function SolutionsPage() {
             id={group.id}
             className={cn(
               "section-pad",
-              dark ? "section-dark" : gi % 2 === 0 ? "bg-surface" : "bg-canvas",
+              // `.sheet-enter` presents the plum band as a sheet sliding under
+              // the light page: it rises the last 28px and un-rounds from 28px
+              // to flat over the first 22% of its transit. Scale is down-only,
+              // so the band can never overhang the viewport, and border-radius
+              // and transform are the only properties involved — no layout, so
+              // CLS stays 0. globals.css gates it behind @supports
+              // (animation-timeline: view()) and names it in the
+              // reduced-motion `animation: none` list, where it resolves to the
+              // flat, seated band that is also its end state.
+              dark
+                ? "section-dark sheet-enter"
+                : gi % 2 === 0
+                  ? "bg-surface"
+                  : "bg-canvas",
             )}
           >
             <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
@@ -88,7 +129,7 @@ export default function SolutionsPage() {
               ) : (
                 <RevealGroup
                   className={cn(
-                    "mt-12 grid gap-5",
+                    "mt-12 grid grid-cols-1 gap-5",
                     group.products.length === 2
                       ? "md:grid-cols-2"
                       : "md:grid-cols-3",
@@ -116,9 +157,10 @@ function ProductCard({ product }: { product: Product }) {
     <article
       id={product.id}
       className={cn(
-        "flex h-full flex-col rounded-xl p-7 shadow-card md:p-8",
+        "flex h-full flex-col rounded-lg p-7 shadow-card md:p-8",
+        CARD_LIFT,
         solid
-          ? "grad-fill text-ink-inv shadow-float"
+          ? SOLID_CARD
           : product.feature === "outline"
             ? "border border-line-violet bg-surface"
             : "border border-line-soft bg-surface",
@@ -130,7 +172,7 @@ function ProductCard({ product }: { product: Product }) {
           solid ? "bg-white/15 text-white" : "bg-tint text-violet-text",
         )}
       >
-        <Icon name={product.icon} size={19} />
+        <Icon name={product.icon} size={19} draw />
       </span>
       <h3
         className={cn(
