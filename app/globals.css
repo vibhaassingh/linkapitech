@@ -40,7 +40,19 @@
 
   /* Ink on plum */
   --ink-inv: #f7f3f9;
-  --ink-inv-2: #cdbbd4;
+  /**
+   * Secondary text on plum. Calibrated against the DARKEST thing it lands on,
+   * which is not a plum flat but a GLASS TIER over plum: .glass on the
+   * connected-banking diagram composites to rgb(102,67,110), much lighter than
+   * plum-700, and there the previous #cdbbd4 measured 4.495:1 — under AA by a
+   * hair, and invisible until the contrast walk learned to composite glass over
+   * a gradient rather than over white. One step lighter clears it:
+   *   glass-over-plum rgb(102,67,110) → 4.54:1  ✓ (was 4.49 ✗)
+   *   --plum-700 #42174c             → 8.07:1
+   *   --plum-900 #250d29             → 10.07:1
+   * Do not darken this without re-checking the glass tiers, not just the flats.
+   */
+  --ink-inv-2: #cebcd4;
   /**
    * Tertiary text on plum — captions, meta, disabled labels. Measured against
    * the WHOLE plum range, worst case first:

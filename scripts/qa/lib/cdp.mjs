@@ -76,11 +76,27 @@ export async function session({
       pending.delete(m.id);
     } else if (m.method) events.push(m);
   };
+  // Every CDP call is bounded. Without this a wedged Chrome parks the promise
+  // forever and the whole gate hangs, indistinguishable from "still running" —
+  // one run sat blocked for 9h23m after the machine slept mid-sweep, with the
+  // renderer alive but never answering. A hung check has to be a LOUD failure,
+  // because silence reads as progress.
+  const CDP_TIMEOUT = Number(process.env.CDP_TIMEOUT_MS || 45000);
   const send = (method, params = {}, sessionId) =>
-    new Promise((res) => {
+    new Promise((res, rej) => {
       const myId = ++id;
-      pending.set(myId, res);
-      ws.send(JSON.stringify({ id: myId, method, params, sessionId }));
+      const timer = setTimeout(() => {
+        pending.delete(myId);
+        rej(new Error(`CDP timeout after ${CDP_TIMEOUT}ms: ${method}`));
+      }, CDP_TIMEOUT);
+      pending.set(myId, (v) => { clearTimeout(timer); res(v); });
+      try {
+        ws.send(JSON.stringify({ id: myId, method, params, sessionId }));
+      } catch (e) {
+        clearTimeout(timer);
+        pending.delete(myId);
+        rej(e);
+      }
     });
 
   const { targetId } = await send("Target.createTarget", { url: "about:blank" });

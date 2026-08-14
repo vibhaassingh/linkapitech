@@ -33,6 +33,17 @@ const CHECK = `(() => {
   for (const anim of document.getAnimations()) {
     const el = anim.effect && anim.effect.target;
     if (!el || el.nodeType !== 1) continue;
+
+    // CSS TRANSITIONS are excluded, and that is not a loophole. A transition on
+    // transform is DRIVEN BY the inline value changing — it interpolates toward
+    // it — so reporting it as "clobbering" that value is backwards. Including
+    // them also made this check flaky: whether a transition is mid-flight when
+    // the page is sampled depends on scroll timing, so it flagged an innocent
+    // trust pill on '/' in one run and passed the same page in the next.
+    // Only @keyframes animations can outrank an inline style for the whole time
+    // they run, which is the actual bug being hunted.
+    if (typeof anim.transitionProperty === "string") continue;
+
     let frames = [];
     try { frames = anim.effect.getKeyframes() || []; } catch { continue; }
 
@@ -45,6 +56,9 @@ const CHECK = `(() => {
     for (const prop of animated) {
       const inline = el.style.getPropertyValue(prop);
       if (!inline) continue;
+      // 'none' is the property's own default — there is no positional anchor to
+      // lose, so an animation covering it costs nothing.
+      if (inline.trim() === "none") continue;
       // An inline value on the same property the animation drives: while the
       // animation runs, the inline declaration has no effect.
       conflicts.push({

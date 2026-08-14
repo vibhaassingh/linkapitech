@@ -19,7 +19,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- the in-page audit ---------------------------------------------------
 const AUDIT = `(() => {
-  const out = { contrast: [], overflow: null, focus: [], headings: [], targets: [], gradientText: [], textSpill: [] };
+  const out = { contrast: [], overflow: null, focus: [], headings: [], targets: [], gradientText: [], textSpill: [], collapsed: [] };
 
   const parse = (c) => {
     const m = c.match(/rgba?\\(([^)]+)\\)/);
@@ -51,40 +51,61 @@ const AUDIT = `(() => {
     return stops.length ? stops : null;
   };
 
-  // Effective background: walk ancestors until an opaque colour. When a gradient
-  // intervenes, return its colour stops so the caller can test the WORST one —
-  // skipping gradients entirely is how a 3.91:1 pairing survived an earlier
-  // "zero contrast failures" run.
+  // Effective background. Skipping gradients entirely is how a 3.91:1 pairing
+  // survived an earlier "zero contrast failures" run, so they are walked.
+  //
+  // The previous version resolved "what sits behind a translucent layer" by
+  // walking ancestors for an opaque backgroundCOLOR only. A gradient section has
+  // backgroundColor: transparent, so that walk sailed straight past
+  // .section-dark's dark plum and landed on main's near-white — then composited
+  // .glass-strong's white sheen over WHITE and reported white-on-white at
+  // 1.05:1. Eleven such phantom failures, on chips that are plainly white on
+  // dark plum. A gradient is a paint layer like any other and has to be walked
+  // as one.
+  //
+  // So: collect every translucent layer between the text and the first OPAQUE
+  // layer (an opaque colour, or a gradient whose stops are opaque), then
+  // composite. A layer with several stops branches, because text may sit over
+  // any of them; the caller scores the worst branch. Branches are capped so a
+  // deep stack cannot blow up.
   const bgOf = (el) => {
-    let node = el, acc = [];
-    while (node && node !== document.documentElement.parentNode) {
+    const layers = [];           // nearest-first, each an array of colour stops
+    let node = el;
+    while (node && node.nodeType === 1) {
       const cs = getComputedStyle(node);
-      if (cs.backgroundImage && cs.backgroundImage !== 'none') {
-        const stops = stopsOf(cs.backgroundImage);
-        if (!stops) return { image: true, node };
-        // Composite each stop over whatever sits behind the gradient, so
-        // translucent stops (the glass tiers) resolve to real colours.
-        let behind = { r: 255, g: 255, b: 255, a: 1 };
-        let p = node.parentElement;
-        while (p) {
-          const pc = parse(getComputedStyle(p).backgroundColor);
-          if (pc && pc.a === 1) { behind = pc; break; }
-          p = p.parentElement;
+      const img = cs.backgroundImage && cs.backgroundImage !== 'none' ? cs.backgroundImage : null;
+      if (img) {
+        if (/url[(]/.test(img)) return { image: true, node };
+        const stops = stopsOf(img);
+        if (stops) {
+          const opaque = stops.filter(c => c.a >= 0.999);
+          // An opaque gradient terminates the walk: it is the base.
+          if (opaque.length) return { bases: opaque, layers };
+          layers.push(stops);
         }
-        return { stops: stops.map(c => (c.a < 1 ? over(c, behind) : c)) };
       }
       const c = parse(cs.backgroundColor);
       if (c && c.a > 0) {
-        acc.push(c);
-        if (c.a === 1) {
-          let base = acc.pop();
-          while (acc.length) base = over(acc.pop(), base);
-          return { color: base };
-        }
+        if (c.a >= 0.999) return { bases: [c], layers };
+        layers.push([c]);
       }
       node = node.parentElement;
     }
-    return { color: { r:255, g:255, b:255, a:1 } };
+    return { bases: [{ r: 255, g: 255, b: 255, a: 1 }], layers };
+  };
+
+  // Flatten bgOf's layer stack into the set of effective opaque backgrounds the
+  // text can actually sit on. Composites from the base upward.
+  const effectiveBgs = (bg) => {
+    let set = bg.bases.slice();
+    for (let i = bg.layers.length - 1; i >= 0; i--) {
+      const next = [];
+      for (const base of set)
+        for (const c of bg.layers[i])
+          next.push(c.a >= 0.999 ? c : over(c, base));
+      set = next.slice(0, 12);
+    }
+    return set.length ? set : [{ r: 255, g: 255, b: 255, a: 1 }];
   };
 
   const visible = (el) => {
@@ -126,34 +147,21 @@ const AUDIT = `(() => {
       });
       continue;
     }
-    if (bg.stops) {
-      // Text must clear AA against EVERY stop it can sit over, so score the
-      // worst one. A gradient is not an excuse to skip the check.
-      let worst = null;
-      for (const stop of bg.stops) {
-        const fgc = fg.a < 1 ? over(fg, stop) : fg;
-        const r = ratio(fgc, stop);
-        if (!worst || r < worst.r) worst = { r, stop };
-      }
-      if (worst && worst.r < need) {
-        out.contrast.push({
-          status: 'fail', ratio: +worst.r.toFixed(2), need, size, weight,
-          tag: el.tagName, txt: el.textContent.trim().slice(0,40),
-          cls: (el.className || '').toString().slice(0,70),
-          fg: cs.color,
-          bg: 'gradient stop rgb(' + [worst.stop.r, worst.stop.g, worst.stop.b].map(Math.round).join(',') + ')',
-        });
-      }
-      continue;
+    // Text must clear AA against EVERY effective background it can sit over,
+    // so score the worst branch.
+    let worst = null;
+    for (const stop of effectiveBgs(bg)) {
+      const fgc = fg.a < 1 ? over(fg, stop) : fg;
+      const r = ratio(fgc, stop);
+      if (!worst || r < worst.r) worst = { r, stop };
     }
-    const fgc = fg.a < 1 ? over(fg, bg.color) : fg;
-    const r = ratio(fgc, bg.color);
-    if (r < need) {
+    if (worst && worst.r < need) {
       out.contrast.push({
-        status: 'fail', ratio: +r.toFixed(2), need, size, weight,
+        status: 'fail', ratio: +worst.r.toFixed(2), need, size, weight,
         tag: el.tagName, txt: el.textContent.trim().slice(0,40),
         cls: (el.className || '').toString().slice(0,70),
-        fg: cs.color, bg: 'rgb(' + [bg.color.r,bg.color.g,bg.color.b].map(Math.round).join(',') + ')',
+        fg: cs.color,
+        bg: 'rgb(' + [worst.stop.r, worst.stop.g, worst.stop.b].map(Math.round).join(',') + ')',
       });
     }
   }
@@ -166,8 +174,8 @@ const AUDIT = `(() => {
     const fg = parse(pcs.color);
     if (!fg || fg.a === 0) continue;
     const bg = bgOf(el);
-    const base = bg.stops ? bg.stops : bg.color ? [bg.color] : null;
-    if (!base) continue;
+    if (bg.image) continue;
+    const base = effectiveBgs(bg);
     const size = parseFloat(getComputedStyle(el).fontSize);
     const need = size >= 24 ? 3 : 4.5;
     let worst = null;
@@ -196,6 +204,17 @@ const AUDIT = `(() => {
     if (cs.overflow !== 'visible' || cs.whiteSpace === 'nowrap') continue;
     const p = el.parentElement;
     if (!p) continue;
+    // Content inside a horizontally scrollable ancestor is SUPPOSED to exceed
+    // its box — that is what the scroller is for. The terminal blocks are the
+    // real case: two /industries code lines were reported as spilling 51-67px at
+    // 390px when they sit in an overflow-x:auto pane and scroll correctly.
+    let sc = p, scrollable = false;
+    for (let i = 0; sc && i < 5; i++) {
+      const ox = getComputedStyle(sc).overflowX;
+      if (ox === 'auto' || ox === 'scroll') { scrollable = true; break; }
+      sc = sc.parentElement;
+    }
+    if (scrollable) continue;
     const pr = p.getBoundingClientRect(), r = el.getBoundingClientRect();
     const pad = parseFloat(getComputedStyle(p).paddingRight) || 0;
     if (r.right > pr.right - pad + 2 || r.left < pr.left - 2) {
@@ -205,6 +224,42 @@ const AUDIT = `(() => {
         cls: (el.className || '').toString().slice(0, 56),
       });
     }
+  }
+
+  // ---- collapsed containers ----
+  // An element measuring 0x0 while its own subtree still paints something. That
+  // is the signature of a percentage width resolved against a shrink-to-fit
+  // parent: w-full inside a grid item with justify-self:end makes the track
+  // content-sized, and if the content is all absolutely positioned there is no
+  // content to size FROM, so the box collapses to nothing and its children pile
+  // up on the origin.
+  //
+  // Every other check here was blind to it. Nothing overflows the document (the
+  // children are absolute, so they do not widen it), no text spills its own
+  // parent, contrast is fine, and the pixel gate compared a broken capture to an
+  // equally broken baseline and called them identical. Only measuring the box
+  // itself finds it.
+  for (const el of [...document.querySelectorAll('body *')]) {
+    if (!el.children.length) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0.5 || r.height > 0.5) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    // Only report if something inside actually renders — an intentionally empty
+    // wrapper collapsing to 0 is not a bug.
+    let painted = null;
+    for (const d of el.querySelectorAll('*')) {
+      const dr = d.getBoundingClientRect();
+      if (dr.width > 2 && dr.height > 2) { painted = { d, dr }; break; }
+    }
+    if (!painted) continue;
+    out.collapsed.push({
+      tag: el.tagName,
+      cls: (el.className || '').toString().slice(0, 70),
+      childTag: painted.d.tagName,
+      childBox: Math.round(painted.dr.width) + 'x' + Math.round(painted.dr.height),
+      childCls: (painted.d.className || '').toString().slice(0, 60),
+    });
   }
 
   // ---- horizontal overflow ----
@@ -267,12 +322,32 @@ async function session({ w, h, mobile, reducedMotion }) {
   }
   if (!url) throw new Error("chrome failed to start");
   const ws = new WebSocket(url);
-  await new Promise((r) => (ws.onopen = r));
+  // Bounded socket open. An unreachable renderer used to park here forever.
+  await new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error("websocket open timed out")), 20000);
+    ws.onopen = () => { clearTimeout(t); res(); };
+    ws.onerror = (e) => { clearTimeout(t); rej(new Error("websocket error: " + (e && e.message))); };
+  });
   let id = 0; const pend = new Map();
   ws.onmessage = (e) => { const m = JSON.parse(e.data);
     if (m.id && pend.has(m.id)) { pend.get(m.id)(m.result ?? m.error); pend.delete(m.id); } };
-  const send = (method, params = {}, sessionId) => new Promise((res) => {
-    const i = ++id; pend.set(i, res); ws.send(JSON.stringify({ id: i, method, params, sessionId })); });
+  // If the renderer dies, fail every outstanding call instead of waiting on a
+  // socket that will never answer.
+  const killPending = (why) => { for (const [, r] of pend) r({ __cdpError: why }); pend.clear(); };
+  ws.onclose = () => killPending("websocket closed");
+  // NOTE: this driver is a second, independent copy of scripts/qa/lib/cdp.mjs.
+  // Hardening only that one would not have helped: THIS is the send that hung
+  // the gate for 9h23m after the machine slept mid-sweep, with Chrome alive but
+  // never answering. Worth collapsing the two drivers into one later; bounding
+  // both is the immediate fix.
+  const CDP_TIMEOUT = Number(process.env.CDP_TIMEOUT_MS || 45000);
+  const send = (method, params = {}, sessionId) => new Promise((res, rej) => {
+    const i = ++id;
+    const t = setTimeout(() => { pend.delete(i); rej(new Error(`CDP timeout after ${CDP_TIMEOUT}ms: ${method}`)); }, CDP_TIMEOUT);
+    pend.set(i, (v) => { clearTimeout(t); if (v && v.__cdpError) rej(new Error(v.__cdpError + ": " + method)); else res(v); });
+    try { ws.send(JSON.stringify({ id: i, method, params, sessionId })); }
+    catch (e) { clearTimeout(t); pend.delete(i); rej(e); }
+  });
   const { targetId } = await send("Target.createTarget", { url: "about:blank" });
   const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
   const S = (m, p) => send(m, p, sessionId);
@@ -293,7 +368,7 @@ async function session({ w, h, mobile, reducedMotion }) {
   };
 }
 
-const report = { contrastFails: [], textSpill: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
+const report = { contrastFails: [], textSpill: [], collapsed: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
 
 for (const vp of VIEWPORTS) {
   const s = await session(vp);
@@ -329,6 +404,7 @@ for (const vp of VIEWPORTS) {
       report.headings.push({ vp: vp.name, page: p, h1count: h1, skips });
     for (const t of a.targets) report.targets.push({ vp: vp.name, page: p, ...t });
     for (const t of a.textSpill || []) report.textSpill.push({ vp: vp.name, page: p, ...t });
+    for (const c of a.collapsed || []) report.collapsed.push({ vp: vp.name, page: p, ...c });
   }
   s.close();
   console.log(`swept ${vp.name} (${vp.w}px)`);
@@ -371,3 +447,36 @@ for (const x of [...report.overImage].slice(0, 8)) console.log("  " + x);
 
 console.log(`\nGradient-clipped text (unmeasurable, review by eye): ${report.gradientText.size}`);
 for (const g of [...report.gradientText].slice(0, 8)) console.log("  " + g);
+
+const cl = uniq(report.collapsed, (x) => x.page + x.cls + x.childCls);
+console.log(`\nCOLLAPSED CONTAINERS (0x0 box with a rendering subtree): ${cl.length}`);
+for (const c of cl.slice(0, 12))
+  console.log(`  ${c.page} <${c.tag} class="${c.cls}"> -> child <${c.childTag}> ${c.childBox} cls=${c.childCls} [${c.vps.join(",")}]`);
+
+// ---------------------------------------------------------------- verdict
+// This block did not exist, and its absence made the whole sweep decorative:
+// the only process.exit was the load guard, so `node qa.mjs` returned 0 with
+// findings on screen and gate.sh happily printed "qa sweep clean". A check that
+// cannot fail is not a check. Contrast/spill/overflow/heading/target/collapsed
+// are hard failures; the two "unmeasurable, review by eye" buckets stay
+// advisory, since a human has to judge those.
+const hard = {
+  "contrast failures": cf.length,
+  "text spilling its container": ts.length,
+  "horizontal overflow": report.overflow.length,
+  "heading issues": report.headings.length,
+  "small targets": tg.length,
+  "collapsed containers": cl.length,
+};
+const failed = Object.entries(hard).filter(([, n]) => n > 0);
+console.log(`\n=== verdict over ${report.pages} page-views ===`);
+for (const [k, n] of Object.entries(hard)) console.log(`  ${n > 0 ? "✗" : "✓"} ${k}: ${n}`);
+if (report.pages === 0) {
+  console.error("\nFAIL: no page was audited — refusing to report a vacuous pass.");
+  process.exit(2);
+}
+if (failed.length) {
+  console.error(`\nFAIL: ${failed.map(([k, n]) => `${n} ${k}`).join(", ")}`);
+  process.exit(1);
+}
+console.log("\nOK — no hard findings.");
