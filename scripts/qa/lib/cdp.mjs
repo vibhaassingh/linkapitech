@@ -30,7 +30,9 @@ export async function session({
   mobile = false,
   reducedMotion = false,
   gl = false,
+  disableGpu = false,
   cpuThrottle = 0,
+  base = "",
 } = {}) {
   const port = 9200 + Math.floor(Math.random() * 700);
   const args = [
@@ -43,6 +45,11 @@ export async function session({
     "about:blank",
   ];
   if (gl) args.splice(1, 0, "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader");
+  // Screenshot captures run with the GPU off rather than on software GL. That is
+  // NOT interchangeable with `gl`: it changes how the hero's WebGL layer paints,
+  // and every pixel baseline in scripts/qa/baseline was captured this way. Keep
+  // them mutually exclusive so a caller cannot accidentally get both.
+  if (disableGpu && !gl) args.splice(1, 0, "--disable-gpu");
   if (reducedMotion) args.unshift("--force-prefers-reduced-motion");
 
   const chrome = spawn(CHROME, args, { stdio: "ignore" });
@@ -132,11 +139,55 @@ export async function session({
     },
     /** Install a script that runs before any page script on the next navigations. */
     addInitScript: (source) => S("Page.addScriptToEvaluateOnNewDocument", { source }),
+    /**
+     * Navigate. Accepts a full URL, or a path when the session was created with
+     * `base` — every caller used to hardcode its own base and its own 4200ms
+     * settle, which is one of the things that made five copies of this driver
+     * drift apart.
+     */
     async goto(url, settleMs = 4200) {
-      await S("Page.navigate", { url });
+      await S("Page.navigate", { url: /^[a-z]+:\/\//.test(url) ? url : base + url });
       await sleep(settleMs);
     },
     mouseTo: (x, y) => S("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, buttons: 0 }),
+    /** Dispatch one key event. `code` doubles as the name, matching CDP's shape. */
+    key: (type, k, code, modifiers = 0) =>
+      S("Input.dispatchKeyEvent", {
+        type,
+        key: k,
+        code,
+        windowsVirtualKeyCode: code === "Tab" ? 9 : code === "Escape" ? 27 : undefined,
+        modifiers,
+      }),
+    /** A full keypress: keyDown then keyUp. What the keyboard suites want. */
+    async press(k, code, modifiers = 0) {
+      for (const type of ["keyDown", "keyUp"]) {
+        await S("Input.dispatchKeyEvent", {
+          type,
+          key: k,
+          code,
+          windowsVirtualKeyCode: code === "Tab" ? 9 : code === "Escape" ? 27 : undefined,
+          modifiers,
+        });
+      }
+    },
+    /** Re-apply device metrics — used to grow the viewport to full page height. */
+    resize: (width, height, opts = {}) =>
+      S("Emulation.setDeviceMetricsOverride", {
+        width,
+        height,
+        deviceScaleFactor: 1,
+        mobile: opts.mobile ?? mobile,
+      }),
+    layoutMetrics: () => S("Page.getLayoutMetrics"),
+    /** PNG screenshot; `beyondViewport` captures the full scrollable page. */
+    async screenshot({ beyondViewport = true } = {}) {
+      const { data } = await S("Page.captureScreenshot", {
+        format: "png",
+        captureBeyondViewport: beyondViewport,
+      });
+      return Buffer.from(data, "base64");
+    },
     /**
      * Scroll by dispatching a real wheel event.
      *

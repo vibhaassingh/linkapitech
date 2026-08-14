@@ -1,11 +1,10 @@
 // Phase-7 QA sweep over raw CDP: contrast, overflow, focus visibility,
 // heading order, touch targets — across every page and viewport.
 // usage: node qa.mjs [baseUrl]
-import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
+import { session, sleep } from "./lib/cdp.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3411";
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking",
   "/industries", "/contact", "/privacy", "/terms",
   "/banks", "/banks/axis", "/banks/indusind", "/banks/hsbc"];
@@ -15,7 +14,6 @@ const VIEWPORTS = [
   { w: 1024, h: 800, name: "laptop", mobile: false },
   { w: 1440, h: 900, name: "desktop", mobile: false },
 ];
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- the in-page audit ---------------------------------------------------
 const AUDIT = `(() => {
@@ -307,71 +305,21 @@ const AUDIT = `(() => {
 })()`;
 
 // ---- driver -------------------------------------------------------------
-async function session({ w, h, mobile, reducedMotion }) {
-  const port = 9200 + Math.floor(Math.random() * 700);
-  const args = ["--headless=new", "--hide-scrollbars", "--use-gl=angle", "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader", `--remote-debugging-port=${port}`, `--window-size=${w},${h}`,
-    `--user-data-dir=/tmp/cdp-qa-${port}`, "about:blank"];
-  if (reducedMotion) args.unshift("--force-prefers-reduced-motion");
-  const chrome = spawn(CHROME, args, { stdio: "ignore" });
-  let url;
-  for (let i = 0; i < 100; i++) {
-    try { const j = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
-      if (j.webSocketDebuggerUrl) { url = j.webSocketDebuggerUrl; break; } } catch {}
-    await sleep(200);
-  }
-  if (!url) throw new Error("chrome failed to start");
-  const ws = new WebSocket(url);
-  // Bounded socket open. An unreachable renderer used to park here forever.
-  await new Promise((res, rej) => {
-    const t = setTimeout(() => rej(new Error("websocket open timed out")), 20000);
-    ws.onopen = () => { clearTimeout(t); res(); };
-    ws.onerror = (e) => { clearTimeout(t); rej(new Error("websocket error: " + (e && e.message))); };
-  });
-  let id = 0; const pend = new Map();
-  ws.onmessage = (e) => { const m = JSON.parse(e.data);
-    if (m.id && pend.has(m.id)) { pend.get(m.id)(m.result ?? m.error); pend.delete(m.id); } };
-  // If the renderer dies, fail every outstanding call instead of waiting on a
-  // socket that will never answer.
-  const killPending = (why) => { for (const [, r] of pend) r({ __cdpError: why }); pend.clear(); };
-  ws.onclose = () => killPending("websocket closed");
-  // NOTE: this driver is a second, independent copy of scripts/qa/lib/cdp.mjs.
-  // Hardening only that one would not have helped: THIS is the send that hung
-  // the gate for 9h23m after the machine slept mid-sweep, with Chrome alive but
-  // never answering. Worth collapsing the two drivers into one later; bounding
-  // both is the immediate fix.
-  const CDP_TIMEOUT = Number(process.env.CDP_TIMEOUT_MS || 45000);
-  const send = (method, params = {}, sessionId) => new Promise((res, rej) => {
-    const i = ++id;
-    const t = setTimeout(() => { pend.delete(i); rej(new Error(`CDP timeout after ${CDP_TIMEOUT}ms: ${method}`)); }, CDP_TIMEOUT);
-    pend.set(i, (v) => { clearTimeout(t); if (v && v.__cdpError) rej(new Error(v.__cdpError + ": " + method)); else res(v); });
-    try { ws.send(JSON.stringify({ id: i, method, params, sessionId })); }
-    catch (e) { clearTimeout(t); pend.delete(i); rej(e); }
-  });
-  const { targetId } = await send("Target.createTarget", { url: "about:blank" });
-  const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-  const S = (m, p) => send(m, p, sessionId);
-  await S("Page.enable"); await S("Runtime.enable");
-  await S("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile: !!mobile });
-  return {
-    async goto(p) { await S("Page.navigate", { url: BASE + p }); await sleep(4200); },
-    async audit() {
-      const r = await S("Runtime.evaluate", { expression: AUDIT, returnByValue: true, awaitPromise: true });
-      if (r?.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails).slice(0, 300));
-      return r?.result?.value;
-    },
-    async evalJs(expr) {
-      const r = await S("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true });
-      return r?.result?.value;
-    },
-    close() { ws.close(); chrome.kill(); },
-  };
+// One shared driver, in ./lib/cdp.mjs. This file used to carry its own copy —
+// and that copy is the one whose unbounded `send` wedged the gate for 9h23m
+// after the machine slept mid-sweep, while the shared driver's hardening sailed
+// past it untouched. Five scripts had drifted into five copies; there is now one.
+//
+// `gl: true` keeps software WebGL on, which this sweep needs so the hero canvas
+// actually paints and its contrast/layout can be measured.
+function qaSession(opts) {
+  return session({ ...opts, gl: true, base: BASE });
 }
 
 const report = { contrastFails: [], textSpill: [], collapsed: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
 
 for (const vp of VIEWPORTS) {
-  const s = await session(vp);
+  const s = await qaSession(vp);
   for (const p of PAGES) {
     await s.goto(p);
     // Refuse to audit a page that did not load. A dead server or a 404 produces
@@ -388,7 +336,7 @@ for (const vp of VIEWPORTS) {
       console.error("Start a production server first:  npm run build && PORT=3411 npm start");
       process.exit(2);
     }
-    const a = await s.audit();
+    const a = await s.evalJs(AUDIT);
     report.pages++;
     for (const c of a.contrast) {
       if (c.status === "fail")
