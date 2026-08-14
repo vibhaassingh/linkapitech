@@ -347,7 +347,10 @@ function ConnectionDiagram() {
       </svg>
       <span className="absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-pill border border-line-soft" />
 
-      <span className="grad-fill absolute left-1/2 top-1/2 grid h-[92px] w-[92px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-pill text-[15px] font-semibold text-ink-inv shadow-float">
+      {/* Smaller hub on phones, for the same reason the pills shrink: it widens
+          the clear space on each side from ~125px to ~135px so the side labels
+          have somewhere to sit. */}
+      <span className="grad-fill absolute left-1/2 top-1/2 grid h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-pill text-[15px] font-semibold text-ink-inv shadow-float sm:h-[92px] sm:w-[92px]">
         <Icon name="link" size={32} />
       </span>
 
@@ -387,7 +390,12 @@ function Pill({
       className={cn(
         // Nested chrome inside the diagram: 12px, the nested step of the radius
         // scale (cards 20 / nested 12 / pills 999).
-        "absolute inline-flex items-center gap-2 whitespace-nowrap rounded-md border border-line-soft bg-surface px-3.5 py-2 text-[12.5px] font-medium text-ink shadow-card",
+        // The phone step is not cosmetic. The diagram box is aspect-locked, so at
+        // 390px it is ~342 wide with a 92px hub centred in it, leaving ~125px of
+        // clear space each side — and "Bank infrastructure" measured 151px, so
+        // the side pills sat ON the hub (26x39px of overlap, measured). Smaller
+        // type and tighter padding below sm bring them inside that gap.
+        "absolute inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-soft bg-surface px-2.5 py-1.5 text-[10.5px] font-medium text-ink shadow-card sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[12.5px]",
         className,
       )}
     >

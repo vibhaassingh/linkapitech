@@ -95,6 +95,16 @@ function Row({
             style={{ transform: `scale(${c.scale ?? 1})` }}
             className="max-h-10 w-auto max-w-[150px] object-contain opacity-[0.92] transition-opacity duration-ui group-hover:opacity-100"
             unoptimized
+            /* Eager on purpose. next/image defaults to lazy, and this strip
+               breaks that assumption: the duplicate row is laid out a full
+               track-width off to the right, so its images never enter the
+               viewport by scrolling and only begin loading once the CSS
+               translate drags them in — measured at 1280px, six of the seven
+               duplicates were still unloaded with one already at x=1249, i.e.
+               on screen as a blank gap. The seven files are a few KB each and
+               the duplicate reuses the primary row's URLs, so making them eager
+               costs one small batch of requests and removes the pop-in. */
+            loading="eager"
           />
         </li>
       ))}

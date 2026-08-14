@@ -44,7 +44,7 @@ export function StatBand() {
             <StatNumber
               key={s.label}
               stat={s}
-              className="h-full items-center justify-center rounded-xl border border-line-soft bg-surface px-6 py-8 text-center shadow-card"
+              className="h-full items-center justify-center rounded-xl border border-line-soft bg-surface px-3 py-8 text-center shadow-card sm:px-6"
               numClassName="!text-violet-text"
               labelClassName="mx-auto max-w-[24ch] text-ink-2"
             />
