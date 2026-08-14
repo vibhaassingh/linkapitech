@@ -115,11 +115,31 @@ export function PageHero({
           )}
         </div>
 
-        {visual && (
-          <Reveal delay={160} className="lg:justify-self-end">
-            {visual}
-          </Reveal>
-        )}
+        {/*
+          NO `justify-self-end` here, deliberately. It makes this grid item
+          shrink-to-fit, and every visual passed in sizes itself with `w-full`
+          plus a `max-w-[…]` cap. A percentage width against a content-sized
+          parent is circular: the parent asks the child how wide it wants to be,
+          the child answers "100% of you". Chromium resolves that to zero.
+
+          The damage scaled with how much intrinsic width the child had:
+            /connected-banking  0x0     — the diagram's contents are ALL
+                                          absolutely positioned, so max-content
+                                          is genuinely nothing. Its pills and hub
+                                          collapsed onto the origin, and because
+                                          a zero-height box puts `bottom-*`
+                                          items above `top-*` ones, the labels
+                                          also rendered in reverse order.
+            /banks/[slug]       278px   — shrank to its text's max-content
+                                          instead of the intended 380px.
+            /services           534px   — an <img> has intrinsic width, so it
+                                          survived, merely undersized.
+
+          Default `justify-self: stretch` fills the track, and each visual's own
+          `mx-auto` centres it within that track — which is what those classes
+          were always asking for.
+        */}
+        {visual && <Reveal delay={160}>{visual}</Reveal>}
       </div>
     </header>
   );
