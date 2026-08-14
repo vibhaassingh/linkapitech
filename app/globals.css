@@ -418,6 +418,22 @@
   letter-spacing: -0.015em;
   font-weight: 700;
 }
+/* Phones only, and it MUST stay after the base rule:
+   a media query adds no specificity, so placed before it the plain
+   `.stat-num` declaration simply won and this had no effect at all. The floor in the rule above (1.9rem) is what the clamp actually resolves to
+   at 390px, since 2.6vw is only ~10px there — and the widest figure,
+   "INR 60,000 Cr+", then measures 187px inside a 116px card content box and
+   burst out of its card on both sides. Three of the four fitted, which is why it
+   read as a one-off rather than a sizing bug. Scale with the viewport below
+   480px so the longest value fits its own card. Paired with px-3 on the
+   card at that width, which buys back ~24px of content box so the numerals
+   can stay meaningfully larger than their 14px labels rather than collapsing
+   to near-label size. */
+@media (max-width: 479px) {
+  .stat-num {
+    font-size: clamp(1.2rem, 5.4vw, 1.5rem);
+  }
+}
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";

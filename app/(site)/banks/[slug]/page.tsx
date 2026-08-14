@@ -354,7 +354,19 @@ function BankMark({
         // or a down-scaled mark drifts away from its own box.
         transformOrigin: left ? "left center" : "center",
       }}
-      className={cn("w-auto object-contain", left && "object-left")}
+      /* `h-full` is load-bearing, not cosmetic. hsbc.svg carries only a viewBox
+         and no width/height, so it has NO intrinsic width, and `width: auto`
+         with no intrinsic width resolves to 0 — the mark rendered 0x0 and simply
+         did not appear in the related-banks row on /banks/axis and
+         /banks/indusind. indusind.svg escaped it purely because its file does
+         declare width/height.
+         `shrink-0` alone does not fix it: that only stops an item shrinking
+         BELOW its base size, and the base size was already 0.
+         next/image emits width/height attributes, so the element carries
+         `aspect-ratio: auto <boxW>/<boxH>`. Giving it a definite height lets that
+         ratio resolve the width, and `object-contain` letterboxes the artwork
+         inside the resulting box. */
+      className={cn("h-full w-auto shrink-0 object-contain", left && "object-left")}
       /* Next already skips the optimizer for SVG; explicit so a future
          dangerouslyAllowSVG can't rasterise a vector mark. */
       unoptimized
