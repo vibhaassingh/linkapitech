@@ -12,6 +12,7 @@ import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
 import { Analytics } from "@/lib/analytics";
 import { CursorGlow } from "@/components/motion/CursorGlow";
+import { LiquidGlassDefs } from "@/components/ui/LiquidGlassDefs";
 import { Magnetic } from "@/components/motion/Magnetic";
 
 export const metadata: Metadata = {
@@ -57,6 +58,11 @@ export default function RootLayout({
         <div className="chrome-glow-layer">
           <CursorGlow />
         </div>
+        {/* Paints nothing: SVG <filter> defs that `.liq-refract` reaches by id
+            through `backdrop-filter: url(#liq-refract)`. A sibling of the glow
+            wrapper, not a child, so that wrapper stays the glow-only lift it is
+            documented as. */}
+        <LiquidGlassDefs />
         <Magnetic />
         {children}
         <Analytics />

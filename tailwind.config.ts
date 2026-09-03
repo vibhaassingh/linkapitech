@@ -55,6 +55,17 @@ export default {
           2: "var(--veil-2)",
           3: "var(--veil-3)",
         },
+        // Liquid-glass light fills and the pill nav's two states (REDESIGN-V4 §A3).
+        // The dark --liq-1/2/3-fill tiers are deliberately NOT exposed as
+        // utilities — the .liq classes carry them, so a call site cannot fork
+        // the AA-calibrated fill from its blur/edge/rim stack.
+        liq: {
+          "light-1": "var(--liq-light-1-fill)",
+          "light-2": "var(--liq-light-2-fill)",
+          "light-3": "var(--liq-light-3-fill)",
+          "pill-light": "var(--liq-pill-light)",
+          "pill-dark": "var(--liq-pill-dark)",
+        },
         lavender: {
           200: "var(--lavender-200)",
           300: "var(--lavender-300)",

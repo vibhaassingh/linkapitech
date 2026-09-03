@@ -178,6 +178,79 @@
   /** The "wet edge" as a background layer, so tiers need no pseudo-element. */
   --glass-edge: linear-gradient(170deg, rgba(255, 255, 255, 0.13), transparent 24%);
 
+  /* ---- Liquid glass (liq) — layers on top of the locked --glass-* tiers ---- */
+  /* fills/blur are ALIASES of the calibrated tiers; do not fork the numbers */
+  --liq-1-fill: var(--glass-1-bg);
+  --liq-1-blur: var(--glass-1-blur);
+  --liq-2-fill: var(--glass-2-bg);
+  --liq-2-blur: var(--glass-2-blur);
+  --liq-3-fill: var(--glass-3-bg);
+  --liq-3-blur: var(--glass-3-blur);
+  --liq-edge: var(--glass-edge);
+  /* bottom-up plum depth: dark stops only, so it can never lower light-ink contrast */
+  --liq-depth: linear-gradient(0deg, rgba(26, 6, 32, 0.22), transparent 42%);
+  /* chromatic rim: white key at top-left, lavender fill, violet at the shadow side */
+  --liq-rim: conic-gradient(
+    from 215deg,
+    rgba(255, 255, 255, 0.58),
+    rgba(201, 184, 216, 0.3) 20%,
+    rgba(255, 255, 255, 0.07) 46%,
+    rgba(142, 36, 170, 0.34) 64%,
+    rgba(255, 255, 255, 0.4) 84%,
+    rgba(255, 255, 255, 0.58)
+  );
+  --liq-rim-w: 1.25px;
+  --liq-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -14px 28px -18px rgba(26, 6, 32, 0.55),
+    0 1px 2px rgba(26, 6, 32, 0.28),
+    0 18px 44px -20px rgba(26, 6, 32, 0.55);
+  /* specular. --liq-spec is masked to the padding frame (text-free); --liq-spec-soft is
+     the only alpha allowed under text, and only under --ink-inv (5.65:1 worst) */
+  --liq-spec: rgba(255, 255, 255, 0.22);
+  --liq-spec-soft: rgba(255, 255, 255, 0.1);
+  --liq-sweep: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.1) 55%,
+    transparent
+  );
+  --liq-pad: 24px; /* frame width the specular mask uses; set per element */
+
+  /* light variant — frosted white over lavender */
+  --liq-light-1-fill: rgba(255, 255, 255, 0.55);
+  --liq-light-2-fill: rgba(255, 255, 255, 0.7);
+  --liq-light-3-fill: rgba(255, 255, 255, 0.82);
+  --liq-light-edge: linear-gradient(170deg, rgba(255, 255, 255, 0.95), transparent 28%);
+  --liq-light-rim: conic-gradient(
+    from 215deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(98, 33, 111, 0.14) 22%,
+    rgba(255, 255, 255, 0.55) 46%,
+    rgba(142, 36, 170, 0.2) 64%,
+    rgba(255, 255, 255, 0.85) 84%,
+    rgba(255, 255, 255, 0.95)
+  );
+  --liq-light-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(98, 33, 111, 0.08),
+    0 1px 2px rgba(37, 13, 41, 0.06),
+    0 16px 40px -18px rgba(37, 13, 41, 0.22);
+  --liq-light-spec: rgba(142, 36, 170, 0.1); /* violet — white is invisible on white */
+
+  /* pill nav */
+  --liq-pill-light: rgba(255, 255, 255, 0.78);
+  --liq-pill-dark: rgba(37, 13, 41, 0.78);
+  --liq-pill-blur: 22px;
+
+  /* liquid interaction */
+  --liq-lift: -2px;
+  --liq-hover-scale: 1.012;
+  --liq-press-scale: 0.985;
+
+  /* parallax amplitude scale (Part D) */
+  --drift-scale: 1;
+
   /* Radii — Figma Purple = generous */
   --r-sm: 8px;
   --r-md: 12px;
