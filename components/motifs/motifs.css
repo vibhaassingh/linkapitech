@@ -140,12 +140,21 @@
     stroke-dashoffset: 0;
   }
 }
+/* Pulses are a desktop-only enhancement — the gate.sh allowlist entry for
+   conduitPulse asserts exactly this, so the CSS must enforce it. */
+@media (max-width: 1023px) {
+  .conduit-pulse {
+    display: none;
+  }
+}
 
 /* ------------------------------------------------------------
    Node — an endpoint (ERP, bank, LinkAPI, a step): a disc with an inner
    violet glow. Standalone = `.liq liq-1`; inside a glass card = `.liq-inset`
    (no second blur); on light = `.node-light` (lavender disc, violet glyph, no
    glass). The glow is a child, opacity-only; data-lit raises it to full.
+   `node-light` = the light-section variant; `data-lit` = the glow state —
+   unrelated despite the similar words.
    ------------------------------------------------------------ */
 .node {
   position: relative;
@@ -206,8 +215,9 @@
 .pool-light {
   background: radial-gradient(70% 90% at 50% 100%, var(--violet-soft), transparent 72%);
 }
-/* Rise with the reveal; the RESTING state is full, so no-JS and reduced
-   motion show the settled pool. +120ms so it lands after the digits do. */
+/* Rise with the reveal; the RESTING state is full, so reduced motion shows the
+   settled pool (useInView flips data-inview immediately). +120ms so it lands
+   after the digits do. */
 [data-reveal]:not([data-inview]) .pool {
   transform: scaleY(0);
   opacity: 0;
@@ -223,6 +233,9 @@
    grain (::after, z:-1) dithers over it. A gradient, never a blur or a
    filter. Position and size come from the component's inline style;
    x/y are the TOP-LEFT corner (no centring transform — see the file header).
+   The parent MUST be a stacking context — .section-dark is; a light section
+   needs Tailwind `isolate` (or `relative z-0`). Without one, z-index:-2 drops
+   the disc behind the section's own background.
    ------------------------------------------------------------ */
 .caustic {
   position: absolute;
@@ -291,9 +304,6 @@
     left / 220px 100% no-repeat;
 }
 @media (max-width: 1023px) {
-  /* Pulses are a desktop-only enhancement — the gate.sh allowlist entry for
-     conduitPulse asserts exactly this, so the CSS must enforce it. */
-  .conduit-pulse { display: none; }
   .seam-spec {
     display: none;
   }

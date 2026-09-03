@@ -9,7 +9,7 @@ interface NodeProps {
   /**
    * Inside a glass card: `.liq-inset` (veil fill, no second blur layer)
    * instead of `.liq liq-1`. This is what keeps nested glass off the §A7 blur
-   * budget.
+   * budget. Ignored when `light` (a light node is never glass).
    */
   inset?: boolean;
   /** Light sections: lavender disc, violet glyph, no glass. */

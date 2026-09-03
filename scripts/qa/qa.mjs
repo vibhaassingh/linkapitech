@@ -474,11 +474,11 @@ console.log(`\nCOLLAPSED CONTAINERS (0x0 box with a rendering subtree): ${cl.len
 for (const c of cl.slice(0, 12))
   console.log(`  ${c.page} <${c.tag} class="${c.cls}"> -> child <${c.childTag}> ${c.childBox} cls=${c.childCls} [${c.vps.join(",")}]`);
 
-// route @ viewport: <selector path> uses <token> inside <glass class>
+// route <selector path> uses <token> inside <glass class> "text" [viewports]
 const ig = uniq(report.inkGlass, (x) => x.page + x.path + x.token);
 console.log(`\nINK ON GLASS (token forbidden on that .liq tier, REDESIGN-V4 §A6): ${ig.length}`);
 for (const g of ig.slice(0, 15))
-  console.log(`  ${g.page} @ ${g.vps.join(",")}: ${g.path} uses ${g.token} inside ${g.glass}  "${g.txt}"`);
+  console.log(`  ${g.page} ${g.path} uses ${g.token} inside ${g.glass} "${g.txt}" [${g.vps.join(",")}]`);
 
 // ---------------------------------------------------------------- verdict
 // This block did not exist, and its absence made the whole sweep decorative:

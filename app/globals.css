@@ -222,6 +222,9 @@
   --liq-light-1-fill: rgba(255, 255, 255, 0.55);
   --liq-light-2-fill: rgba(255, 255, 255, 0.7);
   --liq-light-3-fill: rgba(255, 255, 255, 0.82);
+  --liq-light-1-blur: 12px;
+  --liq-light-2-blur: 20px;
+  --liq-light-3-blur: 28px;
   --liq-light-edge: linear-gradient(170deg, rgba(255, 255, 255, 0.95), transparent 28%);
   --liq-light-rim: conic-gradient(
     from 215deg,
@@ -807,7 +810,13 @@
      L5 specular     ::after — ONLY with .liq-spec / .liq-spec-full /
                      .liq-sweep. Opacity / transform are the only animated
                      properties on it.
-     L6 interaction  element transform on --spring-snappy (.liq-live)
+     L6 interaction  element transform on --spring-snappy (.liq-live).
+                     .liq-live owns `transform`; it is EXCLUSIVE ON ITS
+                     ELEMENT with .liq-enter, .scrub-drift, .card-depth and
+                     [data-tilt] — nest a wrapper when you need both.
+
+   PRIVATE VARS. `--_*` custom properties are private to the material — set
+   only by `.liq*` rules; call sites use the public `--liq-*` tokens.
 
    PSEUDO-ELEMENT BUDGET. `.liq::before` = rim, `.liq::after` = specular.
    .liq therefore never shares an element with another pseudo owner:
@@ -864,8 +873,6 @@
   box-shadow: var(--_shadow);
   backdrop-filter: blur(var(--_blur)) saturate(var(--_sat));
   -webkit-backdrop-filter: blur(var(--_blur)) saturate(var(--_sat));
-  transition: transform var(--dur-spring-snappy) var(--spring-snappy),
-    box-shadow var(--dur-ui) var(--ease-out-expo);
 }
 /* Tier modifiers re-assign fill / blur / saturation only. Tier 1 also thins
    the rim: a 1.25px ring on a 44px chip reads as a border, not an edge. */
@@ -902,7 +909,8 @@
 /* Edge lensing: the ring gets its own backdrop-filter, so the backdrop reads
    brighter and more saturated exactly along the rim — the thick-glass edge.
    Tier 3 / hero only, desktop only: it is one more layer against the §A7
-   budget, and below 1024 the block further down removes it. */
+   budget. The ≥1024 media query is the ONLY gate — base .liq::before sets no
+   backdrop-filter, so there is nothing to remove below it. */
 @media (min-width: 1024px) {
   .liq-lens::before {
     backdrop-filter: brightness(1.18) saturate(1.6);
@@ -959,8 +967,14 @@
   opacity: 1;
 }
 
-/* L6 — liquid interaction, transform only, on the spring .liq already
-   transitions with. */
+/* L6 — liquid interaction, transform only. The transition lives HERE and not
+   on .liq: components/motion/Magnetic.tsx writes el.style.transform every rAF
+   for [data-tilt], and a stylesheet transition on the host would ease every
+   one of those writes into a rubbery, lagging tilt. Nothing changes
+   box-shadow, so box-shadow does not transition. */
+.liq-live {
+  transition: transform var(--dur-spring-snappy) var(--spring-snappy);
+}
 .liq-live:hover {
   transform: translateY(var(--liq-lift)) scale(var(--liq-hover-scale));
 }
@@ -982,7 +996,7 @@
    (white is invisible on white). */
 .liq-light {
   --_fill: var(--liq-light-2-fill);
-  --_blur: 20px;
+  --_blur: var(--liq-light-2-blur);
   --_sat: 1.15;
   --_edge: var(--liq-light-edge);
   --_depth: none;
@@ -992,11 +1006,11 @@
 }
 .liq-light.liq-1 {
   --_fill: var(--liq-light-1-fill);
-  --_blur: 12px;
+  --_blur: var(--liq-light-1-blur);
 }
 .liq-light.liq-3 {
   --_fill: var(--liq-light-3-fill);
-  --_blur: 28px;
+  --_blur: var(--liq-light-3-blur);
 }
 
 /* Chromium-only refraction through the #liq-refract displacement map
@@ -1034,12 +1048,7 @@
   }
   /* Escape hatch for tiles that would overrun the phone budget (StatBand:
      four tiles + the pill nav would be five). */
-  .liq-static-sm {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  /* No edge lensing below desktop (see .liq-lens above). */
-  .liq::before {
+  .liq-static-mobile {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -1047,10 +1056,6 @@
   .liq-light.liq-3 {
     --_blur: 18px;
   }  /* .liq-light.liq-3 is (0,2,0) and would out-specify the cap */
-  /* Part D (ii): parallax drift runs at half amplitude on phones. */
-  :root {
-    --drift-scale: 0.5;
-  }
 }
 /* No pointer specular or sweep band where there is no fine pointer, or no
    room for a 240px highlight to read as one. */
@@ -1225,9 +1230,9 @@ html {
     animation-range: cover 0% cover 100%;
   }
   /* Both keyframes multiply by --drift-scale (1 on desktop, .5 below 1024 —
-     set in the .liq mobile block), so every drifting plane halves together on
-     phones. var() stays INSIDE the transform: that is how the repo already
-     writes this and it passed the composited audit. */
+     set right after the drift tiers below), so every drifting plane halves
+     together on phones. var() stays INSIDE the transform: that is how the repo
+     already writes this and it passed the composited audit. */
   @keyframes scrubDrift {
     from {
       transform: translateY(calc(var(--drift-range, 22px) * var(--drift-scale, 1)));
@@ -1252,13 +1257,25 @@ html {
   .drift-lead {
     --drift-range: -22px;
   }
+  /* Part D (ii): every drifting plane runs at half amplitude on phones. */
+  @media (max-width: 1023px) {
+    :root {
+      --drift-scale: 0.5;
+    }
+  }
 
   /* Part D (v): .liq-enter — entry depth for glass. scale .96 → 1 and opacity
      .6 → 1 over the first 45% of the element's ENTRY, then it rests. A
      blur-radius ramp was rejected here: it kills nested glass and is the most
-     expensive mobile GPU op. All viewports. */
+     expensive mobile GPU op. All viewports.
+     Fill mode is `backwards`, NOT `both`: with `both` the `to` keyframe
+     (transform: none) keeps applying forever after the range and out-ranks
+     .liq-live:hover's transform, so the hover lift is dead on any element
+     carrying both classes. The `to` keyframe equals the base style, so
+     `backwards` is visually identical during entry and releases `transform`
+     afterwards. */
   .liq-enter {
-    animation: liqEnter linear both;
+    animation: liqEnter linear backwards;
     animation-timeline: view();
     animation-range: entry 0% entry 45%;
   }
@@ -1441,17 +1458,21 @@ html {
       height: 100vh;
       contain: paint;
     }
+    /* Steps must be the ONLY element children of .pin-stage (a heading or a
+       Seam goes outside the stage). The selector counts same-tag siblings
+       only, so a stray child of another tag would not shift the ranges, but a
+       same-tag one still would. */
     .pin-step {
       animation: pinStep linear both;
       animation-timeline: --pin;
     }
-    .pin-step:nth-child(1) {
+    .pin-step:nth-of-type(1) {
       animation-range: 0% 34%;
     }
-    .pin-step:nth-child(2) {
+    .pin-step:nth-of-type(2) {
       animation-range: 33% 67%;
     }
-    .pin-step:nth-child(3) {
+    .pin-step:nth-of-type(3) {
       animation-range: 66% 100%;
     }
     @keyframes pinStep {
@@ -1708,7 +1729,7 @@ html {
    later, wins — a bare `.terminal.ledger` at (0,2,0) would silently lose.
    CALL-SITE PHASE (7): re-measure --terminal-cmt (#8b93a0) against the
    COMPOSITE — rgba(23,27,33,.78) over the band's brightest stop — not against
-   --terminal; if it reads under 4.5:1 the ledger stays opaque. Wet edge kept. */
+   --terminal; if it reads under 4.5:1 the ledger stays opaque. */
 .section-dark .terminal.ledger {
   background: rgba(23, 27, 33, 0.78);
   backdrop-filter: blur(18px);

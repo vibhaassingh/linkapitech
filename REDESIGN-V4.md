@@ -64,7 +64,7 @@ Class family **`.liq`** (not `.lg`: collides with Tailwind's `lg:` prefix in JSX
 | L3 | Bevel + elevation | `box-shadow`: 1px white inset top, plum inset bottom, contact + ambient outer | never |
 | L4 | Rim ring | `::before`, `padding: var(--liq-rim-w)`, `mask-composite: exclude` ring, conic white→lavender→violet→white ("chromatic rim"); on `.liq-lens` ≥1024 the ring adds `backdrop-filter: brightness(1.18) saturate(1.6)` (edge lensing) | never |
 | L5 | Specular | `::after`: pointer radial at `--cx/--cy` masked to the padding frame (`.liq-spec`) or unmasked (`.liq-spec-full`), **or** a scroll-driven sweep band (`.liq-sweep`) | **opacity** / **transform** only |
-| L6 | Liquid interaction | element `transform` on `--spring-snappy` (lift −2px, scale 1.012, press .985) + existing `[data-tilt]` | transform only |
+| L6 | Liquid interaction | element `transform` on `--spring-snappy` (lift −2px, scale 1.012, press .985) + existing `[data-tilt]`. `.liq-live` owns `transform`; it is **exclusive on its element** with `.liq-enter`, `.scrub-drift`, `.card-depth` and `[data-tilt]` — nest a wrapper when you need both | transform only |
 
 No flat `border` (the ring is the border). `border-radius` never animates. `isolation: isolate` on `.liq` lets `::before/::after` sit at `z-index:-1` above the fill and below content (children no longer need `relative z-[1]`). `position: relative` is declared only in `@layer components` so a Tailwind `absolute` on the call site still wins.
 
@@ -99,6 +99,7 @@ No flat `border` (the ring is the border). `border-radius` never animates. `isol
 --liq-light-1-fill: rgba(255,255,255,.55);
 --liq-light-2-fill: rgba(255,255,255,.70);
 --liq-light-3-fill: rgba(255,255,255,.82);
+--liq-light-1-blur: 12px; --liq-light-2-blur: 20px; --liq-light-3-blur: 28px;
 --liq-light-edge: linear-gradient(170deg, rgba(255,255,255,.95), transparent 28%);
 --liq-light-rim: conic-gradient(from 215deg,
   rgba(255,255,255,.95), rgba(98,33,111,.14) 22%, rgba(255,255,255,.55) 46%,
@@ -135,9 +136,9 @@ Tailwind `colors.liq`: `"light-1"`, `"light-2"`, `"light-3"`, `"pill-light"`, `"
 | `.liq-sweep` | scroll-driven specular band (`view()`), ≥1024, exclusive with the two above, `--ink-inv` surfaces only |
 | `.liq-lens` | rim ring gets its own backdrop-filter — tier 3 / hero only, ≥1024 |
 | `.liq-refract` | adds `url(#liq-refract)` — Chromium ≥1024, ≤ 4 elements |
-| `.liq-live` | hover lift / press spring (transform only) |
+| `.liq-live` | hover lift / press spring (transform only); owns the `transform` transition. `.liq-live` owns `transform`; it is **exclusive on its element** with `.liq-enter`, `.scrub-drift`, `.card-depth` and `[data-tilt]` — nest a wrapper when you need both |
 | `.liq-enter` | entry depth `scale(.96)→1` + `opacity .6→1` over `view()` entry 0–45% |
-| `.liq-static-sm` | no backdrop-filter below 1024 (blur-budget escape hatch) |
+| `.liq-static-mobile` | no backdrop-filter below 1024 (blur-budget escape hatch) |
 | `.glass`, `.glass-1/2/3`, `.glass-strong` | kept through the migration, then reduced to aliases of `.liq*` (`contract.py` L33 lists glass-1/2/3) |
 
 ## A5. Recipe (new block in `globals.css` after L695)
@@ -157,8 +158,6 @@ Tailwind `colors.liq`: `"light-1"`, `"light-2"`, `"light-3"`, `"pill-light"`, `"
   box-shadow: var(--_shadow);
   backdrop-filter: blur(var(--_blur)) saturate(var(--_sat));
   -webkit-backdrop-filter: blur(var(--_blur)) saturate(var(--_sat));
-  transition: transform var(--dur-spring-snappy) var(--spring-snappy),
-              box-shadow var(--dur-ui) var(--ease-out-expo);
 }
 .liq-1 { --_fill: var(--liq-1-fill); --_blur: var(--liq-1-blur); --_sat: 1.25; --liq-rim-w: 1px; }
 .liq-3 { --_fill: var(--liq-3-fill); --_blur: var(--liq-3-blur); --_sat: 1.5; }
@@ -204,7 +203,11 @@ Tailwind `colors.liq`: `"light-1"`, `"light-2"`, `"light-3"`, `"pill-light"`, `"
 .liq-spec:hover::after, .liq-spec:focus-within::after,
 .liq-spec-full:hover::after, .liq-spec-full:focus-within::after { opacity: 1; }
 
-/* L6 — liquid interaction, transform only */
+/* L6 — liquid interaction, transform only. The transition lives on .liq-live, NOT .liq:
+   Magnetic.tsx writes el.style.transform every rAF for [data-tilt], and a host transition
+   would ease every write (rubbery, lagging tilt). Nothing changes box-shadow, so it does
+   not transition. */
+.liq-live        { transition: transform var(--dur-spring-snappy) var(--spring-snappy); }
 .liq-live:hover  { transform: translateY(var(--liq-lift)) scale(var(--liq-hover-scale)); }
 .liq-live:active { transform: scale(var(--liq-press-scale)); }
 
@@ -213,13 +216,13 @@ Tailwind `colors.liq`: `"light-1"`, `"light-2"`, `"light-3"`, `"pill-light"`, `"
 
 /* light variant */
 .liq-light {
-  --_fill: var(--liq-light-2-fill); --_blur: 20px; --_sat: 1.15;   /* 1.4 pinks the lavender */
+  --_fill: var(--liq-light-2-fill); --_blur: var(--liq-light-2-blur); --_sat: 1.15;   /* 1.4 pinks the lavender */
   --_edge: var(--liq-light-edge); --_depth: none;
   --_rim: var(--liq-light-rim); --_shadow: var(--liq-light-shadow);
   --_spec: var(--liq-light-spec);
 }
-.liq-light.liq-1 { --_fill: var(--liq-light-1-fill); --_blur: 12px; }
-.liq-light.liq-3 { --_fill: var(--liq-light-3-fill); --_blur: 28px; }
+.liq-light.liq-1 { --_fill: var(--liq-light-1-fill); --_blur: var(--liq-light-1-blur); }
+.liq-light.liq-3 { --_fill: var(--liq-light-3-fill); --_blur: var(--liq-light-3-blur); }
 
 /* Chromium-only refraction. `filter:` is never involved, so no backdrop root is created. */
 @supports (backdrop-filter: url(#x)) {
@@ -237,11 +240,11 @@ Tailwind `colors.liq`: `"light-1"`, `"light-2"`, `"light-3"`, `"pill-light"`, `"
 /* mobile downgrade + coarse pointers */
 @media (max-width: 1023px) {
   .liq.liq-1 { backdrop-filter: none; -webkit-backdrop-filter: none; }   /* too small for blur to read */
-  .liq-static-sm { backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .liq::before { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .liq-static-mobile { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* no .liq::before override here: the ≥1024 query on .liq-lens::before is the only gate */
   .liq-3,
   .liq-light.liq-3 { --_blur: 18px; }  /* .liq-light.liq-3 is (0,2,0) and would out-specify the cap */
-  :root { --drift-scale: .5; }
+  /* --drift-scale: .5 lives beside the drift tiers (Part D ii), not here */
 }
 @media (max-width: 1023px), (any-pointer: coarse) {
   .liq-spec::after, .liq-spec-full::after, .liq-sweep::after { display: none; }
@@ -287,7 +290,7 @@ Before any call site: **verify Safari and Firefox evaluate `@supports (backdrop-
 
 ## A7. Blur budget
 
-**≤ 8 backdrop-filtered layers per desktop viewport, ≤ 4 on phones; nested glass never blurs.** `.liq-1` has no blur <1024; `.liq-lens` counts as an extra layer (tier 3 / hero only). Challenges goes 12 → 6 by making icon tiles `.liq-inset`. StatBand tiles carry `liq-static-sm` (4 tiles + pill would exceed 4 on a phone). Ledger is opaque on mobile. Caustics are gradients, not blur.
+**≤ 8 backdrop-filtered layers per desktop viewport, ≤ 4 on phones; nested glass never blurs.** `.liq-1` has no blur <1024; `.liq-lens` counts as an extra layer (tier 3 / hero only). Challenges goes 12 → 6 by making icon tiles `.liq-inset`. StatBand tiles carry `liq-static-mobile` (4 tiles + pill would exceed 4 on a phone). Ledger is opaque on mobile. Caustics are gradients, not blur.
 
 `will-change`: none on the material (hover transitions promote for their own duration). `contain: paint` only on `.liq-sweep` and `.pin-stage`.
 
@@ -367,11 +370,11 @@ useEffect(() => {
 | **Conduit** | Glass channel with a violet highlight flowing through — the pipe money travels | 6px track (`--glass-1-bg` fill, inset 1px `--glass-1-line`, 1px top wet line) containing `.conduit-flow`, a 38%-long band `transparent → lavender-400 → violet-500 → transparent`. SVG variant for curves: `pathLength="100"` path + a `stroke-dasharray="8 92"` pulse path | DOM: band `translateX/Y` from `--sp` (scroll) or 7s loop ≥1024. SVG: `stroke-dashoffset` → **`conduitPulse` joins `ecoWire` in `ALLOWED_ANIM`** (paint-only, same reasoning) | ProcessRail spine, WhatWeDo manifold, WhyUs spine, ErpBand underline, Ecosystem connectors, connected-banking architecture, OfferTimeline rail, banks/[slug] stack | Mobile: scroll-driven only. RM: `--sp` never written → band parked at −100% (invisible); pulse `display:none` |
 | **Node** | Glass disc with inner violet glow — an endpoint (ERP, bank, LinkAPI, a step) | standalone: `.liq liq-1 rounded-pill` 44–56px; **inside a glass card: `.liq-inset`**; child `.node-glow` radial `--violet-glow → transparent`; `data-lit` raises glow to 1 | glow `opacity`, entry `scale(.92→1)` on `--spring-gentle`, `[data-tilt]` | Hero chips, icon tiles on dark (replaces `grad-tile`), ProcessRail steps, Ecosystem chip dots, diagrams | Mobile: no tilt, glow static. RM: static, lit |
 | **Pool** | Violet liquid pooling at the base of a tile — value accumulating under a number | absolute bottom 46%: `radial-gradient(70% 90% at 50% 100%, var(--violet-a24), transparent 72%)`; `::before` 1px lavender meniscus line at its top. `.pool-light` = `--violet-soft`. **Text overlapping a Pool is `--ink-inv` (dark) / `--ink` (light)** | `scaleY(0→1)` origin bottom + opacity, `--spring-smooth` +120ms after `[data-inview]` | StatBand, About track record, banks aggregate card, CtaBand, Footer | Same everywhere. RM: full, static |
-| **Caustic** | Ambient light on the plum — the light liquid throws on the wall | 1–2 absolutely positioned 380–560px divs, `radial-gradient(circle, var(--violet-a24), transparent 70%)`, `z-index:-2` inside the isolated `.section-dark` (grain dithers over). Light: `--violet-soft`. **No `filter`, no feTurbulence** | `.scrub-drift` 14–30px; ≥1024 an additional 40s `translate` loop | Every dark band (max 2), Hero fallback, FAQ wash, Footer | Mobile: 1 blob, scroll drift only. RM: static |
+| **Caustic** | Ambient light on the plum — the light liquid throws on the wall | 1–2 absolutely positioned 380–560px divs, `radial-gradient(circle, var(--violet-a24), transparent 70%)`, `z-index:-2` inside the isolated `.section-dark` (grain dithers over). Light: `--violet-soft`. **No `filter`, no feTurbulence** | `.scrub-drift` 14–30px; ≥1024 an additional 40s `translate` loop | Every dark band (max 2), Hero fallback, FAQ wash, Footer. The parent MUST be a stacking context — `.section-dark` is; a light section needs Tailwind `isolate` (or `relative z-0`) | Mobile: 1 blob, scroll drift only. RM: static |
 | **Seam** | Glass hairline dividing sections — the rim of the vessel | full-width 1px `--glass-3-line` (dark) / `--line-soft` (light) with a 220px child specular segment | segment `translateX` from `--sp` | Top of every dark band, bottom of Hero, top of Footer, under the stuck pill | static line, no segment |
 | **Meniscus** | The curved liquid surface where a dark band ends and a light one begins | SVG `<path preserveAspectRatio="none">` 56–80px, filled with the next section's surface colour + 1.2px lavender stroke. **Static geometry — no path morph. Max 3 uses**: Hero→Marquee, StatBand→ErpBand, dark PageHero→first section. Amplitude ≤ 4% of width | stroke opacity via `--sp` (.3→.6) | as listed | Mobile 32px. RM: identical |
 | **Vessel** | The glass container — the card family | dark `.liq liq-3 rounded-xl liq-spec`; light `.liq liq-light rounded-xl`. Specular = the rim ring's white key + `.liq-spec` — **no extra static white arc** (constraint 3) | `[data-tilt]` (hero), `.liq-spec`, `.liq-live` 4px lift | Hero, WhoWeAre, FAQ card, Testimonials, Terminal shell, Contact, Industry mocks | Mobile: no tilt/spec. RM: static |
-| **Ledger** | Terminal as a glass code window | `.terminal.ledger` = `rgba(23,27,33,.78)` + `backdrop-filter: blur(18px)` **inside `.section-dark` only**; opaque `--terminal` on light + mobile. **Re-measure `--terminal-cmt` (#8b93a0) on the composite; if < 4.5 stay opaque.** Wet edge kept | existing `--sp-live` typing + caret | ProcessRail, Solutions dev band, Industries NBFC | Mobile: opaque. RM: existing fail-open |
+| **Ledger** | Terminal as a glass code window | `.terminal.ledger` = `rgba(23,27,33,.78)` + `backdrop-filter: blur(18px)` **inside `.section-dark` only**; opaque `--terminal` on light + mobile. **Re-measure `--terminal-cmt` (#8b93a0) on the composite; if < 4.5 stay opaque.** | existing `--sp-live` typing + caret | ProcessRail, Solutions dev band, Industries NBFC | Mobile: opaque. RM: existing fail-open |
 | **Droplet** | The small liquid pill — eyebrows, tags, nav marker | `.liq liq-1 rounded-pill` + a 4px specular dot at the leading edge. Light: `.liq liq-light liq-1` | `.liq-spec` hover only | Eyebrows, LIVE_PILL, nav dot, trust lines | `.liq-1` has no blur <1024 |
 
 **Conduit sketch** (`motifs.css` + `Conduit.tsx`):
@@ -417,7 +420,7 @@ export function Conduit({ orientation = "h", flow = "scroll", light, className, 
 [data-inview] .pool{transition:transform var(--dur-spring-smooth) var(--spring-smooth) 120ms,opacity 400ms var(--ease-out-expo) 120ms}
 ```
 
-**Shared `components/motifs/Card.tsx`** replaces the per-page `CARD_LIFT` strings (`about/page.tsx` L31, `solutions/page.tsx` L22, `banks/[slug]/page.tsx` L25). Dark: `.liq rounded-lg p-7 md:p-8` + `.liq-inset` Node icon, title `--ink-inv`, body `--ink-inv-2`; feature `.liq-3` — **all text `--ink-inv`**. Light: `.liq liq-light rounded-lg p-7 md:p-8 border-line-soft`, 44px `--lavender-200` icon disc with `--violet-text` glyph; feature = `bg-tint` + `border-lavender-300` or `grad-fill` with `--ink-on-violet-2` (kept). Hover: `.liq-live` + `.liq-spec` (dark) / `.spotlight` (light); `.icon-draw` kept.
+**Shared `components/motifs/Card.tsx`** replaces the per-page `CARD_LIFT` strings (`about/page.tsx` L31, `solutions/page.tsx` L22, `banks/[slug]/page.tsx` L25). Dark: `.liq rounded-lg p-7 md:p-8` + `.liq-inset` Node icon, title `--ink-inv`, body `--ink-inv-2`; feature `.liq-3` — **all text `--ink-inv`**. Light: `.liq liq-light rounded-lg p-7 md:p-8 border-line-soft`, 44px `--lavender-200` icon disc with `--violet-text` glyph; feature = `bg-tint` + `border-lavender-300` or `grad-fill` with `--ink-on-violet-2` (kept). Hover: `.liq-live` + `.liq-spec` (dark) / `.spotlight` (light); `.icon-draw` kept. `href` renders the card as a `next/link` `<Link>`, never a raw `<a>` — internal links go through the App Router so the RouteTransition view transition fires (it exists only for client navigation).
 
 ---
 
@@ -426,16 +429,17 @@ export function Conduit({ orientation = "h", flow = "scroll", light, className, 
 All within `view()` / `scroll()` / `--sp`. Every new keyframe is transform/opacity only and joins the by-name RM kill list (`globals.css` L1440–1453).
 
 - **(i) Sheet enter.** Keep `.sheet-enter`'s transform (L817–824). Add a child `<span aria-hidden class="sheet-shadow">` — 1px top-edge highlight + 40px upward shadow gradient — whose **opacity** fades 1→0 over `cover 0% cover 22%` (`@keyframes sheetShadow`). All viewports.
-- **(ii) Drift tiers.** `.drift-far { --drift-range: 7px } .drift-mid { 14px } .drift-near { 22px } .drift-lead { -22px }`; `scrubDrift` (L859–866) multiplies by `var(--drift-scale)` (.5 <1024). All viewports.
+- **(ii) Drift tiers.** `.drift-far { --drift-range: 7px } .drift-mid { 14px } .drift-near { 22px } .drift-lead { -22px }`; `scrubDrift` (L859–866) multiplies by `var(--drift-scale)` (.5 <1024 — `:root { --drift-scale: .5 }` sits in its own `@media (max-width: 1023px)` beside the tiers, not in the `.liq` mobile block). All viewports.
 - **(iii) Pinned story** — compositor-only via a **named view timeline** (`view()` on a sticky child stalls; the tall wrapper owns the timeline):
 ```css
 @supports (animation-timeline: view()) { @media (min-width: 1024px) {
   .pin { view-timeline-name: --pin; view-timeline-axis: block; min-height: 300vh; }
   .pin-stage { position: sticky; top: 0; height: 100vh; contain: paint; }
+  /* steps must be the only element children of .pin-stage (a heading or Seam goes outside the stage) */
   .pin-step { animation: pinStep linear both; animation-timeline: --pin; }
-  .pin-step:nth-child(1) { animation-range: 0% 34%; }
-  .pin-step:nth-child(2) { animation-range: 33% 67%; }
-  .pin-step:nth-child(3) { animation-range: 66% 100%; }
+  .pin-step:nth-of-type(1) { animation-range: 0% 34%; }
+  .pin-step:nth-of-type(2) { animation-range: 33% 67%; }
+  .pin-step:nth-of-type(3) { animation-range: 66% 100%; }
   @keyframes pinStep { 0% { opacity: 0; transform: translateY(24px); } 18%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-24px); } }
 }}
 @media (prefers-reduced-motion: reduce) {
@@ -473,7 +477,7 @@ Tone rhythm after StatBand goes dark: `D·L·L·D·L·D·L·D·L·D·L·L·D` (b
 | 5 | **Ecosystem** | L (`--surface`) | flanked constellation (POS L62–73) kept; hub `grad-fill` kept; chips → `.liq liq-light liq-1` pills with a leading 8px Node dot (replaces the 3px bar L220–224) | Conduit-SVG ×10: base stroke `--lavender-300` 1.5px + `.conduit-pulse` `stroke-dasharray="8 92"` with `--pulse-delay: i * -0.9s` — one packet per 6s | chips scale in from the hub-facing edge (kept); hub `rotate(calc(var(--sp) * 18deg))` (kept); pulses ≥1024 only | retune. `.eco-wire` → `conduit-pulse`; `.eco-hub` box-shadow pulse (off-compositor) → Node glow opacity. `grid-cols-1` mobile list kept |
 | 6 | **Challenges** | D `band-b` + `.sheet-enter` | `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`, 6 `.liq liq-sweep liq-enter` Vessels `p-7` radius 20; `.liq-inset` Nodes **dim** (glow .35, `data-lit` absent) — flow blocked; hover lights them (the "we solve it" beat) | Node ×6, Caustic ×1 (lower-left, matches `--grad-section-b`), Seam | RevealGroup 70 | restyle (12 → 6 blur layers). Text on `.liq-sweep` cards is `--ink-inv` |
 | 7 | **WhyUs** | L (`--surface`) | vertical Conduit spine at `lg:left-1/2` the full height; rows alternate sides (`Reveal dir="left|right"`, ≥1024 only); ghost numeral 64px (`.drift-mid`), title 21px, body 15.5px `--ink-2`; band tints alternate (kept) | Conduit (`flow="scroll"`, `light`), Node ×4 light 12px on the spine, lit on the row's `[data-inview]` | spine flow tracks `--sp`; `.scrub-fade-side` ≥1024 | recompose. Mobile: spine at left gutter, single column |
-| 8 | **StatBand** | **D `band-c`** | heading centred; `grid-cols-2 lg:grid-cols-4` of `.liq liq-spec liq-static-sm` tiles `px-4 py-8 sm:px-6` radius 24; numerals `--ink-inv`, affixes `--lavender-400` (`odo-fix` spans), **labels `--ink-inv`** (they overlap the Pool). `LIVE_PILL` → Droplet row centred below | Pool ×4, Caustic ×1 centred low, Seam top, **Meniscus bottom** into ErpBand, Droplet | RevealGroup 90; `useOdometer` roll kept; Pool `scaleY` +120ms after digits land | rewrite; `ambient-violet` dropped (Caustic replaces it). Mobile 2×2 |
+| 8 | **StatBand** | **D `band-c`** | heading centred; `grid-cols-2 lg:grid-cols-4` of `.liq liq-spec liq-static-mobile` tiles `px-4 py-8 sm:px-6` radius 24; numerals `--ink-inv`, affixes `--lavender-400` (`odo-fix` spans), **labels `--ink-inv`** (they overlap the Pool). `LIVE_PILL` → Droplet row centred below | Pool ×4, Caustic ×1 centred low, Seam top, **Meniscus bottom** into ErpBand, Droplet | RevealGroup 90; `useOdometer` roll kept; Pool `scaleY` +120ms after digits land | rewrite; `ambient-violet` dropped (Caustic replaces it). Mobile 2×2 |
 | 9 | **ErpBand** | L (`--surface`) | thin (`py-14`) — the Seam between two dark bands; heading `display-2` centred; six marks (kept sizes L33–43); **one** light Conduit (`flow="scroll"`) under the mark strip. Heading stays "ERPs We Integrate With" (CONTENT-TODO §1) | Conduit (light) | — | restyle |
 | 10 | **ProcessRail** + `Terminal` | D `band-a` + `.sheet-enter` | `lg:grid-cols-[0.85fr_1.15fr]` kept. Left: four steps down a **vertical Conduit** (replaces the 1px rail L123–131; its `.conduit-flow` **is** the existing `fillStyle` `scaleY(var(--fill))`); step markers → Nodes with `litStyle` (kept). Right: **Ledger** terminal. **Pinned story ≥1024** (Part D iii) | Conduit, Node ×4, Ledger, Caustic ×1 (behind the terminal), Seam | `--sp-live` choreography **unchanged** (L82–101, `RAIL_FROM/TO` = `TYPE_FROM/TO`) | material + pin only. Mobile: terminal opaque, stacked |
 | 11 | **Testimonials** | L (`--surface`) | snap track kept (L102–136); cards → `.liq liq-light` Vessels `p-7 md:p-8` radius 20; quote mark `--lavender-300`; avatar monogram `grad-fill` kept; role `--ink-3` | Vessel, Pool-light (faint, under the figcaption) | `.card-depth` (view(x)) kept; dot morph + press springs kept | restyle. Three real quotes, generic roles (CONTENT-TODO §3); no stars |
@@ -514,7 +518,7 @@ components/three/
     liquidShaders.ts            NEW vertex + fragment GLSL template strings; palette injected as literals
   (delete) scene/createHeroField.ts, HeroOrbit.tsx
 ```
-`lensLayout.ts` evaluates `makeRandom(20260812)` at module load (pure, identical on server and client), producing 5 blob descriptors `{ ax, ay, kx, ky, phx, phy, r, w }` plus derived `restX/restY` — the positions at `uFlow = 0`, exactly where the SVG draws them and where the scene boots.
+`lensLayout.ts` evaluates `makeRandom(20260812)` at module load (pure, identical on server and client), producing 5 `LensBlob` descriptors (`interface LensBlob` — not `Blob`, which would shadow the DOM global) `{ ax, ay, kx, ky, phx, phy, r, w }` plus derived `restX/restY` — the positions at `uFlow = 0`, exactly where the SVG draws them and where the scene boots.
 
 **palette.ts:** keep `plum950/900/700/600`, `inkInv`; add `plum800 0x2d1235`, `violet600 0x7b2d8e`, rename `violet → violet500 0x8e24aa`, `lavender → lavender400 0xc9b8d8`; add `LIQUID = { rimLine .34, rimInner .10, rimDark .28, glassTint .09, bodyAlpha [.80,.96], caustic .16, specular .55 }` and `glsl(hex) => "vec3(r, g, b)"`. Zero `three` import stays true.
 
@@ -684,7 +688,7 @@ Risks: banding (static dither), alpha halos (premultiplied + NoBlending, 3px rim
 | Glass everywhere → AA regressions | Fills alias the calibrated tiers; no extra white in background layers; tier-3 = `--ink-inv`; `--ink-inv-3` never on glass; Pool-overlapped text `--ink-inv`; the new `qa.mjs` rule. |
 | Safari parses `backdrop-filter: url()` but renders nothing | Verify in phase 2; Chromium probe → `html[data-refract]`. |
 | Chromium reference backdrop filter off the GPU fast path | ≤4 opt-in elements, desktop only, never animated; drop from chips if TBT moves. |
-| Mobile blur budget | `.liq-1` no blur <1024; `.liq-inset`; `liq-static-sm`; Ledger opaque; Caustics are gradients. |
+| Mobile blur budget | `.liq-1` no blur <1024; `.liq-inset`; `liq-static-mobile`; Ledger opaque; Caustics are gradients. |
 | Meniscus reads as a 2010 wavy divider | ≤3 uses, amplitude ≤4% width; fall back to flat Seam. |
 | Hero reads as lava lamp | Breathe ≥9s ±4px; violet-500→plum-700 only; no bubbles/ripples anywhere. |
 | Caustics read as generic gradient-mesh | ≤2 per section, alpha ≤.24, scroll-drift only on mobile. |
@@ -718,3 +722,13 @@ Recorded so later phases and reviewers don't re-litigate them.
 - `.liq` lives in `@layer components`; with Tailwind v3 that block is subject to content purging and survives because `liq` appears in `components/motifs/*.tsx` — keep at least one motif using it.
 - `.lens-caustic` / `.lens-glint` `<g>` elements must carry **no SVG `transform` attribute** (de-composites in Chromium).
 - Later phases must add each newly **wired** class/token to `scripts/qa/contract.py` as its first call site lands; the ink-on-glass rule is proven able to fail at the first `.liq` call site (Phase 4).
+
+**Phase 2 review fixes (follow-up to `c1b4d48`):**
+- `.liq-enter` uses fill-mode **`backwards`**, not `both`: `both` kept the `to` keyframe's `transform: none` applied forever after the range and out-ranked `.liq-live:hover`, so the lift was dead. Independently, `.liq-live` is **exclusive on its element** with `.liq-enter`, `.scrub-drift`, `.card-depth` and `[data-tilt]` — nest a wrapper when you need both.
+- The `transform` transition lives on **`.liq-live`**, not `.liq`: `Magnetic.tsx` writes `el.style.transform` every rAF for `[data-tilt]`, and a host transition eased every write into a rubbery tilt. Nothing transitions `box-shadow`.
+- `Card href` renders a `next/link` `<Link>`, never a raw `<a>` — the RouteTransition view transition exists only for App Router client navigation.
+- `Caustic` needs its parent to be a **stacking context** (`.section-dark` is; a light section adds Tailwind `isolate` or `relative z-0`), or `z-index:-2` drops it behind the section background.
+- `lensLayout.ts` exports `interface LensBlob` (renamed from `Blob`, which shadowed the DOM global).
+- The blur-budget escape hatch is **`.liq-static-mobile`** (renamed: the old `-sm` suffix read as a Tailwind breakpoint). `--liq-light-1/2/3-blur` tokens replace the literal light blur radii. `:root { --drift-scale: .5 }` sits beside the drift tiers, not in the `.liq` mobile block. The redundant mobile `.liq::before { backdrop-filter: none }` is gone — the ≥1024 query on `.liq-lens::before` is the only gate.
+- `.pin-step` ranges use `:nth-of-type`; steps must be the only element children of `.pin-stage`.
+- `--_*` custom properties are private to the material; call sites use the public `--liq-*` tokens. `.conduit-pulse`'s mobile `display:none` lives in the Conduit section of `motifs.css`. `.terminal` has no wet-edge layer — the Ledger row no longer claims one.

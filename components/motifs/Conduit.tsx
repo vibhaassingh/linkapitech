@@ -52,8 +52,8 @@ interface ConduitPathProps {
   light?: boolean;
   /**
    * Add the travelling packet (`.conduit-pulse`, stroke-dashoffset — the
-   * kit's one paint-only animation, allowlisted in gate.sh). Desktop only by
-   * convention: the call site decides whether to render it below 1024.
+   * kit's one paint-only animation, allowlisted in gate.sh). Desktop only:
+   * hidden below 1024 by CSS; call sites may also skip rendering it.
    */
   pulse?: boolean;
   /** Stagger for the packet, e.g. `${i * -0.9}s`; negative values start mid-path. */

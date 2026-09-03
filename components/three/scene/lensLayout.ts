@@ -55,8 +55,9 @@ export const CAUSTICS = [
  * `kx`/`ky` are integer harmonics of the shader's 360s wrap period, so the
  * paths close seamlessly. `r` is the field radius, `w` its weight.
  * `restX/restY` are the absolute positions at t = 0.
+ * Named `LensBlob`, not `Blob`: `Blob` would shadow the DOM global.
  */
-export interface Blob {
+export interface LensBlob {
   ax: number;
   ay: number;
   kx: number;
@@ -91,9 +92,9 @@ const GRAVITY_Y = 14;
  * on every path — stays inside the lens interior:
  *   |x| ≤ 62, |y| ≤ 44 + 14  →  (62/148)² + (58/132)² ≈ 0.37 < 1.
  */
-export const BLOBS: readonly Blob[] = (() => {
+export const BLOBS: readonly LensBlob[] = (() => {
   const rnd = makeRandom(HERO_SEED);
-  const out: Blob[] = [];
+  const out: LensBlob[] = [];
   for (let i = 0; i < BLOB_COUNT; i++) {
     const ax = 28 + rnd() * 34; // [28, 62]
     const ay = 18 + rnd() * 26; // [18, 44]

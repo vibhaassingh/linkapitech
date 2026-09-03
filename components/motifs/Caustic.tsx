@@ -16,6 +16,10 @@ interface CausticProps {
   drift?: Drift;
   /** 40s ambient translate loop, desktop (≥ 1024) only. */
   loop?: boolean;
+  /**
+   * Lands on the drifting wrapper when both `drift` and `loop` are set (that
+   * element owns position and size), on the disc itself otherwise.
+   */
   className?: string;
 }
 
@@ -24,6 +28,10 @@ interface CausticProps {
  * (REDESIGN-V4 Part C). A radial gradient at z-index:-2 inside the isolated
  * `.section-dark`, so the grain dithers over it. Never a blur, never a filter.
  * Max 2 per section; phones get one, scroll-drift only.
+ *
+ * The parent MUST be a stacking context — `.section-dark` is; a light section
+ * needs Tailwind `isolate` (or `relative z-0`). Without one, z-index:-2 drops
+ * the disc behind the section's own background.
  *
  * `drift` and `loop` both animate `transform`, and two animations cannot
  * share one element — so when both are set the loop runs on an inner disc

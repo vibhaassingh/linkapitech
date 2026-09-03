@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Node } from "./Node";
@@ -16,7 +17,7 @@ interface CardProps {
   title: ReactNode;
   children?: ReactNode;
   className?: string;
-  /** Renders the whole card as an <a> when given (otherwise a <div>). */
+  /** Renders the whole card as a next/link <Link> when given (otherwise a <div>). */
   href?: string;
 }
 
@@ -61,8 +62,9 @@ export function Card({
     className,
   );
   // --liq-pad is the specular mask's text-free frame; 28px matches p-7 and,
-  // with the 18px feather, stays inside md's 32px padding.
-  const style = dark || !feature ? ({ "--liq-pad": "28px" } as CSSProperties) : undefined;
+  // with the 18px feather, stays inside md's 32px padding. The light feature
+  // card is not glass and has no specular, so it gets none.
+  const style = lightFeature ? undefined : ({ "--liq-pad": "28px" } as CSSProperties);
 
   const titleInk = dark ? "text-ink-inv" : "text-ink";
   // Tier 3 hosts --ink-inv only (§A6); every other tier keeps the secondary ink.
@@ -83,11 +85,14 @@ export function Card({
     </>
   );
 
+  // next/link, never a raw <a>: internal links go through the App Router so
+  // the RouteTransition view transition fires — it exists only for client
+  // navigation (components/chrome/RouteTransition.tsx).
   if (href) {
     return (
-      <a href={href} className={shell} style={style}>
+      <Link href={href} className={shell} style={style}>
         {body}
-      </a>
+      </Link>
     );
   }
   return (

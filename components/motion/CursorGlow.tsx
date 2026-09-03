@@ -8,7 +8,8 @@ import { useEffect, useRef, useState } from "react";
  * ONE document-level pointermove listener drives everything:
  *   - `--mx` / `--my` on <html>, consumed by `.cursor-glow` (a fixed ambient
  *     blob) and by any `.ambient-violet` section wash;
- *   - `--cx` / `--cy` on the nearest `.spotlight` card, for its hover sheen.
+ *   - `--cx` / `--cy` on the nearest `.spotlight`, `.liq-spec` or
+ *     `.liq-spec-full` element, for its hover sheen / specular.
  *
  * Writes are batched into a single rAF so a fast pointer never causes more
  * than one style flush per frame, and never reads layout in the handler
