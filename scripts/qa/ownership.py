@@ -98,6 +98,14 @@ OWNERSHIP = [
     ("FROZEN", "components/sections/home/SectionHeader.tsx"),
     ("FROZEN", "components/ui/Eyebrow.tsx"),
 
+    # --- V4 "Liquid Glass" redesign (2026-09) — new files the redesign adds.
+    #     The redesign reopens every packet above by design (it is a ground-up
+    #     visual rewrite executed phase-by-phase from REDESIGN-V4.md), so the
+    #     only thing this map must guarantee for V4 is that no NEW file is
+    #     unowned. Existing files keep their original packet owner. ---
+    ("V4", "components/motifs/*"),
+    ("V4", "components/ui/LiquidGlassDefs.tsx"),
+
     # --- orchestrator-owned (not a packet) ---
     ("ORCH", "scripts/qa/*"),
     ("ORCH", "content/*"),
