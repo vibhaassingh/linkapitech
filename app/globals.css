@@ -1694,6 +1694,19 @@ html {
     transform: translateY(-3px);
   }
 }
+/* Poster hand-off (REDESIGN-V4 Part E §1). The SVG groups in HeroLens.tsx
+   marked `data-poster` ARE the hero until the WebGL scene draws: in Phase 5
+   HeroField promotes its first rendered frame to data-live="true" on
+   .hero-lens, and the poster fades out under the live liquid on the same
+   900ms clock the canvas fades in with. Opacity only. Without WebGL — phones
+   (<1024), reduced motion, no context, JS off — data-live is never set, the
+   poster stands alone and no fade ever fires. The chips are not posters.
+   Deliberately OUTSIDE the @supports (animation-timeline) block that holds
+   .hero-recede: the hand-off must not depend on scroll-timeline support. */
+.hero-lens[data-live="true"] [data-poster] {
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out-expo);
+}
 
 /* ============================================================
    Code terminal (How We Work / SDK cards).

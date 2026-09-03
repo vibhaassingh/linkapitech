@@ -52,6 +52,15 @@ CLASSES = [
     # only ever listed once it is both defined and wired.
     "chrome-header", "chrome-nav-link", "chrome-cta", "chrome-mark",
     "chrome-seam",
+    # V4 Phase 4 — hero rebuilt around the lens. The first `.liq` call sites
+    # (hero chips, Droplet eyebrow, the glass Button), the motifs the hero
+    # composes, the hero band + display step, and the poster SVG's animated
+    # groups. `caustic` is NOT listed: the hero's two caustics are SVG
+    # ellipses inside `.lens-caustic`, no DOM <Caustic> is rendered yet.
+    "liq", "liq-1", "liq-refract", "liq-spec-full", "liq-live",
+    "droplet", "node", "seam", "meniscus",
+    "band-hero", "display-0", "lens-caustic", "lens-glint", "drift-lead",
+    "hero-lens",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",
@@ -62,6 +71,11 @@ TOKENS = [
     # V4 Phase 3 — the --liq-* tokens the pill and the mobile sheet consume.
     "--liq-pill-light", "--liq-pill-dark", "--liq-pill-blur",
     "--liq-rim", "--liq-light-rim", "--liq-rim-w", "--liq-light-shadow",
+    # V4 Phase 4 — the material tokens the now-wired `.liq` (edge, depth,
+    # shadow), `.liq-spec-full` (soft specular) and `.liq-live` (lift/press)
+    # rules consume.
+    "--liq-edge", "--liq-depth", "--liq-shadow", "--liq-spec-soft",
+    "--liq-lift", "--liq-hover-scale", "--liq-press-scale",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
 JS_WIRING = {

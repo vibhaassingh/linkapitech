@@ -1,76 +1,79 @@
+import { Fragment } from "react";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
-import { HeroOrbit } from "@/components/three/HeroOrbit";
+import { Droplet, Meniscus, Seam } from "@/components/motifs";
+import { HeroLens } from "@/components/three/HeroLens";
 import { HERO } from "@/content/home";
 
 /**
- * Homepage hero — plum gradient, capsule eyebrow, two CTAs, and the orbit
- * visual on the right. The H1 and sub are deliberately NOT reveal-gated: the
- * headline is the LCP element and must paint on first frame.
+ * Homepage hero (REDESIGN-V4 Part E §1) — a Droplet eyebrow, the display-0
+ * headline, two CTAs, and the lens composition on the right. The H1 and lead
+ * are deliberately NOT reveal-gated: the headline is the LCP element and must
+ * paint on first frame.
+ *
+ * The section IS a `.section-dark` now (`band-hero` swaps in --grad-hero's two
+ * violet blooms over the plum base), so the shared ::after grain dithers it
+ * like every other dark band — the hand-rolled gradient + grain divs are gone.
+ * `.section-dark` also sets the inverted ink defaults, the plum scrollbar and
+ * ::selection colours, and is the stacking context the motifs rely on.
  *
  * `.hero-recede` gives the section the iOS "sheet presenting over the app
- * window" read: as the hero scrolls out it takes on a corner radius, drops a
- * fraction of a percent of scale and dims, so the white band arriving beneath
- * it reads as a sheet sliding *over* the hero rather than the hero simply
- * leaving. It is transform/filter/radius only — no layout property is touched,
- * so CLS stays 0 — it is identity at scroll position 0 (the H1 paints
- * untouched), and it lives inside B0's `@supports (animation-timeline: view())`
- * + reduced-motion guards, so it collapses to a static hero when either fails.
+ * window" read: as the hero scrolls out it drops a fraction of a percent of
+ * scale, so the white band arriving beneath reads as a sheet sliding *over*
+ * the hero. Transform only, identity at scroll 0 (the H1 paints untouched),
+ * inside the `@supports (animation-timeline: view())` + reduced-motion guards.
+ *
+ * Bottom edge: a Seam (the vessel's rim) directly above a Meniscus filled with
+ * the LogoMarquee's --surface — the dark band ends as a liquid surface. Both
+ * are stacked in one absolute wrapper at the bottom; the section's bottom
+ * padding (80/112px) is taller than the pair (33/57/81px), so nothing overlaps
+ * the CTA row or the lens.
  */
 export function Hero() {
+  // The " · " separators become 3px dots at render; the content string itself
+  // is untouched (content/home.ts stays the single source of copy).
+  const eyebrowParts = HERO.eyebrow.split(" · ");
+
   return (
     <section
       /* data-hero: chrome.css's no-JS / first-frame baseline reads it to paint
-         the pill dark; data-surface: the header's tone observer targets it
-         (this section is deliberately not .section-dark — see below). */
+         the pill dark; data-surface: the header's tone observer targets it. */
       data-surface="dark"
       data-hero="dark"
-      className="hero-recede relative isolate overflow-hidden bg-[var(--plum-900)]"
+      className="section-dark band-hero hero-recede relative isolate overflow-hidden"
     >
-      {/* gradient + radial glow */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{ background: "var(--grad-hero)" }}
-      />
-
-      {/* Film grain — the dither that keeps --grad-hero's two violet blooms
-          from banding. Their alpha ramps (0.35 key, 0.18 fill) stretch over
-          ~800–950px, i.e. only one 8-bit step per ~20–35px in the blue channel:
-          flat enough for Mach bands to show on a wide display. A 2.5%
-          overlay-blended noise tile is enough dither to break the steps up
-          while staying well under the threshold of reading as texture.
-          `--grain` is laid on every other dark band by `.section-dark::after`,
-          but this section is deliberately NOT `.section-dark` — it paints
-          --grad-hero itself, and adopting the class would also swap
-          .eyebrow-capsule to its glass variant, a visible design change — so
-          the hero carries its own layer at B0's exact parameters (140px tile,
-          overlay, 0.025). `isolate` on the section pins the blend's backdrop to
-          the hero's own gradient regardless of whether .hero-recede's filter is
-          active. If the grain selector is ever widened to reach the hero,
-          delete this div.
-          It sits below the z-[1] content wrapper, so it can never overlay the
-          H1 or alter text contrast, and being absolute it cannot shift layout. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          backgroundImage: "var(--grain)",
-          backgroundSize: "140px 140px",
-          mixBlendMode: "overlay",
-          opacity: 0.025,
-        }}
-      />
-
-      <div className="relative z-[1] mx-auto grid grid-cols-1 w-full max-w-[1240px] items-center gap-12 px-6 pb-20 pt-[140px] md:px-10 md:pb-28 md:pt-[168px] lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+      <div className="relative z-[1] mx-auto grid w-full max-w-[1240px] grid-cols-1 items-center gap-12 px-6 pb-20 pt-[140px] md:px-10 md:pb-28 md:pt-[168px] lg:min-h-[min(92svh,920px)] lg:grid-cols-[minmax(0,54fr)_minmax(0,46fr)] lg:gap-10">
         <div>
-          <span className="eyebrow-capsule">{HERO.eyebrow}</span>
+          {/* Droplet is a capsule, not an Eyebrow: <Eyebrow>'s --ink-3 would
+              trip the ink-on-glass rule. --ink-inv-2 is the tier-1 secondary
+              ink (§A6). The parts sit in ONE inline span so the label wraps as
+              text on narrow viewports (flex items would not wrap). The dots are
+              decorative; the surrounding spaces keep the words apart for
+              assistive tech. */}
+          <Droplet className="text-[0.72rem] font-medium uppercase leading-[1.7] tracking-eyebrow text-ink-inv-2">
+            <span>
+              {eyebrowParts.map((part, i) => (
+                <Fragment key={part}>
+                  {i > 0 && (
+                    <>
+                      {" "}
+                      <span
+                        aria-hidden="true"
+                        className="mx-1.5 inline-block h-[3px] w-[3px] rounded-pill bg-lavender-400 align-middle"
+                      />{" "}
+                    </>
+                  )}
+                  {part}
+                </Fragment>
+              ))}
+            </span>
+          </Droplet>
 
-          <h1 className="display-1 mt-7 max-w-[19ch] text-ink-inv">
+          <h1 className="display-0 mt-7 max-w-[14ch] text-ink-inv">
             {HERO.headline}
           </h1>
 
-          <p className="mt-6 max-w-[54ch] text-[16.5px] leading-relaxed text-ink-inv-2">
+          <p className="mt-6 max-w-[54ch] text-[17px] leading-[1.65] text-ink-inv-2">
             {HERO.sub}
           </p>
 
@@ -91,7 +94,24 @@ export function Hero() {
           </Reveal>
         </div>
 
-        <HeroOrbit />
+        {/* Lens column. Mobile: 420px, centred, after the type. lg: the
+            wrapper stretches the cell and bleeds 6% past its right edge
+            (width auto + negative margin — an explicit w-full would ignore
+            the margin); the section's overflow-hidden clips the bleed. */}
+        <div className="mx-auto w-full max-w-[420px] lg:ml-0 lg:-mr-[6%] lg:w-auto lg:max-w-none">
+          <HeroLens />
+        </div>
+      </div>
+
+      {/* Bottom edge: Seam (rim) over the Meniscus (the next band's surface,
+          rising). .seam is position:relative in motifs.css and would out-rank
+          a Tailwind `absolute`, so both sit in-flow inside one absolute box. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0"
+      >
+        <Seam />
+        <Meniscus fill="var(--surface)" />
       </div>
     </section>
   );

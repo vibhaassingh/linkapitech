@@ -42,9 +42,16 @@ const styles: Record<Exclude<Variant, "accent">, string> = {
   /** White fill — the primary CTA on plum/dark surfaces. */
   light:
     "bg-surface px-7 py-[14px] text-[15px] text-plum-700 shadow-card hover:bg-white hover:shadow-float",
-  /** Liquid-glass secondary on plum surfaces. */
+  /**
+   * Liquid-glass secondary on plum surfaces (REDESIGN-V4 §A4): the `.liq`
+   * material with the unmasked pointer specular and the hover lift. Text is
+   * `--ink-inv` and must stay so — `.liq-spec-full` puts white UNDER the label
+   * on hover, and only `--ink-inv` clears AA there (5.65:1 worst, §A6; the
+   * qa.mjs ink-on-glass rule enforces it). `.liq-live` owns `transform`;
+   * `[data-magnetic]` writes `translate`, so the pull still composes with it.
+   */
   glass:
-    "glass sheen rounded-pill px-7 py-[14px] text-[15px] text-ink-inv hover:bg-white/[0.14]",
+    "liq liq-spec-full liq-live rounded-pill px-7 py-[14px] text-[15px] text-ink-inv",
   /** Hairline outline on light surfaces. */
   outline:
     "border border-line bg-transparent px-7 py-[13px] text-[15px] text-ink hover:border-plum-600 hover:text-plum-700",
