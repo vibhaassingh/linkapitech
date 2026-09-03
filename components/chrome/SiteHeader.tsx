@@ -22,7 +22,7 @@ const isActive = (pathname: string, href: string) =>
  * edge, sitting over whatever the page's hero is — plum gradient or lavender
  * wash. No mega menu: every nav item is a page.
  *
- * Two motion pieces, both of which try to stay off the main thread:
+ * Three mechanisms, all of which try to stay off the main thread:
  *
  * 1. ELEVATION RAMP. The shadow ramps continuously over the first 120px of
  *    scroll via a CSS `scroll()` timeline (see chrome.css §1) — no scroll
@@ -36,6 +36,26 @@ const isActive = (pathname: string, href: string) =>
  *    --thumb-x / --thumb-w / --thumb-o). Measurement is cached: it happens on
  *    mount, on route change, on a nav resize and once after webfont swap —
  *    never per frame, and never a read after a write in the same task.
+ *    V4: the marker is a 6px dot placed by translate only (chrome.css §2);
+ *    publish() still writes --thumb-x (px) and --thumb-w (unitless).
+ *
+ * 3. TONE OBSERVER (REDESIGN-V4 Part B). The pill is two-state liquid glass —
+ *    frosted white over lavender sections, plum glass over dark ones — and
+ *    `data-over="dark|light"` on the pill is what chrome.css §1b switches on.
+ *    It is driven by ONE IntersectionObserver whose root is a 1px band at the
+ *    pill's vertical centre, observing every `.section-dark` /
+ *    `[data-surface="dark"]` in <main>: a Set of the sections currently
+ *    crossing that band decides the state. IO rather than a scroll listener
+ *    because it does zero per-frame work — the intersection test runs on the
+ *    compositor side and the callback fires only on a crossing. It runs under
+ *    reduced motion too: which tone is under the pill is a CONTRAST feature,
+ *    not motion (the colour transitions themselves collapse to 0.001ms via
+ *    the global block). Before hydration, and with JS off, chrome.css's
+ *    `.chrome-header:has(~ main [data-hero="dark"])` baseline reads the
+ *    hero's own `data-hero` (Hero.tsx / PageHero.tsx), so a dark-hero route
+ *    paints dark on its first frame; the observer only ever confirms or
+ *    refines that. On route change the attribute is removed so the baseline
+ *    decides again until the new page's sections have been observed.
  */
 export function SiteHeader(_props: SiteHeaderProps) {
   const [stuck, setStuck] = useState(false);
@@ -43,6 +63,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
   const pathname = usePathname();
   const reduced = usePrefersReducedMotion();
 
+  const pillRef = useRef<HTMLDivElement | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const thumbRef = useRef<HTMLSpanElement | null>(null);
   const linksRef = useRef<Array<HTMLAnchorElement | null>>([]);
@@ -156,17 +177,89 @@ export function SiteHeader(_props: SiteHeaderProps) {
     };
   }, []);
 
+  // Tone observer — see mechanism 3 in the header comment. Keyed on pathname
+  // so the new route's sections are observed; `arm` is re-run (rAF-coalesced)
+  // on resize because the root band is expressed in viewport pixels.
+  useEffect(() => {
+    const pill = pillRef.current;
+    if (!pill || typeof IntersectionObserver === "undefined") return;
+
+    let io: IntersectionObserver | null = null;
+    const under = new Set<Element>();
+
+    const arm = () => {
+      io?.disconnect();
+      under.clear();
+      // A 1px root band at the pill's vertical centre: rootMargin shrinks the
+      // viewport to [y, y + 1). The header is fixed, so y is scroll-invariant.
+      // Both insets are CLAMPED at 0: if the viewport is ever shorter than
+      // the pill's centre (a collapsed window, a viewport mid-resize reporting
+      // 0) the naive `-${innerHeight - y - 1}px` becomes `--Npx`, and the
+      // IntersectionObserver constructor throws a SyntaxError — an uncaught
+      // throw in an effect unmounts the whole tree. Found by the phase-3
+      // visual check, not by the gate's headless viewports.
+      const y = Math.max(
+        0,
+        Math.round(pill.getBoundingClientRect().top + pill.offsetHeight / 2),
+      );
+      const below = Math.max(0, window.innerHeight - y - 1);
+      try {
+        io = new IntersectionObserver(
+          (records) => {
+            for (const r of records) {
+              if (r.isIntersecting) under.add(r.target);
+              else under.delete(r.target);
+            }
+            const next = under.size ? "dark" : "light";
+            if (pill.dataset.over !== next) pill.dataset.over = next;
+          },
+          { rootMargin: `-${y}px 0px -${below}px 0px`, threshold: 0 },
+        );
+      } catch {
+        // Never let the header take the page down: without an observer the
+        // CSS :has(data-hero) baseline stays in charge, which is correct for
+        // the hero and merely static further down.
+        io = null;
+        delete pill.dataset.over;
+        return;
+      }
+      const observer = io;
+      document
+        .querySelectorAll('main .section-dark, main [data-surface="dark"]')
+        .forEach((el) => observer.observe(el));
+    };
+    arm();
+
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(arm);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      io?.disconnect();
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+      // Back to the CSS baseline until the next route has been observed.
+      delete pill.dataset.over;
+    };
+  }, [pathname]);
+
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 px-4 pt-3 md:px-6 md:pt-5">
+      <header className="chrome-header fixed inset-x-0 top-0 z-50 px-4 pt-3 md:px-6 md:pt-5">
+        {/* No background utility: the fill, frost, rim and every state colour
+            are chrome.css §1b, switched by data-over (observer) with a
+            :has(data-hero) baseline for the first frame. */}
         <div
+          ref={pillRef}
           data-stuck={stuck ? "true" : "false"}
           data-menu={mobileOpen ? "true" : "false"}
-          className="chrome-pill relative mx-auto flex h-[60px] w-full max-w-[1300px] items-center justify-between gap-6 rounded-[16px] bg-surface pl-5 pr-3 shadow-card md:h-[64px] md:pl-7 md:pr-4"
+          className="chrome-pill relative mx-auto flex h-[60px] w-full max-w-[1300px] items-center justify-between gap-6 rounded-[22px] pl-5 pr-3 shadow-card md:h-[64px] md:pl-7 md:pr-4"
         >
           <Link
             href="/"
-            className="rounded-sm text-plum-950"
+            className="chrome-mark rounded-sm"
             aria-label="LinkAPI Tech — home"
           >
             <Logo />
@@ -188,10 +281,8 @@ export function SiteHeader(_props: SiteHeaderProps) {
                   }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "rounded-sm py-1 text-[14.5px] transition-colors duration-ui",
-                    active
-                      ? "font-semibold text-violet-text"
-                      : "font-medium text-ink-2 hover:text-plum-700",
+                    "chrome-nav-link rounded-sm py-1 text-[14.5px] transition-colors duration-ui",
+                    active ? "font-semibold" : "font-medium",
                   )}
                 >
                   {item.label}
@@ -201,7 +292,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
             {/* One thumb for the whole nav. Decorative: `aria-current` on the
                 active link is what carries the state to assistive tech.
                 Server-rendered it is invisible without any inline style —
-                `.nav-thumb` defaults --thumb-w to 0, i.e. scaleX(0). */}
+                chrome.css §2 defaults --thumb-o to 0 until publish() runs. */}
             <span
               ref={thumbRef}
               aria-hidden="true"
@@ -217,7 +308,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
               /* py-2.5 is off the 8-pt grid on purpose: it is what puts the
                  button at a 44px box inside the 64px pill. The grid pass below
                  the fold only touched spacing that owns no component size. */
-              className="hidden items-center rounded-pill bg-plum-600 px-6 py-2.5 text-[14px] font-semibold text-ink-inv transition-colors duration-ui hover:bg-violet-600 lg:inline-flex"
+              className="chrome-cta hidden items-center rounded-pill px-6 py-2.5 text-[14px] font-semibold transition-colors duration-ui lg:inline-flex"
             >
               {CTA.label}
             </Link>
@@ -228,11 +319,15 @@ export function SiteHeader(_props: SiteHeaderProps) {
               aria-controls="mobile-menu"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               onClick={() => setMobileOpen((v) => !v)}
-              className="grid h-11 w-11 place-items-center rounded-pill text-plum-900 lg:hidden"
+              className="chrome-mark grid h-11 w-11 place-items-center rounded-pill lg:hidden"
             >
               <Burger open={mobileOpen} />
             </button>
           </div>
+
+          {/* Seam hairline at the bottom edge; chrome.css §1b fades it in on
+              the same scroll ramp as the elevation shadow. */}
+          <span className="chrome-seam" aria-hidden="true" />
         </div>
       </header>
       <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />

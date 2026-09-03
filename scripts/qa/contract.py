@@ -26,12 +26,27 @@ ROOT = subprocess.run(["git", "rev-parse", "--show-toplevel"],
                       capture_output=True, text=True).stdout.strip()
 GLOBALS = os.path.join(ROOT, "app", "globals.css")
 TW = os.path.join(ROOT, "tailwind.config.ts")
+# Every stylesheet app/layout.tsx imports, plus the Tailwind theme. chrome.css
+# and motifs.css are plain global sheets imported after globals.css; a class
+# defined only there is just as "defined" as one in globals — before they were
+# read here, a `.chrome-*` hook would have been reported as an orphan.
+CSS_FILES = [
+    GLOBALS,
+    os.path.join(ROOT, "components", "chrome", "chrome.css"),
+    os.path.join(ROOT, "components", "motifs", "motifs.css"),
+    TW,
+]
 
 # The contract, as handed to the seven section agents.
 CLASSES = [
     "sheet-enter", "hero-recede", "scrub-drift", "scrub-fade-side",
     "orb-hand-off", "card-depth", "glass-1", "glass-2", "glass-3",
     "nav-thumb", "link-draw", "icon-draw", "shake",
+    # V4 Phase 3 — adaptive liquid-glass pill (chrome.css §1b). Each is added
+    # the moment its first call site lands (REDESIGN-V4 Part J), so an item is
+    # only ever listed once it is both defined and wired.
+    "chrome-header", "chrome-nav-link", "chrome-cta", "chrome-mark",
+    "chrome-seam",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",
@@ -39,6 +54,9 @@ TOKENS = [
     "--grain", "--ink-inv-3", "--scroll-velocity",
     "--scrollbar-thumb", "--scrollbar-track",
     "--grad-section-a", "--grad-section-b", "--grad-section-c",
+    # V4 Phase 3 — the --liq-* tokens the pill and the mobile sheet consume.
+    "--liq-pill-light", "--liq-pill-dark", "--liq-pill-blur",
+    "--liq-rim", "--liq-light-rim", "--liq-rim-w", "--liq-light-shadow",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
 JS_WIRING = {
@@ -66,7 +84,7 @@ def sources():
 
 
 def main():
-    css = read(GLOBALS) + read(TW)
+    css = "".join(read(f) for f in CSS_FILES)
     src = sources()
     app_code = "\n".join(src.values())
     problems = []

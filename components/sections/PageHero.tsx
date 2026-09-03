@@ -69,6 +69,11 @@ export function PageHero({
 
   return (
     <header
+      /* data-hero: chrome.css's no-JS / first-frame baseline paints the pill
+         dark over a dark hero; data-surface marks it for the header's tone
+         observer (which also matches .section-dark — the two overlap here). */
+      data-hero={tone}
+      data-surface={dark ? "dark" : undefined}
       className={cn(
         "relative overflow-hidden",
         dark ? "section-dark" : "section-wash",

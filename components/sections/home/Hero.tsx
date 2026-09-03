@@ -19,7 +19,14 @@ import { HERO } from "@/content/home";
  */
 export function Hero() {
   return (
-    <section className="hero-recede relative isolate overflow-hidden bg-[var(--plum-900)]">
+    <section
+      /* data-hero: chrome.css's no-JS / first-frame baseline reads it to paint
+         the pill dark; data-surface: the header's tone observer targets it
+         (this section is deliberately not .section-dark — see below). */
+      data-surface="dark"
+      data-hero="dark"
+      className="hero-recede relative isolate overflow-hidden bg-[var(--plum-900)]"
+    >
       {/* gradient + radial glow */}
       <div
         aria-hidden="true"

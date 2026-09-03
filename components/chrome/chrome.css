@@ -5,9 +5,9 @@
    WHY THIS FILE EXISTS RATHER THAN MORE RULES IN globals.css
    `app/globals.css` is the design system and is owned by B0 — read-only to
    every later packet. What lives here is not vocabulary anyone else consumes:
-   it is the structural CSS for four chrome effects (a stacking/occlusion
-   contract, a scroll-driven elevation ramp, a sheet's enter animation, and the
-   view-transition timing). It is a PLAIN global stylesheet, not a CSS module,
+   it is the structural CSS for five chrome effects (a stacking/occlusion
+   contract, a scroll-driven elevation ramp, the adaptive liquid-glass pill,
+   a sheet's enter animation, and the view-transition timing). It is a PLAIN global stylesheet, not a CSS module,
    because two of those need document-level selectors (`::view-transition-*`)
    that a module cannot scope.
 
@@ -20,6 +20,12 @@
    Contract classes consumed from globals.css (B0): `.nav-thumb` (+ its
    --thumb-x / --thumb-w / --thumb-o inputs), `.link-draw`, and the
    --spring-* / --dur-spring-* / --dur-menu / --ease-out-expo tokens.
+   V4 (REDESIGN-V4 Part B) adds the liquid-glass tokens --liq-pill-light /
+   --liq-pill-dark / --liq-pill-blur / --liq-rim / --liq-light-rim /
+   --liq-rim-w / --liq-light-shadow, and defines the header's own hooks
+   `.chrome-header`, `.chrome-nav-link`, `.chrome-cta`, `.chrome-mark`,
+   `.chrome-seam` (§1b) — every one of them is listed in
+   scripts/qa/contract.py, which asserts they are defined AND used.
    ============================================================ */
 
 /* ------------------------------------------------------------
@@ -81,15 +87,246 @@
 }
 
 /* ------------------------------------------------------------
+   1b · Adaptive liquid-glass pill (REDESIGN-V4 Part B)
+   The pill is two-state glass: frosted white over the lavender sections,
+   plum glass over the dark ones. ONE IntersectionObserver in SiteHeader (a
+   1px root band at the pill's vertical centre, observing every dark section
+   in <main>) writes data-over="dark|light" on a crossing; nothing runs per
+   frame and nothing here reads scroll position.
+
+   WHY THE FILLS ARE .78. scripts/qa/qa.mjs's contrast walk scores a `fixed`
+   header over --canvas: it climbs header → body → html, finds no opaque
+   layer, and so composites the dark pill over WHITE rather than the plum it
+   really sits on. Plum-900 at .78 puts --ink-inv-2 at 5.2:1 scored (10+:1
+   real); .72 scores 4.2 and fails. White at .78 puts --ink-2 at 9.17:1 over
+   canvas and 5.63:1 over plum mid-crossfade. Any extra white in the pill's
+   OWN background layers moves both numbers, so the highlights live in
+   ::before (rim) and box-shadow — layers the walk cannot see and which are
+   geometrically text-free (honest, not a loophole).
+
+   WHY background-color / color TRANSITION — a documented exception to the
+   transform/opacity/filter rule. They are paint-only, and they fire only
+   when the observer flips the state: a scroll crossing, never during load or
+   inside any Lighthouse trace — exactly like the `transition-colors` the
+   links already carried. Nothing else on the pill animates; border-radius
+   never does. Under reduced motion the global block collapses them to
+   0.001ms; the observer keeps running because tone is a contrast feature,
+   not motion.
+
+   STATE IS ONE SWITCH. Every state-dependent colour is a private --_pill-*
+   custom property set by the ONE dark rule below; the pieces (rim, links,
+   CTA, mark, thumb, seam) only ever read them. There is therefore exactly
+   one specificity contest on the pill (dark rule vs. base rule), no dark
+   override on any descendant, no !important — and the no-JS baseline covers
+   every piece, not just the fill.
+
+   NO-JS / PRE-HYDRATION BASELINE. Until the observer has written data-over,
+   `.chrome-header:has(~ main [data-hero="dark"])` reads the hero's own tone
+   (Hero.tsx / PageHero.tsx set data-hero) so a dark-hero route paints dark on
+   its very first frame. It sits inside `:is()` with the runtime selector:
+   :is() takes a FORGIVING selector list, so a browser without :has() drops
+   just that arm instead of the whole rule — and a minifier cannot re-merge
+   what was never split. (:is() specificity is its most specific arm, 0,4,1;
+   the fallback below repeats the selector so it still out-ranks this.)
+   ------------------------------------------------------------ */
+.chrome-pill {
+  --_pill-fill: var(--liq-pill-light);
+  --_pill-ink: var(--ink-2);
+  --_pill-ink-hover: var(--plum-700);
+  --_pill-ink-active: var(--violet-text);
+  --_pill-mark: var(--plum-950);
+  --_pill-rim: var(--liq-light-rim);
+  --_pill-thumb: var(--plum-600);
+  --_pill-cta-bg: var(--plum-600);
+  --_pill-cta-bg-hover: var(--violet-600);
+  --_pill-cta-ink: var(--ink-inv);
+  --_pill-seam: var(--line-soft);
+
+  /* Own stacking context, as `.liq` has: ::before (rim) and ::after (§1
+     elevation) sit at z-index -1 ABOVE the now-translucent fill and below
+     the content. backdrop-filter creates one anyway; declaring it keeps the
+     layer order identical inside the no-backdrop-filter fallback. */
+  isolation: isolate;
+  background-color: var(--_pill-fill);
+  color: var(--_pill-ink);
+  backdrop-filter: blur(var(--liq-pill-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--liq-pill-blur)) saturate(1.5);
+  transition:
+    background-color var(--dur-menu) var(--ease-out-expo),
+    color var(--dur-menu) var(--ease-out-expo);
+}
+:is(
+    .chrome-pill[data-over="dark"],
+    .chrome-header:has(~ main [data-hero="dark"]) .chrome-pill:not([data-over])
+  ) {
+  --_pill-fill: var(--liq-pill-dark);
+  --_pill-ink: var(--ink-inv-2);
+  --_pill-ink-hover: var(--ink-inv);
+  --_pill-ink-active: var(--ink-inv);
+  --_pill-mark: var(--ink-inv);
+  --_pill-rim: var(--liq-rim);
+  --_pill-thumb: var(--lavender-400);
+  --_pill-cta-bg: var(--surface);
+  --_pill-cta-bg-hover: var(--lavender-200);
+  --_pill-cta-ink: var(--plum-700);
+  --_pill-seam: var(--glass-3-line);
+}
+
+/* Rim ring — the identical mask recipe to `.liq::before` (globals.css): the
+   content-box layer XOR'd / excluded against the border-box layer leaves only
+   the --liq-rim-w band, so the ring never sits under a glyph and is invisible
+   to the contrast walk honestly. `::after` is §1's elevation ramp; this is
+   the pill's only other pseudo-element. */
+.chrome-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: var(--liq-rim-w);
+  background: var(--_pill-rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* Text, CTA, logo/burger. Colours live HERE rather than as Tailwind utilities
+   on the JSX so the state switch reaches them; layout utilities stay in the
+   JSX. The active rule is declared after hover so an active item keeps its
+   accent under the pointer (the pre-V4 behaviour). Logo and burger both draw
+   in currentColor (Logo.tsx), so `.chrome-mark` is the only colour they need. */
+.chrome-nav-link {
+  color: var(--_pill-ink);
+}
+.chrome-nav-link:hover {
+  color: var(--_pill-ink-hover);
+}
+.chrome-nav-link[aria-current="page"] {
+  color: var(--_pill-ink-active);
+}
+.chrome-cta {
+  background-color: var(--_pill-cta-bg);
+  color: var(--_pill-cta-ink);
+}
+.chrome-cta:hover {
+  background-color: var(--_pill-cta-bg-hover);
+}
+.chrome-mark {
+  color: var(--_pill-mark);
+}
+
+/* Seam hairline — appears as the header "sticks", on the SAME 0–120px
+   scroll(root block) ramp as the ::after elevation shadow, with the same
+   [data-stuck] / [data-menu] fallback for browsers without scroll-driven
+   animations (SiteHeader computes data-stuck only when the timeline is
+   unavailable or motion is reduced). Inset from the ends so it stays inside
+   the 22px corner radius. Opacity is the only animated property. */
+.chrome-seam {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 0;
+  height: 1px;
+  background: var(--_pill-seam);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-menu) var(--ease-out-expo);
+}
+/* Fallback path only — see the @supports block below. */
+.chrome-pill[data-stuck="true"] .chrome-seam,
+.chrome-pill[data-menu="true"] .chrome-seam {
+  opacity: 1;
+}
+@supports (animation-timeline: scroll()) {
+  .chrome-seam {
+    animation: chromeElevate linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 120px;
+  }
+  /* As §1: drop the animation (not a bigger opacity) so the rule above wins. */
+  .chrome-pill[data-menu="true"] .chrome-seam {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Refraction (Chromium, desktop, static): the #liq-refract displacement map
+   (components/ui/LiquidGlassDefs.tsx) appended to the pill's own
+   backdrop-filter list. Deliberately NOT `.liq-refract` — that rule
+   re-declares the list with the material's private --_blur/--_sat, which the
+   pill does not carry. `filter:` is never involved, so no backdrop root.
+   TODO(v4-phase3): verify @supports (backdrop-filter: url(#x)) is false in
+   Safari 18/26 + Firefox. caniuse-lite and MDN browser-compat-data carry no
+   url() sub-feature for backdrop-filter, so this could not be established
+   offline; if Safari parses-but-doesn't-render, gate behind html[data-refract]
+   set by a Chromium probe (REDESIGN-V4 Part I). */
+@supports (backdrop-filter: url(#x)) {
+  @media (min-width: 1024px) {
+    .chrome-pill {
+      backdrop-filter: blur(var(--liq-pill-blur)) saturate(1.5) url(#liq-refract);
+      -webkit-backdrop-filter: blur(var(--liq-pill-blur)) saturate(1.5) url(#liq-refract);
+    }
+  }
+}
+
+/* No-backdrop-filter fallback: near-opaque fills so both inks stay AA without
+   the frost (same form as the .glass / .liq fallbacks in globals.css). Direct
+   declarations, because the state switch above only sets the fill VARIABLE;
+   the dark selector is repeated verbatim so it keeps the same specificity. */
+@supports not (backdrop-filter: blur(1px)) {
+  .chrome-pill {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  :is(
+      .chrome-pill[data-over="dark"],
+      .chrome-header:has(~ main [data-hero="dark"]) .chrome-pill:not([data-over])
+    ) {
+    background-color: var(--plum-900);
+  }
+}
+
+/* ------------------------------------------------------------
    2 · Nav thumb — state only; all painting is B0's `.nav-thumb`.
    The thumb must NOT animate on first placement (it would slide in from x=0
    on every page load) or on resize (it would chase the layout). SiteHeader
    sets data-animate="false" in the same style change as the new position, and
    CSS Transitions resolve against the AFTER-change style — so no transition
    is generated. Specificity (0,2,0) beats `.nav-thumb`, so no !important.
+
+   V4 (REDESIGN-V4 Part B): the marker is a 6px Droplet DOT, not the 2px
+   underline, and it is TRANSLATE ONLY. B0's rule scales a 1px bar by the
+   unitless --thumb-w, but glass must never distort, so the dot is centred
+   under the active label arithmetically instead:
+       x = --thumb-x + --thumb-w × 0.5px − 3px   (3px = half the dot)
+   SiteHeader's publish() is unchanged — it still writes --thumb-x in px and
+   --thumb-w UNITLESS (hence the `* 0.5px`), and --thumb-o as 0 | 1. The
+   spring `transition` on transform and the data-animate rule above both
+   stay in force; `.chrome-pill .nav-thumb` (0,2,0) out-ranks B0's
+   `.nav-thumb` and `.section-dark .nav-thumb` without !important.
    ------------------------------------------------------------ */
 .nav-thumb[data-animate="false"] {
   transition: none;
+}
+.chrome-pill .nav-thumb {
+  bottom: -6px;
+  height: 6px;
+  width: 6px;
+  border-radius: 50%;
+  background: var(--_pill-thumb);
+  transform-origin: center;
+  transform: translate3d(
+    calc(var(--thumb-x, 0px) + var(--thumb-w, 0) * 0.5px - 3px),
+    0,
+    0
+  );
+  /* Default HIDDEN. With B0's scale-to-zero-width gone, an unpublished thumb
+     would otherwise paint a stray dot at x = −3px between the server render
+     and publish().
+     publish() always writes --thumb-o explicitly (0 or 1), so this default is
+     only ever in effect before hydration. */
+  opacity: var(--thumb-o, 0);
 }
 
 /* ------------------------------------------------------------
@@ -145,7 +382,34 @@
    render. There is deliberately no exit animation — `hidden` removes the box
    immediately, and a closing sheet nobody waits for is not worth the risk of
    stranding an interactive overlay on screen.
+
+   V4 (REDESIGN-V4 Part B): the sheet stays OPAQUE bg-canvas — a frosted
+   sheet over the already-blurring scrim would be two full-viewport blurs on
+   the device class that can least afford them — so its liquid-glass dressing
+   is only the light rim ring (`::before`, free here: the enter animation is
+   on the element itself) and the light shadow. The ring is absolutely
+   positioned inside the scrolling sheet, so it sizes to the scrollport and
+   travels with the content; on a full-bleed sheet only its top edge is ever
+   visible, directly under the pill.
    ------------------------------------------------------------ */
+.chrome-sheet {
+  box-shadow: var(--liq-light-shadow);
+}
+.chrome-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: var(--liq-rim-w);
+  background: var(--liq-light-rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
 @keyframes chromeSheetIn {
   from {
     transform: translate3d(100%, 0, 0);
@@ -242,8 +506,10 @@
        animations the transition finishes on the next frame — i.e. instantly.
    ------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  /* Out-ranks the running scroll-driven animation. */
-  .chrome-pill::after {
+  /* Out-ranks the running scroll-driven animation. The seam rides the same
+     scroll() ramp as ::after, so it needs the same drop. */
+  .chrome-pill::after,
+  .chrome-seam {
     animation: none !important;
     transition: none !important;
   }

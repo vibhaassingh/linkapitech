@@ -25,6 +25,10 @@ interface MobileMenuProps {
  * transition. The scrim is a sibling, not a child, so it can never appear in
  * the focus-trap's `a, button` query or become the element that opening the
  * sheet focuses.
+ *
+ * V4 (REDESIGN-V4 Part B): the sheet stays opaque `bg-canvas` and gains only
+ * the light liquid-glass rim ring and shadow — both on `.chrome-sheet` in
+ * chrome.css §4, so nothing in this markup changed for it.
  */
 export function MobileMenu({ open, onClose }: MobileMenuProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
