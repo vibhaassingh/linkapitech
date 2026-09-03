@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -53,4 +54,26 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * `next dev` writes to `.next-dev`; `next build` / `next start` keep `.next`.
+ *
+ * Why: dev and prod servers sharing one `.next` is the documented
+ * build-corruption case (README "hard-won gotchas"). It bit three QA-gate runs
+ * in one day: the Claude desktop Browser pane kept a `next dev` preview alive
+ * on :3000 whose file watcher recompiled into `.next` the moment a source file
+ * changed, so every chunk of the freshly built production server 400'd and the
+ * a11y/motion/WebGL sweeps ran against unstyled pages. Splitting the output
+ * directories by phase removes the failure mode instead of relying on nobody
+ * ever leaving a dev server running.
+ *
+ * Side effect to know: Next rewrites `next-env.d.ts` (gitignored) to reference
+ * whichever dist dir ran last, so `tsc --noEmit` needs that dir's `types/` to
+ * exist — true after any dev run or build; only a manual `rm -rf` of the last
+ * used dir without a rebuild can trip TS6053.
+ */
+export default function config(phase: string): NextConfig {
+  return {
+    ...nextConfig,
+    distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next",
+  };
+}

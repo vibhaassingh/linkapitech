@@ -5,6 +5,9 @@
 
 # next.js
 /.next/
+# `next dev` output — next.config.ts splits it from the build dir so a dev
+# server can never corrupt a production build (gitignore has no inline comments)
+/.next-dev/
 /out/
 next-env.d.ts
 
