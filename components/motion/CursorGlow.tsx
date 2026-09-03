@@ -50,7 +50,7 @@ export function CursorGlow() {
       const target = e.target;
       const next =
         target instanceof Element
-          ? target.closest<HTMLElement>(".spotlight")
+          ? target.closest<HTMLElement>(".spotlight,.liq-spec,.liq-spec-full")
           : null;
       if (next !== card.current?.el) {
         card.current = next

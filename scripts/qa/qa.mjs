@@ -1,5 +1,5 @@
 // Phase-7 QA sweep over raw CDP: contrast, overflow, focus visibility,
-// heading order, touch targets — across every page and viewport.
+// heading order, touch targets, ink-on-glass — across every page and viewport.
 // usage: node qa.mjs [baseUrl]
 import { writeFileSync } from "node:fs";
 import { session, sleep } from "./lib/cdp.mjs";
@@ -17,7 +17,7 @@ const VIEWPORTS = [
 
 // ---- the in-page audit ---------------------------------------------------
 const AUDIT = `(() => {
-  const out = { contrast: [], overflow: null, focus: [], headings: [], targets: [], gradientText: [], textSpill: [], collapsed: [] };
+  const out = { contrast: [], overflow: null, focus: [], headings: [], targets: [], gradientText: [], textSpill: [], collapsed: [], inkGlass: [] };
 
   const parse = (c) => {
     const m = c.match(/rgba?\\(([^)]+)\\)/);
@@ -193,6 +193,78 @@ const AUDIT = `(() => {
     }
   }
 
+  // ---- ink on glass (REDESIGN-V4 §A6) ----
+  // The contrast walk above composites glass over its band and scores the
+  // result, and the .liq material's AA matrix was derived from that same
+  // arithmetic. But four pairings are unsafe in ways a per-page measurement
+  // cannot see: --ink-inv-2 clears tier 2 by 0.02 and FAILS (4.04) on tier 3
+  // over band A while passing on bands B/C; --ink-inv-3 never clears 4.5 on
+  // any glass; --ink-3 fails (4.17) on the .55-white .liq-light.liq-1; and the
+  // unmasked specular (.liq-spec-full / .liq-sweep) adds white UNDER text on
+  // hover or scroll — states the walk never puts the page in. So these are
+  // forbidden by TOKEN, not by measurement: the element's computed colour is
+  // compared against the resolved token values, normalised through the same
+  // computed-style path so '#a38eb0' and 'rgb(163, 142, 176)' are one thing.
+  // Proven able to fail at Phase 4 (first '.liq' call site) by temporarily
+  // placing '--ink-inv-2' text in a '.liq-3' — see gate log.
+  {
+    const rootCs = getComputedStyle(document.documentElement);
+    const probe = document.createElement('span');
+    probe.style.position = 'absolute';
+    probe.style.opacity = '0';
+    probe.style.pointerEvents = 'none';
+    document.body.appendChild(probe);
+    const norm = (c) => { probe.style.color = ''; probe.style.color = c; return getComputedStyle(probe).color; };
+    // token -> normalised rgb(); rgb() -> token, for naming what was found.
+    const tok = {}, nameOf = {};
+    for (const t of ['--ink', '--ink-2', '--ink-3', '--ink-inv', '--ink-inv-2', '--ink-inv-3',
+                     '--ink-on-violet-2', '--violet-text', '--lavender-400']) {
+      const v = rootCs.getPropertyValue(t).trim();
+      if (!v) continue;
+      tok[t] = norm(v);
+      if (!nameOf[tok[t]]) nameOf[tok[t]] = t;
+    }
+    probe.remove();
+    // A short selector path — up to four ancestors, tag + first two classes.
+    const pathOf = (el) => {
+      const parts = [];
+      let n = el;
+      for (let i = 0; n && n.nodeType === 1 && n !== document.body && i < 4; i++) {
+        const cls = (n.className || '').toString().trim().split(/\s+/).filter(Boolean).slice(0, 2);
+        parts.unshift(n.tagName.toLowerCase() + (cls.length ? '.' + cls.join('.') : ''));
+        n = n.parentElement;
+      }
+      return parts.join(' > ');
+    };
+    const glassOf = (host) => (host.className || '').toString().split(/\s+/)
+      .filter(c => /^liq(-|$)/.test(c)).join(' ') || 'liq';
+    const flag = (el, token, host) => out.inkGlass.push({
+      path: pathOf(el), token, glass: glassOf(host), txt: el.textContent.trim().slice(0, 30),
+    });
+    for (const el of textEls) {
+      const cs = getComputedStyle(el);
+      const fg = parse(cs.color);
+      if (!fg || fg.a === 0) continue;
+      if (cs.webkitBackgroundClip === 'text' || cs.backgroundClip === 'text') continue;
+      const color = cs.color;
+      const is = (t) => !!tok[t] && color === tok[t];
+      // 1. dark tier 3 hosts --ink-inv only
+      const t3 = el.closest('.liq-3:not(.liq-light)');
+      if (t3 && (is('--ink-inv-2') || is('--ink-inv-3')))
+        flag(el, is('--ink-inv-2') ? '--ink-inv-2' : '--ink-inv-3', t3);
+      // 2. --ink-inv-3 never on any dark glass
+      const dark = el.closest('.liq:not(.liq-light)');
+      if (dark && !t3 && is('--ink-inv-3')) flag(el, '--ink-inv-3', dark);
+      // 3. --ink-3 not on the thinnest light glass
+      const l1 = el.closest('.liq-light.liq-1');
+      if (l1 && is('--ink-3')) flag(el, '--ink-3', l1);
+      // 4. unmasked specular / sweep surfaces: --ink-inv only
+      const full = el.closest('.liq-spec-full, .liq-sweep');
+      if (full && tok['--ink-inv'] && color !== tok['--ink-inv'])
+        flag(el, nameOf[color] || color, full);
+    }
+  }
+
   // ---- text overflowing its own container (document stays the same width) ----
   for (const el of [...document.querySelectorAll('body *')].filter(visible)) {
     if (el.children.length) continue;
@@ -316,7 +388,7 @@ function qaSession(opts) {
   return session({ ...opts, gl: true, base: BASE });
 }
 
-const report = { contrastFails: [], textSpill: [], collapsed: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
+const report = { contrastFails: [], textSpill: [], collapsed: [], inkGlass: [], gradientText: new Set(), overImage: new Set(), overflow: [], headings: [], targets: [], pages: 0 };
 
 for (const vp of VIEWPORTS) {
   const s = await qaSession(vp);
@@ -353,6 +425,7 @@ for (const vp of VIEWPORTS) {
     for (const t of a.targets) report.targets.push({ vp: vp.name, page: p, ...t });
     for (const t of a.textSpill || []) report.textSpill.push({ vp: vp.name, page: p, ...t });
     for (const c of a.collapsed || []) report.collapsed.push({ vp: vp.name, page: p, ...c });
+    for (const g of a.inkGlass || []) report.inkGlass.push({ vp: vp.name, page: p, ...g });
   }
   s.close();
   console.log(`swept ${vp.name} (${vp.w}px)`);
@@ -401,13 +474,20 @@ console.log(`\nCOLLAPSED CONTAINERS (0x0 box with a rendering subtree): ${cl.len
 for (const c of cl.slice(0, 12))
   console.log(`  ${c.page} <${c.tag} class="${c.cls}"> -> child <${c.childTag}> ${c.childBox} cls=${c.childCls} [${c.vps.join(",")}]`);
 
+// route @ viewport: <selector path> uses <token> inside <glass class>
+const ig = uniq(report.inkGlass, (x) => x.page + x.path + x.token);
+console.log(`\nINK ON GLASS (token forbidden on that .liq tier, REDESIGN-V4 §A6): ${ig.length}`);
+for (const g of ig.slice(0, 15))
+  console.log(`  ${g.page} @ ${g.vps.join(",")}: ${g.path} uses ${g.token} inside ${g.glass}  "${g.txt}"`);
+
 // ---------------------------------------------------------------- verdict
 // This block did not exist, and its absence made the whole sweep decorative:
 // the only process.exit was the load guard, so `node qa.mjs` returned 0 with
 // findings on screen and gate.sh happily printed "qa sweep clean". A check that
 // cannot fail is not a check. Contrast/spill/overflow/heading/target/collapsed
-// are hard failures; the two "unmeasurable, review by eye" buckets stay
-// advisory, since a human has to judge those.
+// are hard failures, and so is ink-on-glass (a forbidden token on a .liq tier
+// is a contrast failure the walk cannot measure); the two "unmeasurable,
+// review by eye" buckets stay advisory, since a human has to judge those.
 const hard = {
   "contrast failures": cf.length,
   "text spilling its container": ts.length,
@@ -415,6 +495,7 @@ const hard = {
   "heading issues": report.headings.length,
   "small targets": tg.length,
   "collapsed containers": cl.length,
+  "ink on glass": ig.length,
 };
 const failed = Object.entries(hard).filter(([, n]) => n > 0);
 console.log(`\n=== verdict over ${report.pages} page-views ===`);

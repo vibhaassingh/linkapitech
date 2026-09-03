@@ -1,0 +1,379 @@
+/* ============================================================
+   Motif kit — the "Liquid Infrastructure" vocabulary (REDESIGN-V4 Part C).
+   Conduit · Node · Pool · Caustic · Seam · Meniscus · Droplet · Card.
+
+   WHY A SEPARATE FILE
+   app/globals.css is the design system; these are the motifs V4 sections
+   compose FROM it. Imported ONCE, from app/layout.tsx, immediately after
+   chrome.css — so every rule here sits after Tailwind's utilities and after
+   the design system and wins ties without `!important`. The only `!important`
+   in this file is in the reduced-motion block at the bottom, where it must
+   out-rank a running animation (same rule as globals.css).
+
+   RULES
+   - Every motif is a REAL ELEMENT (components/motifs/*.tsx), never a pseudo
+     on the section: .section-dark owns ::after (grain), .ambient-violet owns
+     ::before, .liq owns both of its own. A motif may own a pseudo on ITSELF
+     (.pool::before is the meniscus line).
+   - Animated properties: transform / opacity only. The one paint-only
+     exception is `conduitPulse` (stroke-dashoffset on an SVG path), which is
+     allowlisted by name in scripts/qa/gate.sh ALLOWED_ANIM with the same
+     reasoning as ecoWire. Every keyframe here joins the RM block below.
+   - Scroll-driven motifs read `--sp` (0→1, written by useSectionProgress onto
+     the section and inherited by every child). `--sp` is declared `0` on
+     :root, so an UNWRITTEN --sp — no driver mounted, reduced motion, no JS —
+     resolves to 0 and every --sp-driven decoration parks at its hidden start.
+     Decoration fails CLOSED; content uses --sp-live, which fails OPEN.
+   - Colours are tokens only. Tailwind opacity modifiers do nothing on var()
+     colours, so translucency comes from --violet-a24 / --violet-soft / the
+     veils and glass lines.
+   - A motif never centres itself with an inline `transform`: .scrub-drift
+     and the ambient loops OWN transform on that element, and an animation
+     silently overriding an inline transform is exactly what
+     scripts/qa/cascade.mjs exists to catch.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Conduit — the glass channel money travels through.
+   6px track (tier-1 glass fill, inset 1px line, 1px top wet line) holding
+   .conduit-flow, a 38%-long transparent → lavender → violet → transparent
+   band. Vertical tracks are 6px wide and take their height from the parent.
+   ------------------------------------------------------------ */
+.conduit {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--glass-1-bg);
+  box-shadow: inset 0 0 0 1px var(--glass-1-line), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.conduit-v {
+  width: 6px;
+  height: auto;
+}
+.conduit-flow {
+  position: absolute;
+  inset: 0;
+  width: 38%;
+  border-radius: inherit;
+  opacity: 0.9;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--lavender-400) 45%,
+    var(--violet-500) 60%,
+    transparent
+  );
+}
+.conduit-v .conduit-flow {
+  width: auto;
+  height: 38%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--lavender-400) 45%,
+    var(--violet-500) 60%,
+    transparent
+  );
+}
+/* Scroll-driven: the band crosses the whole track as --sp goes 0 → 1. It
+   starts at -100% (its own width off the leading end) and travels 360% of its
+   own 38% width ≈ the track length plus one band, so it has fully left the far
+   end at --sp = 1. UNWRITTEN --sp resolves to the :root value 0, so the
+   transform is translateX(-100%): the band is parked off-track and invisible.
+   No driver means no flow, by construction — nothing else has to know. */
+.conduit-scroll .conduit-flow {
+  transform: translateX(calc(-100% + var(--sp) * 360%));
+}
+.conduit-v.conduit-scroll .conduit-flow {
+  transform: translateY(calc(-100% + var(--sp) * 360%));
+}
+/* Ambient loop — desktop only; phones are scroll-driven only. The vertical
+   track needs its own keyframes: translateX would slide a 6px-wide band out
+   of a 6px-wide track. */
+@media (min-width: 1024px) {
+  .conduit-loop .conduit-flow {
+    animation: conduitFlow 7s linear infinite;
+  }
+  .conduit-v.conduit-loop .conduit-flow {
+    animation-name: conduitFlowV;
+  }
+}
+@keyframes conduitFlow {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+@keyframes conduitFlowV {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(300%);
+  }
+}
+/* Light sections: a lavender track with the soft hairline. */
+.conduit-light {
+  background: var(--lavender-200);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+/* SVG variant for curves (ConduitPath): a <path pathLength="100"> base
+   stroke plus a .conduit-pulse path with stroke-dasharray="8 92" — one
+   8-unit packet per path per 6s. stroke-dashoffset has no composited
+   equivalent (the path is a curve, so translating a longer dashed path is not
+   an option); this is the kit's one paint-only animation, used ≥1024 only and
+   allowlisted by name in gate.sh. --pulse-delay staggers packets. */
+.conduit-pulse {
+  animation: conduitPulse 6s linear infinite;
+  animation-delay: var(--pulse-delay, 0s);
+  opacity: 0.85;
+}
+@keyframes conduitPulse {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ------------------------------------------------------------
+   Node — an endpoint (ERP, bank, LinkAPI, a step): a disc with an inner
+   violet glow. Standalone = `.liq liq-1`; inside a glass card = `.liq-inset`
+   (no second blur); on light = `.node-light` (lavender disc, violet glyph, no
+   glass). The glow is a child, opacity-only; data-lit raises it to full.
+   ------------------------------------------------------------ */
+.node {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--node-size, 48px);
+  height: var(--node-size, 48px);
+  border-radius: 999px;
+  flex: none;
+}
+.node-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--violet-glow), transparent 70%);
+  opacity: 0.35;
+  transition: opacity var(--dur-ui) var(--ease-out-expo);
+}
+.node[data-lit] .node-glow {
+  opacity: 1;
+}
+/* The glyph is positioned too, so DOM order (glow first) puts it on top; an
+   in-flow glyph would paint UNDER the absolutely positioned glow. */
+.node > :not(.node-glow) {
+  position: relative;
+}
+.node-light {
+  background: var(--lavender-200);
+  color: var(--violet-text);
+}
+
+/* ------------------------------------------------------------
+   Pool — violet liquid pooling at the base of a tile: value accumulating
+   under a number. Absolute, bottom 46% of a positioned parent, with a 1px
+   lavender meniscus line at its top. TEXT OVERLAPPING A POOL IS --ink-inv
+   (dark) / --ink (light) — the pool adds violet under it (§A6).
+   ------------------------------------------------------------ */
+.pool {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 46%;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(70% 90% at 50% 100%, var(--violet-a24), transparent 72%);
+  transform-origin: 50% 100%;
+  transform: scaleY(1);
+}
+.pool::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 184, 216, 0.45), transparent);
+}
+.pool-light {
+  background: radial-gradient(70% 90% at 50% 100%, var(--violet-soft), transparent 72%);
+}
+/* Rise with the reveal; the RESTING state is full, so no-JS and reduced
+   motion show the settled pool. +120ms so it lands after the digits do. */
+[data-reveal]:not([data-inview]) .pool {
+  transform: scaleY(0);
+  opacity: 0;
+}
+[data-inview] .pool {
+  transition: transform var(--dur-spring-smooth) var(--spring-smooth) 120ms,
+    opacity 400ms var(--ease-out-expo) 120ms;
+}
+
+/* ------------------------------------------------------------
+   Caustic — ambient light on the plum: the light liquid throws on the wall.
+   A 380–560px radial at z-index:-2 inside the isolated .section-dark, so the
+   grain (::after, z:-1) dithers over it. A gradient, never a blur or a
+   filter. Position and size come from the component's inline style;
+   x/y are the TOP-LEFT corner (no centring transform — see the file header).
+   ------------------------------------------------------------ */
+.caustic {
+  position: absolute;
+  pointer-events: none;
+  z-index: -2;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--violet-a24), transparent 70%);
+}
+.caustic-light {
+  background: radial-gradient(circle, var(--violet-soft), transparent 70%);
+}
+/* When a caustic both drifts with scroll AND loops, the two transform
+   animations cannot share one element: the component nests the loop inside a
+   drifting wrapper, which owns the position and size. */
+.caustic-wrap {
+  position: absolute;
+  pointer-events: none;
+  z-index: -2;
+}
+.caustic-wrap > .caustic {
+  inset: 0;
+}
+/* 40s ambient translate, desktop only; phones get scroll drift alone. */
+@media (min-width: 1024px) {
+  .caustic-loop {
+    animation: causticDrift 40s ease-in-out infinite alternate;
+  }
+}
+@keyframes causticDrift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(var(--caustic-dx, 24px), var(--caustic-dy, -18px));
+  }
+}
+
+/* ------------------------------------------------------------
+   Seam — the glass hairline between sections: the rim of the vessel. A
+   full-width 1px line with a 220px specular segment that slides across as
+   --sp goes 0 → 1. The segment is a 220px background on a FULL-WIDTH child
+   (not a 220px element): translateX percentages are the element's OWN width,
+   so only a full-width child can travel the seam's length. At --sp = 0 the
+   segment sits 220px off the left edge, clipped — unwritten --sp = hidden.
+   ------------------------------------------------------------ */
+.seam {
+  position: relative;
+  display: block;
+  height: 1px;
+  background: var(--glass-3-line);
+  overflow: hidden;
+}
+.seam-light {
+  background: var(--line-soft);
+}
+.seam-spec {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent)
+    left / 220px 100% no-repeat;
+  transform: translateX(calc(-220px + var(--sp) * (100% + 220px)));
+}
+/* White is invisible on a light band; the light seam's segment is violet. */
+.seam-light .seam-spec {
+  background: linear-gradient(90deg, transparent, var(--line-violet), transparent)
+    left / 220px 100% no-repeat;
+}
+@media (max-width: 1023px) {
+  .seam-spec {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   Meniscus — the curved liquid surface where a dark band ends and a light
+   one begins. An SVG path (preserveAspectRatio="none") filled with the NEXT
+   section's surface colour, plus a 1.2px lavender stroke whose opacity
+   follows --sp (.3 → .6). Static geometry — no path morph; max 3 uses.
+   ------------------------------------------------------------ */
+.meniscus {
+  display: block;
+  width: 100%;
+  height: 56px;
+}
+@media (min-width: 768px) {
+  .meniscus {
+    height: 80px;
+  }
+}
+@media (max-width: 639px) {
+  .meniscus {
+    height: 32px;
+  }
+}
+.meniscus-line {
+  opacity: calc(0.3 + var(--sp) * 0.3);
+}
+
+/* ------------------------------------------------------------
+   Droplet — the small liquid pill: a `.liq liq-1` capsule with a 4px specular
+   dot at the leading edge. A VISUAL CAPSULE, not an eyebrow replacement: it
+   wraps whatever it is given (Phase 4+ decides where it wraps <Eyebrow>).
+   Padding comes from the component's Tailwind classes so a call site can
+   override it — a padding here would out-rank px-* at equal specificity.
+   ------------------------------------------------------------ */
+.droplet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.droplet-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  flex: none;
+}
+.droplet-light .droplet-dot {
+  background: var(--violet-500);
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   Card — the light card's 44px icon disc (dark cards use a Node inset).
+   ------------------------------------------------------------ */
+.card-icon-light {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--lavender-200);
+  color: var(--violet-text);
+  flex: none;
+}
+
+/* ------------------------------------------------------------
+   Reduced motion. The global block in globals.css already collapses every
+   animation to 0.001ms × 1 iteration, after which a loop with no fill-mode
+   returns to its base style — so the conduit band and the caustic rest at
+   their start positions. These are the explicit locks on top of that: the
+   pulse packet is decorative-only and simply goes; the caustic loop is named
+   so the intent is auditable.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .conduit-pulse {
+    display: none;
+  }
+  .caustic-loop,
+  .conduit-loop .conduit-flow {
+    animation: none !important;
+  }
+}

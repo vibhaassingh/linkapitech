@@ -407,6 +407,16 @@
 /* ============================================================
    Type scale — Poppins, clamp-driven. Display = 700, headings = 600.
    ============================================================ */
+/* Hero-only display step above .display-1 (REDESIGN-V4 Part E §1): the
+   homepage H1 and nothing else — every other headline tops out at .display-1.
+   Tracking is a flat -0.03em: the clamp already renders ≥ 3.5rem from ~680px,
+   so the whole range sits in .display-1's "tight" regime. */
+.display-0 {
+  font-size: clamp(2.75rem, 1.3rem + 5.2vw, 4.9rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
 .display-1 {
   font-size: clamp(2.6rem, 1.2rem + 4.6vw, 4.2rem);
   line-height: 1.08;
@@ -647,6 +657,14 @@
 .band-c {
   background-image: var(--grad-section-c);
 }
+/* Hero band (REDESIGN-V4 Part E §1): --grad-hero's two violet blooms as a
+   .section-dark modifier, so the hero becomes a .section-dark and inherits the
+   shared ::after grain — retiring Hero.tsx's hand-rolled grain div (that
+   call-site change is Phase 4). Same background-image-only contract as
+   .band-a/b/c, so ink colour, grain and selection styling stay in force. */
+.band-hero {
+  background-image: var(--grad-hero);
+}
 
 /* Light lavender-washed hero shell (inner pages). */
 .section-wash {
@@ -764,6 +782,279 @@
   }
   to {
     transform: rotate(18deg) translateX(420%);
+  }
+}
+
+/* ============================================================
+   Liquid glass material — `.liq` (REDESIGN-V4 Part A).
+
+   Layer stack, bottom → top (§A2):
+     L0 frost        backdrop-filter blur + saturate — never animates
+     L1 fill         background-color: --liq-N-fill, ALIASES of the
+                     AA-calibrated --glass-N-bg. Never fork the numbers.
+     L2 edge + depth background-image: the 170° wet edge + a bottom-up plum
+                     depth gradient. The depth layer has DARK stops only, so it
+                     can only RAISE light-ink contrast. This matters because the
+                     contrast walk (scripts/qa/qa.mjs) composites the brightest
+                     stop of every background layer of every ancestor as if text
+                     sat on it, and --ink-inv-2 clears AA on tier 2 by 0.02
+                     (4.52:1) — any further white in these layers breaks it.
+     L3 bevel        box-shadow: 1px white inset top, plum inset bottom,
+                     contact + ambient outer
+     L4 rim ring     ::before — conic chromatic rim (white key top-left →
+                     lavender → violet at the shadow side), masked to a
+                     --liq-rim-w band, so it is text-free by construction
+     L5 specular     ::after — ONLY with .liq-spec / .liq-spec-full /
+                     .liq-sweep. Opacity / transform are the only animated
+                     properties on it.
+     L6 interaction  element transform on --spring-snappy (.liq-live)
+
+   PSEUDO-ELEMENT BUDGET. `.liq::before` = rim, `.liq::after` = specular.
+   .liq therefore never shares an element with another pseudo owner:
+   .section-dark (::after grain), .ambient-violet (::before), .glass (::after),
+   .sheen (::before), .spotlight (::before), .pulse-dot, .link-draw. Nest a
+   wrapper instead. Motifs (components/motifs) are real elements for the same
+   reason.
+
+   No flat `border` — the ring IS the border. `isolation: isolate` lets both
+   pseudos sit at z-index:-1, above the fill and below content, so children
+   no longer need `relative z-[1]`. `filter` is never used anywhere here: a
+   filter on an ancestor is a backdrop root and kills every descendant's
+   backdrop-filter in Chromium (see the heroRecede note below). Frost is
+   backdrop-filter only. border-radius never animates (compositing, see the
+   scroll-scrubbed block). No `will-change` on the material: hover transitions
+   promote for their own duration.
+
+   AA text matrix (§A6) — enforced by scripts/qa/qa.mjs "ink on glass":
+     .liq / .liq-1 over any plum band   --ink-inv ✓   --ink-inv-2 ✓ (4.52 worst)
+     .liq-3 over band A (plum-700)      --ink-inv ONLY (--ink-inv-2 = 4.04 ✗)
+     --ink-inv-3                        never on glass
+     .liq-spec-full hovered / .liq-sweep  --ink-inv ONLY (5.65 worst)
+     .liq-light.liq-1 (.55 white)       --ink / --ink-2 / --violet-text
+                                        (--ink-3 = 4.17 ✗); .liq-light (.70)
+                                        clears --ink-3 at 4.56.
+   Blur budget (§A7): ≤ 8 backdrop-filtered layers per desktop viewport,
+   ≤ 4 on phones; nested glass never blurs (.liq-inset); .liq-1 has no blur
+   below 1024; .liq-lens counts as an extra layer.
+   ============================================================ */
+
+/* Only `position` lives in the components layer, so a Tailwind `absolute` on
+   the call site still wins (the same reason .glass-1/2/3 set no position). */
+@layer components {
+  .liq {
+    position: relative;
+  }
+}
+
+.liq {
+  --_fill: var(--liq-2-fill);
+  --_blur: var(--liq-2-blur);
+  --_sat: 1.4;
+  --_edge: var(--liq-edge);
+  --_depth: var(--liq-depth);
+  --_rim: var(--liq-rim);
+  --_shadow: var(--liq-shadow);
+  --_spec: var(--liq-spec);
+  isolation: isolate;
+  background-color: var(--_fill);
+  background-image: var(--_edge), var(--_depth);
+  box-shadow: var(--_shadow);
+  backdrop-filter: blur(var(--_blur)) saturate(var(--_sat));
+  -webkit-backdrop-filter: blur(var(--_blur)) saturate(var(--_sat));
+  transition: transform var(--dur-spring-snappy) var(--spring-snappy),
+    box-shadow var(--dur-ui) var(--ease-out-expo);
+}
+/* Tier modifiers re-assign fill / blur / saturation only. Tier 1 also thins
+   the rim: a 1.25px ring on a 44px chip reads as a border, not an edge. */
+.liq-1 {
+  --_fill: var(--liq-1-fill);
+  --_blur: var(--liq-1-blur);
+  --_sat: 1.25;
+  --liq-rim-w: 1px;
+}
+.liq-3 {
+  --_fill: var(--liq-3-fill);
+  --_blur: var(--liq-3-blur);
+  --_sat: 1.5;
+}
+
+/* L4 — rim ring. `padding` is the ring width; the content-box mask layer
+   XOR/excluded against the border-box layer leaves only the band between
+   them, so the ring never sits under a glyph — invisible to the contrast walk
+   honestly, not as a loophole. */
+.liq::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: var(--liq-rim-w);
+  background: var(--_rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+/* Edge lensing: the ring gets its own backdrop-filter, so the backdrop reads
+   brighter and more saturated exactly along the rim — the thick-glass edge.
+   Tier 3 / hero only, desktop only: it is one more layer against the §A7
+   budget, and below 1024 the block further down removes it. */
+@media (min-width: 1024px) {
+  .liq-lens::before {
+    backdrop-filter: brightness(1.18) saturate(1.6);
+    -webkit-backdrop-filter: brightness(1.18) saturate(1.6);
+  }
+}
+
+/* L5a — pointer specular. --cx/--cy are written by CursorGlow (its
+   .closest() selector includes .liq-spec and .liq-spec-full; one rAF, cached
+   rect, coarse-pointer and reduced-motion gated). Opacity is the ONLY animated
+   property. */
+.liq-spec::after,
+.liq-spec-full::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--cx, 30%) var(--cy, 20%),
+    var(--_spec),
+    transparent 62%
+  );
+  transition: opacity 420ms var(--ease-out-expo);
+}
+/* .liq-spec confines the highlight to the PADDING FRAME: four edge masks, each
+   solid for --liq-pad then feathered over the next 18px, unioned by the default
+   mask-composite: add. Text lives inside the frame, so the .22 white never sits
+   under a glyph and any ink the tier allows is fine here. Set --liq-pad per
+   element to its real padding (the default is 24px). */
+.liq-spec::after {
+  --_f: calc(var(--liq-pad) + 18px);
+  -webkit-mask: linear-gradient(to bottom, #000 var(--liq-pad), transparent var(--_f)),
+    linear-gradient(to top, #000 var(--liq-pad), transparent var(--_f)),
+    linear-gradient(to right, #000 var(--liq-pad), transparent var(--_f)),
+    linear-gradient(to left, #000 var(--liq-pad), transparent var(--_f));
+  mask: linear-gradient(to bottom, #000 var(--liq-pad), transparent var(--_f)),
+    linear-gradient(to top, #000 var(--liq-pad), transparent var(--_f)),
+    linear-gradient(to right, #000 var(--liq-pad), transparent var(--_f)),
+    linear-gradient(to left, #000 var(--liq-pad), transparent var(--_f));
+}
+/* .liq-spec-full is unmasked, so the highlight CAN sit under text — hence the
+   softer .10 alpha, the only alpha allowed under text, and only under
+   --ink-inv (5.65:1 worst case). */
+.liq-spec-full::after {
+  --_spec: var(--liq-spec-soft);
+}
+.liq-spec:hover::after,
+.liq-spec:focus-within::after,
+.liq-spec-full:hover::after,
+.liq-spec-full:focus-within::after {
+  opacity: 1;
+}
+
+/* L6 — liquid interaction, transform only, on the spring .liq already
+   transitions with. */
+.liq-live:hover {
+  transform: translateY(var(--liq-lift)) scale(var(--liq-hover-scale));
+}
+.liq-live:active {
+  transform: scale(var(--liq-press-scale));
+}
+
+/* Nested chip INSIDE a glass card: veil fill and a single inset highlight, no
+   second blur layer (this is what takes Challenges from 12 to 6 blurs). Not a
+   .liq — no rim, no frost — so it is safe on any element. */
+.liq-inset {
+  background: var(--veil-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Light variant — frosted white over lavender. Re-assigns every private var
+   and combines with .liq-1 / .liq-3. Saturation 1.15, not 1.4: 1.4 pinks the
+   lavender. No depth layer (it would grey a white fill), violet specular
+   (white is invisible on white). */
+.liq-light {
+  --_fill: var(--liq-light-2-fill);
+  --_blur: 20px;
+  --_sat: 1.15;
+  --_edge: var(--liq-light-edge);
+  --_depth: none;
+  --_rim: var(--liq-light-rim);
+  --_shadow: var(--liq-light-shadow);
+  --_spec: var(--liq-light-spec);
+}
+.liq-light.liq-1 {
+  --_fill: var(--liq-light-1-fill);
+  --_blur: 12px;
+}
+.liq-light.liq-3 {
+  --_fill: var(--liq-light-3-fill);
+  --_blur: 28px;
+}
+
+/* Chromium-only refraction through the #liq-refract displacement map
+   (components/ui/LiquidGlassDefs.tsx). `filter:` is never involved, so no
+   backdrop root is created. Desktop only, static, ≤ 4 elements (pill nav +
+   3 hero chips). Phase 3 must first verify Safari and Firefox evaluate this
+   @supports as FALSE; if Safari parses-but-doesn't-render, gate it behind a
+   Chromium probe that sets html[data-refract]. */
+@supports (backdrop-filter: url(#x)) {
+  @media (min-width: 1024px) {
+    .liq-refract {
+      backdrop-filter: blur(var(--_blur)) saturate(var(--_sat)) url(#liq-refract);
+      -webkit-backdrop-filter: blur(var(--_blur)) saturate(var(--_sat)) url(#liq-refract);
+    }
+  }
+}
+
+/* No-backdrop-filter fallback: denser fills so text stays readable — the same
+   plum the .glass fallback above uses, and a near-opaque white for light. */
+@supports not (backdrop-filter: blur(1px)) {
+  .liq {
+    background-color: rgba(66, 23, 76, 0.72);
+  }
+  .liq-light {
+    background-color: rgba(255, 255, 255, 0.94);
+  }
+}
+
+/* Mobile downgrade (§A7: ≤ 4 blur layers on a phone). */
+@media (max-width: 1023px) {
+  /* Tier-1 chips are too small for blur to read. */
+  .liq.liq-1 {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  /* Escape hatch for tiles that would overrun the phone budget (StatBand:
+     four tiles + the pill nav would be five). */
+  .liq-static-sm {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  /* No edge lensing below desktop (see .liq-lens above). */
+  .liq::before {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .liq-3 {
+    --_blur: 18px;
+  }
+  /* Part D (ii): parallax drift runs at half amplitude on phones. */
+  :root {
+    --drift-scale: 0.5;
+  }
+}
+/* No pointer specular or sweep band where there is no fine pointer, or no
+   room for a 240px highlight to read as one. */
+@media (max-width: 1023px), (any-pointer: coarse) {
+  .liq-spec::after,
+  .liq-spec-full::after,
+  .liq-sweep::after {
+    display: none;
   }
 }
 
@@ -929,12 +1220,87 @@ html {
     animation-timeline: view();
     animation-range: cover 0% cover 100%;
   }
+  /* Both keyframes multiply by --drift-scale (1 on desktop, .5 below 1024 —
+     set in the .liq mobile block), so every drifting plane halves together on
+     phones. var() stays INSIDE the transform: that is how the repo already
+     writes this and it passed the composited audit. */
   @keyframes scrubDrift {
     from {
-      transform: translateY(var(--drift-range, 22px));
+      transform: translateY(calc(var(--drift-range, 22px) * var(--drift-scale, 1)));
     }
     to {
-      transform: translateY(calc(var(--drift-range, 22px) * -1));
+      transform: translateY(calc(var(--drift-range, 22px) * -1 * var(--drift-scale, 1)));
+    }
+  }
+  /* Part D (ii): drift tiers — named amplitudes so a section reads as planes
+     (background caustic, mid ghost numeral, foreground chip) rather than as
+     one parallax number. `drift-lead` moves AGAINST the others: a foreground
+     plate that leads the scroll (the hero poster). */
+  .drift-far {
+    --drift-range: 7px;
+  }
+  .drift-mid {
+    --drift-range: 14px;
+  }
+  .drift-near {
+    --drift-range: 22px;
+  }
+  .drift-lead {
+    --drift-range: -22px;
+  }
+
+  /* Part D (v): .liq-enter — entry depth for glass. scale .96 → 1 and opacity
+     .6 → 1 over the first 45% of the element's ENTRY, then it rests. A
+     blur-radius ramp was rejected here: it kills nested glass and is the most
+     expensive mobile GPU op. All viewports. */
+  .liq-enter {
+    animation: liqEnter linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+  @keyframes liqEnter {
+    from {
+      opacity: 0.6;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Part D (i): the sheet's shadow. A child <span aria-hidden class="sheet-
+     shadow"> placed FIRST inside a .sheet-enter section. One element, one
+     gradient: its bottom 1px (which sits on the section's own top pixel row)
+     is the top-edge highlight, and the 40px above it is a shadow cast UPWARD
+     onto whatever the sheet slides over. Its OPACITY fades 1 → 0 over the
+     same cover 0–22% window .sheet-enter rises through, so the shadow is gone
+     once the sheet has landed. Positioned, so it needs a positioned parent
+     (.section-dark is one); a parent with overflow:hidden clips the upward
+     40px — put the overflow on an inner wrapper instead. */
+  .sheet-shadow {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -40px;
+    height: 41px;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.14) 1px,
+      rgba(26, 6, 32, 0.55) 1px,
+      transparent
+    );
+    animation: sheetShadow linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 22%;
+  }
+  @keyframes sheetShadow {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
     }
   }
 
@@ -1017,6 +1383,87 @@ html {
     100% {
       transform: scale(0.965);
       opacity: 0.75;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    /* Part D (iv): .liq-sweep — a scroll-driven specular band with .sheen's
+       geometry, driven by view() instead of hover (.sheen retires where this
+       is adopted). The band is the element's ::after, so .liq-sweep is
+       EXCLUSIVE with .liq-spec / .liq-spec-full. It is unmasked and passes
+       under text, hence --ink-inv surfaces only (§A6). `contain: paint` clips
+       the rotated band; transform is the only animated property. */
+    .liq-sweep {
+      overflow: hidden;
+      contain: paint;
+    }
+    .liq-sweep::after {
+      content: "";
+      position: absolute;
+      inset: -60% auto -60% -75%;
+      width: 50%;
+      z-index: -1;
+      background: var(--liq-sweep);
+      pointer-events: none;
+      animation: liqSweep linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    @keyframes liqSweep {
+      from {
+        transform: rotate(18deg) translateX(-40%);
+      }
+      to {
+        transform: rotate(18deg) translateX(420%);
+      }
+    }
+
+    /* Part D (iii): pinned story. `view()` on a sticky child STALLS — the
+       sticky box does not move through the scrollport — so the TALL wrapper
+       owns a NAMED view timeline and the steps inside the sticky stage
+       subscribe to it by name. Three steps take a third each, with a 1%
+       overlap so no frame is empty. Default markup is stacked blocks, so
+       below 1024 / without support / under reduced motion the fallback is
+       complete with no JS. One use: ProcessRail (Phase 7) — three viewport
+       heights of pinned content is a UX cost on phones. */
+    .pin {
+      view-timeline-name: --pin;
+      view-timeline-axis: block;
+      min-height: 300vh;
+    }
+    .pin-stage {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      contain: paint;
+    }
+    .pin-step {
+      animation: pinStep linear both;
+      animation-timeline: --pin;
+    }
+    .pin-step:nth-child(1) {
+      animation-range: 0% 34%;
+    }
+    .pin-step:nth-child(2) {
+      animation-range: 33% 67%;
+    }
+    .pin-step:nth-child(3) {
+      animation-range: 66% 100%;
+    }
+    @keyframes pinStep {
+      0% {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      18%,
+      82% {
+        opacity: 1;
+        transform: none;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-24px);
+      }
     }
   }
 }
@@ -1190,6 +1637,39 @@ html {
   }
 }
 
+/* Hero lens idle motion (REDESIGN-V4 Part E) — on SVG <g> groups inside
+   HeroLens.tsx. `transform-box: view-box` makes transform-origin resolve in
+   viewBox units, so the caustic rocks about the lens centre (250, 205) at any
+   rendered size. The <g> must carry NO `transform` attribute: an SVG transform
+   attribute beside a CSS transform animation de-composites it in Chromium
+   (Phase 4's composited audit on / is the proof). Transform-only; both join
+   the reduced-motion by-name list. */
+.lens-caustic {
+  animation: lensCausticSway 24s ease-in-out infinite alternate;
+  transform-origin: 250px 205px;
+  transform-box: view-box;
+}
+@keyframes lensCausticSway {
+  from {
+    transform: rotate(-2deg);
+  }
+  to {
+    transform: rotate(2deg);
+  }
+}
+.lens-glint {
+  animation: lensGlintFloat 9s ease-in-out infinite;
+}
+@keyframes lensGlintFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
 /* ============================================================
    Code terminal (How We Work / SDK cards).
    ============================================================ */
@@ -1215,6 +1695,28 @@ html {
    them was actively risky — they still carried the pre-audit #7fb4e8 (7.90:1)
    after the live value was corrected to #93b8dd (8.35:1), so re-adding a class
    name would have silently reverted the contrast fix. */
+
+/* Ledger (REDESIGN-V4 Part C) — the terminal as a glass code window. Dark
+   bands + desktop ONLY: inside a .section-dark the shell goes translucent and
+   frosts the plum behind it; on light sections and on phones it stays the
+   opaque --terminal (phone blur budget; nothing worth frosting on a light
+   band). Both rules carry the same (0,3,0) selector so the mobile one, being
+   later, wins — a bare `.terminal.ledger` at (0,2,0) would silently lose.
+   CALL-SITE PHASE (7): re-measure --terminal-cmt (#8b93a0) against the
+   COMPOSITE — rgba(23,27,33,.78) over the band's brightest stop — not against
+   --terminal; if it reads under 4.5:1 the ledger stays opaque. Wet edge kept. */
+.section-dark .terminal.ledger {
+  background: rgba(23, 27, 33, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+@media (max-width: 1023px) {
+  .section-dark .terminal.ledger {
+    background: var(--terminal);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
 
 /* Staggered line reveal once in view. */
 .terminal [data-tline] {
@@ -1503,19 +2005,29 @@ html {
   }
   /* Belt and braces for the scrub layer. Named explicitly because the
      `animation-timeline: auto` fallback lands each animation on its END
-     keyframe, and for three of these the end state is NOT the resting state:
+     keyframe, and for several of these the end state is NOT the resting state:
      .hero-recede ends receded and dimmed, .scrub-drift ends 22px high,
-     .card-depth ends scaled down as a neighbour. `animation: none` is the
+     .card-depth ends scaled down as a neighbour, .pin-step ends faded OUT,
+     .liq-sweep::after ends parked off the far edge. `animation: none` is the
      whole fix — it drops every keyframe-applied value back to the element's
      own computed style. Deliberately NOT accompanied by `transform: none
      !important`, which would also wipe legitimate layout transforms such as
-     the `-translate-x-1/2` centring on an orb. */
+     the `-translate-x-1/2` centring on an orb. The V4 additions (.liq-enter,
+     .sheet-shadow, the .lens-* idle loops) are listed by name for the same
+     reason even where their end state happens to be rest: a by-name list is
+     one the next reader can audit. */
   .sheet-enter,
   .hero-recede,
   .scrub-drift,
   .scrub-fade-side,
   .orb-hand-off,
   .card-depth,
+  .liq-sweep::after,
+  .liq-enter,
+  .sheet-shadow,
+  .pin-step,
+  .lens-caustic,
+  .lens-glint,
   [data-draw] > *,
   /* The odometer's resting transform IS the final number, so killing the
      animation shows the finished figure instantly — no roll, no flash of a
@@ -1538,8 +2050,24 @@ html {
   .cursor-glow,
   .ambient-violet::before,
   .spotlight::before,
-  .sheen::before {
+  .sheen::before,
+  .liq-spec::after,
+  .liq-spec-full::after,
+  .liq-sweep::after {
     display: none !important;
+  }
+  /* Pinned story collapses to its stacked-blocks fallback: no tall wrapper, no
+     sticky stage, every step in view (its animation is killed by name above). */
+  .pin {
+    min-height: 0 !important;
+  }
+  .pin-stage {
+    position: static !important;
+    height: auto !important;
+  }
+  /* The sheet shadow's END state (faded out) is its resting state. */
+  .sheet-shadow {
+    opacity: 0 !important;
   }
   /* A frozen marquee would clip every logo past the first two, so hand the
      row over to native horizontal scrolling and drop the duplicate copy. */

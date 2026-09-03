@@ -144,9 +144,19 @@ if node scripts/qa/kbd2.mjs; then ok "reduced-motion clean"; else bad "reduced-m
 #     Measured cost is nil: /connected-banking has the LOWEST TBT of every route
 #     (20ms) at perf 96. Kept as a documented exception, not an oversight.
 #
+#   conduitPulse — the motif kit's SVG Conduit packet (components/motifs/
+#     motifs.css), animates stroke-dashoffset on a <path pathLength="100">.
+#     Same reasoning as ecoWire: a dash marching along a CURVED path has no
+#     composited equivalent, and a translated longer dashed path only works for
+#     straight segments. Bounded by construction: one 8-unit packet per path per
+#     6s, rendered ≥1024 only, `display: none` under reduced motion
+#     (REDESIGN-V4 Part C). Allowlisted ahead of its first call site (Ecosystem,
+#     Phase 7) so it cannot be mistaken for a regression when it lands.
+#
 # Anything not on that list fails, so a new offender cannot ride in silently.
+# Comma- or whitespace-separated; the Python below splits on both.
 step "composited-animation audit over key routes (authoritative: runs GPU-composited)"
-ALLOWED_ANIM="ecoWire"
+ALLOWED_ANIM="ecoWire,conduitPulse"
 LH_FAIL=0
 for r in / /services /connected-banking /contact /banks/axis; do
   LH="/tmp/gate-lh$(echo "$r" | tr '/' '-').json"
@@ -157,9 +167,9 @@ for r in / /services /connected-banking /contact /banks/axis; do
     continue
   fi
   read -r BAD_N ALLOW_N TBT PERF NAMES <<<"$(ALLOWED="$ALLOWED_ANIM" python3 - "$LH" <<'PY2'
-import json, os, sys
+import json, os, re, sys
 d = json.load(open(sys.argv[1])); a = d["audits"]
-allowed = set(filter(None, os.environ.get("ALLOWED", "").split(",")))
+allowed = set(filter(None, re.split(r"[,\s]+", os.environ.get("ALLOWED", ""))))
 items = (a.get("non-composited-animations", {}).get("details") or {}).get("items", [])
 bad, ok_ = [], []
 for it in items:

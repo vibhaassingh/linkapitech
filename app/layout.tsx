@@ -7,6 +7,11 @@ import "./globals.css";
 // path takes the resolver out of the question for a global stylesheet whose
 // ORDER is load-bearing.
 import "../components/chrome/chrome.css";
+// Motif kit (Conduit, Node, Pool, Caustic, Seam, Meniscus, Droplet, Card —
+// REDESIGN-V4 Part C). Same convention as chrome.css: after Tailwind and the
+// design system, so it wins ties without !important; relative path for the
+// same order-is-load-bearing reason.
+import "../components/motifs/motifs.css";
 import { poppins, plexMono } from "./fonts";
 import { metadataBase } from "@/lib/metadata";
 import { SITE } from "@/lib/site";
