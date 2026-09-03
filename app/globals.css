@@ -840,6 +840,9 @@
 
 /* Only `position` lives in the components layer, so a Tailwind `absolute` on
    the call site still wins (the same reason .glass-1/2/3 set no position). */
+/* Tailwind v3 hoists this into its @tailwind components slot, which makes it
+   subject to content purging: `.liq` survives only because `liq` appears in
+   components/motifs/*.tsx. Keep at least one motif using it. */
 @layer components {
   .liq {
     position: relative;
@@ -1040,9 +1043,10 @@
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-  .liq-3 {
+  .liq-3,
+  .liq-light.liq-3 {
     --_blur: 18px;
-  }
+  }  /* .liq-light.liq-3 is (0,2,0) and would out-specify the cap */
   /* Part D (ii): parallax drift runs at half amplitude on phones. */
   :root {
     --drift-scale: 0.5;

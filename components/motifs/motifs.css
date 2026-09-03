@@ -291,6 +291,9 @@
     left / 220px 100% no-repeat;
 }
 @media (max-width: 1023px) {
+  /* Pulses are a desktop-only enhancement — the gate.sh allowlist entry for
+     conduitPulse asserts exactly this, so the CSS must enforce it. */
+  .conduit-pulse { display: none; }
   .seam-spec {
     display: none;
   }

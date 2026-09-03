@@ -239,7 +239,8 @@ Tailwind `colors.liq`: `"light-1"`, `"light-2"`, `"light-3"`, `"pill-light"`, `"
   .liq.liq-1 { backdrop-filter: none; -webkit-backdrop-filter: none; }   /* too small for blur to read */
   .liq-static-sm { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .liq::before { backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .liq-3 { --_blur: 18px; }
+  .liq-3,
+  .liq-light.liq-3 { --_blur: 18px; }  /* .liq-light.liq-3 is (0,2,0) and would out-specify the cap */
   :root { --drift-scale: .5; }
 }
 @media (max-width: 1023px), (any-pointer: coarse) {
@@ -666,7 +667,7 @@ Risks: banding (static dither), alpha halos (premultiplied + NoBlending, 3px rim
 |---|---|---|---|
 | 0 | Branch `redesign/liquid-glass-v4`. Green start confirmed (gate passed on `main` 2026-09-03). Fresh V3-final `baseline/` captures for the human comparison. This spec. `ownership.py`: V4 packet map. | `REDESIGN-V4.md`, `scripts/qa/ownership.py`, `scripts/qa/baseline/*` (local) | — |
 | 1 | Tokens + Tailwind entries + `<LiquidGlassDefs>` | `app/globals.css` (`:root`), `tailwind.config.ts`, `components/ui/LiquidGlassDefs.tsx`, `app/layout.tsx` | zero visual change |
-| 2 | `.liq*` classes + mobile/coarse/RM blocks; drift tiers; `sheet-shadow`, `pin*`, `.display-0`, `band-hero`, `.lens-*` keyframes; motif kit; `scene/lensLayout.ts`; CursorGlow selector; `ALLOWED_ANIM="ecoWire conduitPulse"`; new `qa.mjs` ink-on-glass rule (proven able to fail at the first call-site phase) | `app/globals.css`, `components/motifs/*`, `components/motion/CursorGlow.tsx`, `scripts/qa/{gate.sh,qa.mjs}` | no call sites yet — so **`contract.py` entries land with each call-site phase** (it asserts defined AND wired). **Verify `@supports (backdrop-filter: url(#x))` false in Safari + Firefox** before phase 3 |
+| 2 | `.liq*` classes + mobile/coarse/RM blocks; drift tiers; `sheet-shadow`, `pin*`, `.display-0`, `band-hero`, `.lens-*` keyframes; motif kit; `scene/lensLayout.ts`; CursorGlow selector; `ALLOWED_ANIM="ecoWire,conduitPulse"` (comma-separated — the gate's Python splits on `[,\s]+`); new `qa.mjs` ink-on-glass rule (proven able to fail at the first call-site phase) | `app/globals.css`, `components/motifs/*`, `components/motion/CursorGlow.tsx`, `scripts/qa/{gate.sh,qa.mjs}` | no call sites yet — so **`contract.py` entries land with each call-site phase** (it asserts defined AND wired). **Verify `@supports (backdrop-filter: url(#x))` false in Safari + Firefox** before phase 3 |
 | 3 | Adaptive glass pill (+ `data-hero` on Hero/PageHero) | `chrome.css`, `SiteHeader.tsx`, `Hero.tsx`, `PageHero.tsx` | `qa.mjs` scores dark-hero pages at scroll 0 in the dark state; `kbd1` unchanged |
 | 4 | Hero section + `HeroLens` SVG fallback (complete composition); `Button` glass variant → `.liq` | `Hero.tsx`, `components/three/HeroLens.tsx`, `components/ui/Button.tsx` | composited audit on `/`; LCP unchanged |
 | 5 | WebGL liquid scene + `HeroField` swap + `data-live`; `probe.mjs` additions | `scene/{createHeroLiquid,liquidShaders,palette}.ts`, `HeroField.tsx`, `scripts/qa/probe.mjs` | probe suite. **Owner review gate (preview URL).** |
@@ -693,3 +694,27 @@ Risks: banding (static dither), alpha halos (premultiplied + NoBlending, 3px rim
 | Pinned story support | `@supports` + ≥1024; stacked fallback complete; Firefox behind a flag — enhancement only. |
 | `pixdiff` exit 2 | Expected; `--skip-pixdiff` during build; phase-0 captures for the human comparison; `layout.mjs` + `qa.mjs` stay hard gates. |
 | `.liq` collision | Chosen over `.lg` precisely to avoid the `lg:` prefix hazard. |
+
+
+---
+
+# Part J — Implementation notes (decisions made during the build)
+
+Recorded so later phases and reviewers don't re-litigate them.
+
+**Phase 2 (`b4adff1`, reviewed):**
+- `ALLOWED_ANIM` is **comma-separated**; the gate's Python now splits on `[,\s]+` so either form parses.
+- `.band-hero` is a plain single-class rule (mirrors `band-a/b/c`), used as `class="section-dark band-hero"`.
+- `.display-0` ships **flat** `-0.03em` (no 800px step) — hero-only; clamp is ≥ 3.5rem from ~680px.
+- Ledger's mobile override is `.section-dark .terminal.ledger` (0,3,0) so it out-ranks the desktop rule; light sections fall back to `.terminal`'s opaque `--terminal`.
+- `.seam-spec` is full-width with the 220px segment as a `background-size`, so the `%` translate spans the seam; `.seam-light .seam-spec` uses a `--line-violet` gradient (white is invisible on lavender). `<1024` hides the segment.
+- `Caustic` with both `drift` and `loop` nests `.caustic.caustic-loop` inside `.caustic-wrap.scrub-drift.drift-*` (two transform animations can't share an element). **`x`/`y` are the top-left corner** — call sites compute centres.
+- `conduitFlowV` keyframes exist for vertical loops; `.conduit-pulse` is `display:none` below 1024 and under reduced motion.
+- `.sheet-shadow` is one element (`top:-40px; height:41px`); a parent `overflow:hidden` clips the upward part (CtaBand — acceptable).
+- `Card` light **feature** is solid `bg-tint border-lavender-300 spotlight shadow-card`, not `.liq` (`.liq` sets `background-color` after Tailwind utilities, so `bg-tint` on a `.liq` would be a silent no-op). Light non-feature omits the flat border — the rim ring is the border (§A2). Dark feature renders **all** text `--ink-inv` (§A6).
+- `Droplet` is a **capsule, not an Eyebrow**: a plain `<Eyebrow>` (`--ink-3`) inside `Droplet light` trips the ink-on-glass rule — recolour to `--violet-text`/`--ink-2` where it wraps one. Droplet has no `.liq-spec` (a 24px frame mask on a ~30px pill leaves nothing visible).
+- `Node`: `light` → `node node-light` (no glass); `inset` → `node liq-inset`; default → `node liq liq-1`; `label` → `role="img"` + `aria-label`, else `aria-hidden`. Its entry `scale(.92→1)` is a **call-site `Reveal`** concern, not built into the component.
+- `ConduitPath` (SVG conduit + optional pulse) is exported from `Conduit.tsx`.
+- `.liq` lives in `@layer components`; with Tailwind v3 that block is subject to content purging and survives because `liq` appears in `components/motifs/*.tsx` — keep at least one motif using it.
+- `.lens-caustic` / `.lens-glint` `<g>` elements must carry **no SVG `transform` attribute** (de-composites in Chromium).
+- Later phases must add each newly **wired** class/token to `scripts/qa/contract.py` as its first call site lands; the ink-on-glass rule is proven able to fail at the first `.liq` call site (Phase 4).

@@ -230,13 +230,13 @@ const AUDIT = `(() => {
       const parts = [];
       let n = el;
       for (let i = 0; n && n.nodeType === 1 && n !== document.body && i < 4; i++) {
-        const cls = (n.className || '').toString().trim().split(/\s+/).filter(Boolean).slice(0, 2);
+        const cls = (n.className || '').toString().trim().split(/\\s+/).filter(Boolean).slice(0, 2);
         parts.unshift(n.tagName.toLowerCase() + (cls.length ? '.' + cls.join('.') : ''));
         n = n.parentElement;
       }
       return parts.join(' > ');
     };
-    const glassOf = (host) => (host.className || '').toString().split(/\s+/)
+    const glassOf = (host) => (host.className || '').toString().split(/\\s+/)
       .filter(c => /^liq(-|$)/.test(c)).join(' ') || 'liq';
     const flag = (el, token, host) => out.inkGlass.push({
       path: pathOf(el), token, glass: glassOf(host), txt: el.textContent.trim().slice(0, 30),
