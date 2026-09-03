@@ -7,9 +7,10 @@
    every later packet. What lives here is not vocabulary anyone else consumes:
    it is the structural CSS for five chrome effects (a stacking/occlusion
    contract, a scroll-driven elevation ramp, the adaptive liquid-glass pill,
-   a sheet's enter animation, and the view-transition timing). It is a PLAIN global stylesheet, not a CSS module,
-   because two of those need document-level selectors (`::view-transition-*`)
-   that a module cannot scope.
+   a sheet's enter animation, and the view-transition timing). It is a PLAIN
+   global stylesheet, not a CSS module, because two of those need
+   document-level selectors (`::view-transition-*`) that a module cannot
+   scope.
 
    Imported ONCE, from app/layout.tsx, immediately after globals.css — so
    these rules sit after Tailwind's utilities and after the design system, and
@@ -89,10 +90,10 @@
 /* ------------------------------------------------------------
    1b · Adaptive liquid-glass pill (REDESIGN-V4 Part B)
    The pill is two-state glass: frosted white over the lavender sections,
-   plum glass over the dark ones. ONE IntersectionObserver in SiteHeader (a
-   1px root band at the pill's vertical centre, observing every dark section
-   in <main>) writes data-over="dark|light" on a crossing; nothing runs per
-   frame and nothing here reads scroll position.
+   plum glass over the dark ones. ONE IntersectionObserver in SiteHeader (its
+   root inset to the pill's own top and bottom edges, observing every dark
+   section in <main>) writes data-over="dark|light" on a crossing; nothing
+   runs per frame and nothing here reads scroll position.
 
    WHY THE FILLS ARE .78. scripts/qa/qa.mjs's contrast walk scores a `fixed`
    header over --canvas: it climbs header → body → html, finds no opaque
@@ -105,13 +106,15 @@
    geometrically text-free (honest, not a loophole).
 
    WHY background-color / color TRANSITION — a documented exception to the
-   transform/opacity/filter rule. They are paint-only, and they fire only
-   when the observer flips the state: a scroll crossing, never during load or
-   inside any Lighthouse trace — exactly like the `transition-colors` the
-   links already carried. Nothing else on the pill animates; border-radius
-   never does. Under reduced motion the global block collapses them to
-   0.001ms; the observer keeps running because tone is a contrast feature,
-   not motion.
+   transform/opacity/filter rule. They are paint-only, and they fire when the
+   state flips: a scroll crossing, or a client-side route change whose new
+   hero differs in tone. In a browser WITHOUT :has() there is one more: the
+   baseline arm below is dropped there, so a dark-hero route paints light and
+   fades to dark over --dur-menu when the observer's first delivery lands at
+   hydration. Every browser Lighthouse runs in has :has(), so no trace ever
+   sees one. Nothing else on the pill animates; border-radius never does.
+   Under reduced motion the global block collapses them to 0.001ms; the
+   observer keeps running because tone is a contrast feature, not motion.
 
    STATE IS ONE SWITCH. Every state-dependent colour is a private --_pill-*
    custom property set by the ONE dark rule below; the pieces (rim, links,
@@ -196,7 +199,22 @@
    on the JSX so the state switch reaches them; layout utilities stay in the
    JSX. The active rule is declared after hover so an active item keeps its
    accent under the pointer (the pre-V4 behaviour). Logo and burger both draw
-   in currentColor (Logo.tsx), so `.chrome-mark` is the only colour they need. */
+   in currentColor (Logo.tsx), so `.chrome-mark` is the only colour they need.
+
+   ONE CROSSFADE. Every piece that reads a --_pill-* colour transitions on the
+   fill's own clock and curve (--dur-menu / --ease-out-expo, declared once
+   below), so a state flip is a single fade. Before this the links and CTA
+   carried Tailwind's `transition-colors duration-ui` (200ms), the mark had no
+   transition at all and the thumb's background snapped (§2) — so on a
+   crossing the logo and burger flipped 120ms before the fill had finished.
+   Hover on links and CTA rides the same declaration; still paint-only. */
+.chrome-mark,
+.chrome-nav-link,
+.chrome-cta {
+  transition:
+    color var(--dur-menu) var(--ease-out-expo),
+    background-color var(--dur-menu) var(--ease-out-expo);
+}
 .chrome-nav-link {
   color: var(--_pill-ink);
 }
@@ -292,8 +310,14 @@
    The thumb must NOT animate on first placement (it would slide in from x=0
    on every page load) or on resize (it would chase the layout). SiteHeader
    sets data-animate="false" in the same style change as the new position, and
-   CSS Transitions resolve against the AFTER-change style — so no transition
-   is generated. Specificity (0,2,0) beats `.nav-thumb`, so no !important.
+   CSS Transitions resolve against the AFTER-change style — so no spring is
+   generated. That rule is `.chrome-pill .nav-thumb[data-animate="false"]` at
+   (0,3,0): it must out-rank the (0,2,0) `.chrome-pill .nav-thumb` rule below
+   — which now declares its own `transition` list — whatever their source
+   order, and it keeps ONLY the background-color fade so a tone flip that
+   lands before the first route change (data-animate stays "false" until
+   publish(true)) still crossfades with the rest of the pill (§1b). No
+   !important anywhere in it.
 
    V4 (REDESIGN-V4 Part B): the marker is a 6px Droplet DOT, not the 2px
    underline, and it is TRANSLATE ONLY. B0's rule scales a 1px bar by the
@@ -302,13 +326,10 @@
        x = --thumb-x + --thumb-w × 0.5px − 3px   (3px = half the dot)
    SiteHeader's publish() is unchanged — it still writes --thumb-x in px and
    --thumb-w UNITLESS (hence the `* 0.5px`), and --thumb-o as 0 | 1. The
-   spring `transition` on transform and the data-animate rule above both
-   stay in force; `.chrome-pill .nav-thumb` (0,2,0) out-ranks B0's
-   `.nav-thumb` and `.section-dark .nav-thumb` without !important.
+   spring `transition` on transform and the data-animate rule both stay in
+   force; `.chrome-pill .nav-thumb` (0,2,0) out-ranks B0's `.nav-thumb` and
+   `.section-dark .nav-thumb` without !important.
    ------------------------------------------------------------ */
-.nav-thumb[data-animate="false"] {
-  transition: none;
-}
 .chrome-pill .nav-thumb {
   bottom: -6px;
   height: 6px;
@@ -327,6 +348,21 @@
      publish() always writes --thumb-o explicitly (0 or 1), so this default is
      only ever in effect before hydration. */
   opacity: var(--thumb-o, 0);
+  /* `transition` is a shorthand, so B0's transform/opacity pair is RESTATED
+     rather than extended — a bare `transition: background-color …` here would
+     silently drop the spring. The third entry is V4's: the dot reads
+     --_pill-thumb, and without it the dot snapped to lavender while the fill,
+     links, CTA and mark were still fading over --dur-menu (§1b). */
+  transition:
+    transform var(--dur-spring-smooth) var(--spring-smooth),
+    opacity var(--dur-ui) linear,
+    background-color var(--dur-menu) var(--ease-out-expo);
+}
+/* First placement — see the section comment: no spring, no fade-in, tone
+   crossfade kept. Declared after the rule above and one attribute more
+   specific, so it wins on both counts. */
+.chrome-pill .nav-thumb[data-animate="false"] {
+  transition: background-color var(--dur-menu) var(--ease-out-expo);
 }
 
 /* ------------------------------------------------------------
@@ -386,28 +422,18 @@
    V4 (REDESIGN-V4 Part B): the sheet stays OPAQUE bg-canvas — a frosted
    sheet over the already-blurring scrim would be two full-viewport blurs on
    the device class that can least afford them — so its liquid-glass dressing
-   is only the light rim ring (`::before`, free here: the enter animation is
-   on the element itself) and the light shadow. The ring is absolutely
-   positioned inside the scrolling sheet, so it sizes to the scrollport and
-   travels with the content; on a full-bleed sheet only its top edge is ever
-   visible, directly under the pill.
+   is the light shadow ALONE. --liq-light-shadow's first layer is the
+   `inset 0 1px 0 rgba(255,255,255,.95)` top highlight: on a full-bleed sheet
+   that is the only edge of a rim ring that could ever show, and box-shadow
+   paints on the sheet's own, non-scrolling box. Part B's `::before` rim ring
+   is deliberately NOT here: `.chrome-sheet` is the SCROLLER (MobileMenu.tsx
+   `overflow-y-auto`), so an `absolute; inset: 0` pseudo sizes to the
+   scrollport and travels with the content — on a phone where the menu
+   overflows, the ring's violet-tinted bottom edge rose through the list as a
+   stray hairline. (The pill's ring in §1b is fine: the pill never scrolls.)
    ------------------------------------------------------------ */
 .chrome-sheet {
   box-shadow: var(--liq-light-shadow);
-}
-.chrome-sheet::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  padding: var(--liq-rim-w);
-  background: var(--liq-light-rim);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
 }
 
 @keyframes chromeSheetIn {

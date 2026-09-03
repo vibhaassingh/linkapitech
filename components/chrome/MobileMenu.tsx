@@ -27,8 +27,11 @@ interface MobileMenuProps {
  * sheet focuses.
  *
  * V4 (REDESIGN-V4 Part B): the sheet stays opaque `bg-canvas` and gains only
- * the light liquid-glass rim ring and shadow — both on `.chrome-sheet` in
- * chrome.css §4, so nothing in this markup changed for it.
+ * the light liquid-glass shadow (`.chrome-sheet` in chrome.css §4), whose
+ * inset top highlight is the one rim edge a full-bleed sheet can show. Part
+ * B's `::before` rim ring is deliberately absent: this element is the
+ * scroller (`overflow-y-auto`), so an inset pseudo would size to the
+ * scrollport and scroll with the content. Nothing in this markup changed.
  */
 export function MobileMenu({ open, onClose }: MobileMenuProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null);

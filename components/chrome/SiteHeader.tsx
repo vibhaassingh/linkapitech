@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Logo } from "./Logo";
 import { MobileMenu } from "./MobileMenu";
 import { usePrefersReducedMotion } from "@/components/motion/hooks";
@@ -42,8 +48,9 @@ const isActive = (pathname: string, href: string) =>
  * 3. TONE OBSERVER (REDESIGN-V4 Part B). The pill is two-state liquid glass —
  *    frosted white over lavender sections, plum glass over dark ones — and
  *    `data-over="dark|light"` on the pill is what chrome.css §1b switches on.
- *    It is driven by ONE IntersectionObserver whose root is a 1px band at the
- *    pill's vertical centre, observing every `.section-dark` /
+ *    It is driven by ONE IntersectionObserver whose root is the viewport
+ *    inset (rootMargin) to the pill's own top and bottom edges — a band as
+ *    tall as the pill — observing every `.section-dark` /
  *    `[data-surface="dark"]` in <main>: a Set of the sections currently
  *    crossing that band decides the state. IO rather than a scroll listener
  *    because it does zero per-frame work — the intersection test runs on the
@@ -54,8 +61,15 @@ const isActive = (pathname: string, href: string) =>
  *    `.chrome-header:has(~ main [data-hero="dark"])` baseline reads the
  *    hero's own `data-hero` (Hero.tsx / PageHero.tsx), so a dark-hero route
  *    paints dark on its first frame; the observer only ever confirms or
- *    refines that. On route change the attribute is removed so the baseline
- *    decides again until the new page's sections have been observed.
+ *    refines that. On route change the attribute is removed in a LAYOUT
+ *    effect cleanup — synchronously inside React's commit, before the browser
+ *    paints the new <main> — so the baseline also decides the first frame of
+ *    every client navigation, and the observer takes over once its initial
+ *    delivery for the new page's sections lands. (A passive-effect cleanup
+ *    was too late for that: a Next <Link> navigation is a transition update,
+ *    and the browser could paint the new page with the previous route's
+ *    data-over still on the pill — /services scrolled to a light section →
+ *    /about painted a light pill over the plum hero.)
  */
 export function SiteHeader(_props: SiteHeaderProps) {
   const [stuck, setStuck] = useState(false);
@@ -177,6 +191,22 @@ export function SiteHeader(_props: SiteHeaderProps) {
     };
   }, []);
 
+  // Route change: drop data-over BEFORE the browser paints the new <main>.
+  // A layout effect's cleanup runs synchronously in React's commit phase; a
+  // passive effect's runs after paint — and a Next <Link> navigation is a
+  // transition update, so with the reset in the passive cleanup (where it
+  // first lived) the browser could paint the new route with the OLD route's
+  // state still on the pill. Cleanup-only on purpose: the observer effect
+  // below re-arms for the new route and writes the fresh value; between the
+  // two, the CSS :has(data-hero) baseline is in charge, which is correct for
+  // the first frame of any route.
+  useLayoutEffect(() => {
+    const pill = pillRef.current;
+    return () => {
+      if (pill) delete pill.dataset.over;
+    };
+  }, [pathname]);
+
   // Tone observer — see mechanism 3 in the header comment. Keyed on pathname
   // so the new route's sections are observed; `arm` is re-run (rAF-coalesced)
   // on resize because the root band is expressed in viewport pixels.
@@ -190,22 +220,39 @@ export function SiteHeader(_props: SiteHeaderProps) {
     const arm = () => {
       io?.disconnect();
       under.clear();
-      // A 1px root band at the pill's vertical centre: rootMargin shrinks the
-      // viewport to [y, y + 1). The header is fixed, so y is scroll-invariant.
+      // The root band is the pill's own vertical extent: rootMargin insets the
+      // implicit root to [pill.top, pill.bottom). The header is fixed, so both
+      // edges are scroll-invariant.
+      //
+      // WHY clientHeight, NOT innerHeight. The implicit root's bounds are the
+      // LAYOUT viewport — document.documentElement.clientHeight — which
+      // excludes a classic scrollbar and, on iOS with the dynamic toolbar,
+      // differs from window.innerHeight. The bottom inset is subtracted from
+      // the root's REAL height, so measuring it against a different height is
+      // an off-by-N: with the original 1px band, any ≥1px discrepancy
+      // collapsed the band to nothing, every target reported
+      // isIntersecting:false, and the pill read data-over="light" everywhere
+      // — silently, with no error to find. A pill-height band is the second
+      // half of the same fix: a few px of drift now shave the band instead of
+      // erasing it.
+      //
       // Both insets are CLAMPED at 0: if the viewport is ever shorter than
-      // the pill's centre (a collapsed window, a viewport mid-resize reporting
-      // 0) the naive `-${innerHeight - y - 1}px` becomes `--Npx`, and the
+      // the pill (a collapsed window, a viewport mid-resize reporting 0) the
+      // naive `-${height - bottom}px` becomes `--Npx`, and the
       // IntersectionObserver constructor throws a SyntaxError — an uncaught
       // throw in an effect unmounts the whole tree. Found by the phase-3
       // visual check, not by the gate's headless viewports.
-      const y = Math.max(
-        0,
-        Math.round(pill.getBoundingClientRect().top + pill.offsetHeight / 2),
-      );
-      const below = Math.max(0, window.innerHeight - y - 1);
+      const rect = pill.getBoundingClientRect();
+      const rootHeight = document.documentElement.clientHeight;
+      const top = Math.max(0, Math.round(rect.top));
+      const below = Math.max(0, Math.round(rootHeight - rect.bottom));
       try {
         io = new IntersectionObserver(
-          (records) => {
+          (records, self) => {
+            // A disconnected observer can still deliver entries it had already
+            // queued (re-arm on resize, or the route-change cleanup below);
+            // only the live instance may write.
+            if (self !== io) return;
             for (const r of records) {
               if (r.isIntersecting) under.add(r.target);
               else under.delete(r.target);
@@ -213,12 +260,20 @@ export function SiteHeader(_props: SiteHeaderProps) {
             const next = under.size ? "dark" : "light";
             if (pill.dataset.over !== next) pill.dataset.over = next;
           },
-          { rootMargin: `-${y}px 0px -${below}px 0px`, threshold: 0 },
+          { rootMargin: `-${top}px 0px -${below}px 0px`, threshold: 0 },
         );
-      } catch {
+      } catch (err) {
         // Never let the header take the page down: without an observer the
         // CSS :has(data-hero) baseline stays in charge, which is correct for
-        // the hero and merely static further down.
+        // the hero and merely static further down. Loud in development so a
+        // regression here stays visible instead of degrading silently to
+        // that baseline.
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            "[SiteHeader] tone observer failed to arm; the pill stays on the CSS data-hero baseline.",
+            err,
+          );
+        }
         io = null;
         delete pill.dataset.over;
         return;
@@ -238,10 +293,12 @@ export function SiteHeader(_props: SiteHeaderProps) {
     window.addEventListener("resize", onResize);
     return () => {
       io?.disconnect();
+      // Null it so a late delivery from the disconnected instance is ignored
+      // by the `self !== io` guard above. data-over is NOT reset here — the
+      // layout effect above does that, before paint.
+      io = null;
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf);
-      // Back to the CSS baseline until the next route has been observed.
-      delete pill.dataset.over;
     };
   }, [pathname]);
 
@@ -281,7 +338,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
                   }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "chrome-nav-link rounded-sm py-1 text-[14.5px] transition-colors duration-ui",
+                    "chrome-nav-link rounded-sm py-1 text-[14.5px]",
                     active ? "font-semibold" : "font-medium",
                   )}
                 >
@@ -308,7 +365,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
               /* py-2.5 is off the 8-pt grid on purpose: it is what puts the
                  button at a 44px box inside the 64px pill. The grid pass below
                  the fold only touched spacing that owns no component size. */
-              className="chrome-cta hidden items-center rounded-pill px-6 py-2.5 text-[14px] font-semibold transition-colors duration-ui lg:inline-flex"
+              className="chrome-cta hidden items-center rounded-pill px-6 py-2.5 text-[14px] font-semibold lg:inline-flex"
             >
               {CTA.label}
             </Link>

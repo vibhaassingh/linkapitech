@@ -16,6 +16,11 @@ Two failure modes this exists to catch, both of which produce no error anywhere
               no listener is inert markup.
 
 Exit 1 on any orphan or unwired item.
+
+Scope note: "defined but unused" is only a FAILURE for JS_WIRING and
+[data-tilt]. For CLASSES and TOKENS it is merely printed (used_by_components /
+referenced) — a class the design system defines ahead of its first call site
+is allowed, so the class/token lists guard against orphans, not dead rules.
 """
 import os
 import re
@@ -73,6 +78,15 @@ def read(path):
         return ""
 
 
+def strip_css_comments(text):
+    """Drop every /* ... */ block. `defined` below is a plain substring test,
+    and chrome.css's header comment LISTS its §1b hooks by name — so without
+    this a deleted `.chrome-seam` rule would still read as defined. Applied to
+    the .css files only: tailwind.config.ts is TypeScript, where `/*` occurs
+    legitimately inside its content globs ("./app/**/*.{ts,tsx}")."""
+    return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+
+
 def sources():
     files = subprocess.run(["git", "ls-files"], capture_output=True, text=True,
                            cwd=ROOT).stdout.split()
@@ -84,7 +98,8 @@ def sources():
 
 
 def main():
-    css = "".join(read(f) for f in CSS_FILES)
+    css = "".join(strip_css_comments(read(f)) if f.endswith(".css") else read(f)
+                  for f in CSS_FILES)
     src = sources()
     app_code = "\n".join(src.values())
     problems = []

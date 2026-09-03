@@ -40,7 +40,7 @@ export function Hero() {
           flat enough for Mach bands to show on a wide display. A 2.5%
           overlay-blended noise tile is enough dither to break the steps up
           while staying well under the threshold of reading as texture.
-          `--grain` is laid on every other dark band by `.section-dark::before`,
+          `--grain` is laid on every other dark band by `.section-dark::after`,
           but this section is deliberately NOT `.section-dark` — it paints
           --grad-hero itself, and adopting the class would also swap
           .eyebrow-capsule to its glass variant, a visible design change — so
