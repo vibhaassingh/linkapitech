@@ -1,58 +1,89 @@
 # linkapitech-site
 
-**linkapitech.com — "Institutional Light" redesign.** An ultra-corporate,
-bank-audience website for LinkAPI Tech Pvt. Ltd., with the client banks
-(HSBC · Axis Bank · IndusInd Bank · Aditya Birla*) as the narrative center of
-every page. Near-white canvas, deep-navy accent, typography-led, one signature
-vanilla-Three.js hero. Populated entirely with **LinkAPI's real content**.
+**linkapitech.com — "Figma Purple".** A deep-plum/orchid corporate site for
+LinkAPI Tech Pvt. Ltd., rebuilt ground-up to follow the client-authored Figma
+file *"LinkAPI Website"* and then elevated with liquid-glass surfaces and
+scroll motion the static Figma can't express. Populated entirely with
+**LinkAPI's real content**.
+
+> **Design lineage.** This is the third direction. It supersedes *Institutional
+> Light* (deep-navy, mega menu) which superseded the *allgoodstudio* design
+> clone. The authoritative spec is **`REDESIGN-V3.md`** in this folder. The
+> large spec documents in the parent folder (`DESIGN-SYSTEM.md`,
+> `HOMEPAGE-SECTIONS.md`, `INTERACTIONS-AND-MOTION.md`, `PAGES-AND-ROUTING.md`)
+> describe the **retired** first direction and are historical reference only.
+> `CONTENT-MAPPING.md` is still useful for real contact details and asset
+> inventory, but its stats are superseded by `content/stats.ts`.
 
 ## Stack
 
 - **Next.js 15** (App Router, React 19, TypeScript, RSC by default)
 - **Tailwind CSS v3** + CSS-variable design tokens (`:root` in `globals.css`)
-- **Lenis** smooth scroll (homepage only, single rAF loop — no GSAP)
-- **three** (vanilla, no react-three-fiber) — lazy hero scene, see below
-- **next/font/google** — Schibsted Grotesk 600 (display) + Inter 400/500 (body)
-  + IBM Plex Mono 400 (eyebrows/numerals); 4 font files total, deliberately lean
+- **Lenis** smooth scroll (marketing route group only, single rAF loop — no GSAP)
+- **three** (vanilla, no react-three-fiber) — lazy additive hero haze, see below
+- **next/font/google** — **Poppins** 400/500/600/700 (everything) + **IBM Plex
+  Mono** 400 (code terminals only); 5 font files, deliberately lean
 - **react-hook-form** + **zod** — contact form
 - Env-driven analytics; dynamic OG image, favicons, sitemap, robots, JSON-LD
 
-## The Three.js hero (lazy-load pattern)
+## Palette and type
 
-`components/three/` — a "connective arc network": LinkAPI hub, the four bank
-nodes on a shallow 3D arc, navy bezier connections, silver data pulses.
+Primary brand is `--plum-600 #62216F`. Dark sections run `#250D29`–`#42174C`;
+light sections sit on `--canvas #FAF8FC`. Two-tone headlines use
+`--violet-text #6F257F` (AA-large on white). Full token table in
+`REDESIGN-V3.md`; the live values are the `:root` block in `app/globals.css`.
 
-- A **static SVG poster** (`HeroPoster.tsx`) is server-rendered in the initial
-  HTML — it is the *only* visual under reduced-motion, no-WebGL, or <1024px
-  viewports (mobile never downloads three).
-- On capable desktops, `HeroVisual.tsx` dynamically imports the scene at
-  browser idle (`requestIdleCallback`) and crossfades it in after the first
-  rendered frame. three (~110KB gz) stays out of the critical bundle — the
-  homepage first-load is unchanged by the scene.
-- Bank labels are **HTML text** projected per frame inside the scene's single
-  rAF (crisp at any DPR, real text). RAF halts when the hero is off-screen
-  (IntersectionObserver) or the tab is hidden; everything disposes on unmount.
-- DPR capped at 1.5, antialias off on retina, `powerPreference: "low-power"`.
+> **Tailwind opacity modifiers do NOT work on `var()` colours.** Every token
+> here is a hex/rgba string, so `bg-plum-600/40` compiles to *nothing* — no CSS
+> at all, silently. Translucency needs an explicit token (`--line-plum`,
+> `--line-violet`, `--violet-soft`). There is a warning comment in `globals.css`.
+
+## Navigation
+
+A **floating white pill navbar** with five flat links. There is deliberately
+**no mega menu** — the Figma has none. Below 1024px, `components/chrome/
+MobileMenu.tsx` is a `role="dialog"` sheet with focus trap/restore and scroll
+lock. It keeps its dialog mounted via `hidden={!open}` rather than unmounting.
+
+## The WebGL hero layer (lazy, additive)
+
+`components/three/` — `HeroOrbit.tsx` renders the hero's SVG arc composition
+server-side and is **the whole composition on its own**. `HeroField.tsx` /
+`scene/createHeroField.ts` add an *additive* WebGL haze on top. Because the SVG
+is complete by itself there is no crossfade and no-WebGL clients lose nothing.
+
+The scene is gated on: reduced motion, viewports ≥1024px, a WebGL capability
+probe, and an idle dynamic import. It halts its rAF when off-screen
+(IntersectionObserver) or the tab is hidden, and fully disposes on unmount. The
+ortho camera is mapped 1:1 to the SVG's 500×400 viewBox so the two cannot drift.
 
 ## Motion system
 
 - Reveals are **React-state-driven**: `useInView` (IO threshold 0) renders a
-  `data-inview` attribute — re-renders can never wipe the revealed state, and
-  wrappers taller than the viewport still fire.
-- Easing/durations are tokens: `--ease-out-expo`, 900ms entrances, 200ms UI,
-  80ms staggers. A global `prefers-reduced-motion` kill-switch snaps
-  everything to its end state and prevents the WebGL scene from loading.
-- The hero H1 + subhead are **never** reveal-gated (they're the LCP elements).
+  `data-inview` attribute — re-renders can never wipe the revealed state.
+- Spring curves and scroll-scrub tokens live in `lib/springs.ts` +
+  `--spring-*`/`--dur-spring-*` in `globals.css`.
+- `Magnetic.tsx` gives pill CTAs a 6px pull via **one delegated pointermove
+  listener at the root**, which keeps `Button` a server component.
+- A global `prefers-reduced-motion` kill-switch snaps everything to its end
+  state and prevents the WebGL scene from loading.
+- The hero H1 + subhead are **never** reveal-gated (they are the LCP elements).
 
-## Mega menu (accessibility contract)
+### Motion gotchas that cost real debugging time
 
-`components/chrome/MegaMenu.tsx` — full-width Solutions/Work panels:
-click/Enter/Space toggle; hover-intent (80ms open / 250ms close, one shared
-timer across trigger+panel — WCAG 1.4.13 persistent); Esc closes and restores
-trigger focus; panels are `hidden` when closed and sit in DOM order directly
-after their trigger (natural Tab flow, no focus trap); ArrowDown opens and
-focuses the first link; a hover-opened panel absorbs the follow-up click.
-Mobile (<1024px): `role="dialog"` sheet with focus trap/restore + scroll lock.
+- **`border-radius` in a keyframe silently de-composites the whole animation.**
+  Transform/opacity/filter only. CLS-safety and compositing are *different*
+  tests. The authoritative check is Lighthouse's `non-composited-animations`
+  audit — profiling style recalc does **not** clear a property.
+- **CSS animations outrank inline styles.** An element with both `.chip-float`
+  and an inline `translate()` anchor silently loses the anchor. `qa:cascade`
+  exists to catch exactly this.
+- **Responsive grids need a base `grid-cols-1`.** With only `lg:grid-cols-2`
+  the implicit mobile column is `auto` — content-sized and free to overflow.
+- **`RevealGroup` wraps each child in an element**; that wrapper must be `<li>`
+  when `as="ul"/"ol"`. Call sites pass plain children, never their own `<li>`.
+- **Outward reveal transforms widen the document** — `[data-reveal=left/right]`
+  (±32px) must stay scoped to ≥1024px or phones get a horizontal scrollbar.
 
 ## Getting started
 
@@ -76,47 +107,100 @@ npm run build && npm start   # production
 
 ```
 app/
-  layout.tsx                 root: fonts, base metadata, analytics
-  globals.css                :root tokens + type scale + reveal/menu/accordion CSS
-  (marketing)/               homepage route group (Lenis + lazy Three.js)
-  (site)/                    lightweight inner pages (native smooth scroll)
-    about  services  clients  contact  terms  privacy  work  work/[slug]
+  layout.tsx                 root: fonts, base metadata, analytics, Magnetic
+  fonts.ts                   Poppins (400–700) + IBM Plex Mono 400
+  globals.css                :root tokens + type scale + reveal/motion CSS
+  (marketing)/               homepage route group (Lenis + lazy WebGL haze)
+  (site)/                    inner pages (native smooth scroll)
+    about  services  solutions  connected-banking  industries
+    banks  banks/[slug]  contact  terms  privacy
   api/contact/route.ts       zod + honeypot + Resend-optional form handler
   opengraph-image  icon  apple-icon  sitemap  robots
 components/
-  chrome/   SiteHeader, MegaMenu, MegaPanel, MobileMenu, SiteFooter
-  sections/ home/* (11 homepage sections), PageHero, work/caseToneStyles,
-            ContactForm, LegalDoc
-  three/    HeroVisual, HeroPoster, scene/ (createHeroScene, palette)
-  ui/       Button, Container, Eyebrow, StatNumber, Wordmark, Chip, Field
-  motion/   SmoothScrollProvider, useInView, Reveal, RevealGroup, hooks
-content/    services, process, benefits, testimonials, faq, cases, stats,
-            clients, home, about, legal  (typed data — single source of truth)
-lib/        site (IA + contacts), metadata, analytics, jsonld, cn
+  chrome/   SiteHeader (pill nav), MobileMenu, SiteFooter, Logo,
+            SkipLink, RouteTransition, chrome.css
+  sections/ home/* (14 sections), services/*, industries/*,
+            PageHero, CtaBand, ContactForm, LegalDoc
+  three/    HeroOrbit (SVG, complete alone), HeroField (additive WebGL),
+            scene/createHeroField, scene/palette
+  ui/       Button, Eyebrow, Field, Icon, StatNumber
+  motion/   SmoothScrollProvider, Reveal, RevealGroup, Magnetic, CursorGlow,
+            useInView, useSectionProgress, velocity, hooks
+content/    services, solutions, industries, banks, capabilities, process,
+            testimonials, faq, stats, clients, home, about, legal
+            (typed data — single source of truth)
+lib/        site (IA + contacts), metadata, analytics, jsonld, cn, springs
+scripts/qa/ verification harness — see below
 ```
 
-## Quality gates (verified on the production build)
+### Retired routes
 
-Lighthouse mobile — `/` 90/100/100/100 · `/services` 96/100/100/100 ·
-`/work/[slug]` 95/100/100/100 · `/clients` 95/100/100/100
-(Perf/A11y/Best-Practices/SEO). CLS 0 on every page. Content fully readable
-without JavaScript (RSC HTML, poster included).
+`/work`, `/work/:slug` and `/clients` **308-redirect** to `/industries` and
+`/about` (see `next.config.ts`). `content/cases.ts` and `content/benefits.ts`
+are **archived**: no route imports them, so they are tree-shaken out of every
+bundle. They are retained deliberately in case case studies return.
+
+## Verification
+
+One command runs the whole gate — 24 checks, in dependency order:
+
+```bash
+npm run gate -- --since <ref>
+```
+
+`scripts/qa/gate.sh` covers tsc, the design-token/JS-wiring contract, build +
+BUILD_ID assertion, route health across 13 routes, an a11y + layout sweep
+(13 pages × 4 viewports), motion, WebGL, cascade conflicts, keyboard,
+reduced-motion, a composited-animation audit over 5 routes, and a pixel diff.
+Individual scripts are documented in `scripts/qa/README.md`; they drive
+headless Chrome over CDP and have **no npm dependencies**.
+
+Rules the harness encodes, each from a real failure:
+
+- **Never pipe `npm run build`** — SIGPIPE truncates it and leaves no BUILD_ID,
+  which then looks like a server bug.
+- **Probe every route for 200 before any sweep** — a sweep against a dead
+  server reports zero findings in every category and reads exactly like success.
+- **`reporter()` exits 2 if no assertion ran** — a run that asserts nothing is
+  a failed run, not a pass.
+- **Never run `next dev` and `next start` against one `.next`.** And never
+  `rm -rf .next` while a server is running on it.
+- `scripts/qa/{baseline,current,review}/` are gitignored — regenerate locally.
+
+Headless Chrome has **no compositor**, so scroll-driven animations there
+necessarily tick on the main thread; a headless profile showing style recalc is
+an artifact, not jank. Assert compositing via Lighthouse instead.
+
+## Measuring performance
+
+Measure on the **live domain**, not locally: Lighthouse's simulated throttling
+is pessimistic without Vercel's edge, so local prod builds read perf 94–98 while
+the same pages score 100 in production. Vercel **preview** deployments are
+SSO-gated, which silently corrupts measurement — routes 302 to a login page and
+Lighthouse's robots-txt gatherer parses that HTML as robots.txt, producing a
+bogus "SEO 61". Use the MCP `get_access_to_vercel_url` bypass or a local
+production build.
+
+Live mobile Lighthouse: `/`, `/connected-banking`, `/banks/axis` =
+**100/100/100/100**; `/services` 95; `/contact` **82** — the last is the Google
+Maps embed's ~488KB of third-party JS, a parked product decision (see
+`CONTENT-TODO.md` §5).
 
 ## Content-truth rules
 
-All facts come from `content/` — real contacts, real aggregate stats (5000+
-API implementations, 45,000+ customers, ₹20,000 Cr/month, 10L+ txns/month),
-real service language. **No outcome claim is attributed to a named bank**
-(logos are trust signals only), and no certifications are claimed (none
-exist in the source). Draft copy is flagged `TODO: client to confirm` in
-code comments.
+All facts come from `content/` — real contacts, real service language, and the
+Figma's client-authored stats (70,000+ businesses onboarded, ₹60,000 Cr+
+monthly volume, 5,000+ API implementations, 300+ clients). These **supersede**
+the older published set (45,000+ customers, ₹20,000 Cr/month).
 
-## Open items — `TODO: client to confirm`
+**No outcome claim is attributed to a named bank** — the `/banks` pages are
+written as *capability* and carry an explicit "not a claim of official
+partnership with, or endorsement by" note. No certifications are claimed (none
+exist in the source). Figures inside the industry UI mockups are clearly
+illustrative sample data. Draft copy is flagged `TODO: client to confirm`.
 
-- *Aditya Birla wordmark: confirm the exact entity name behind `aditya.png`.
-- Licensed vector logos for all four bank marks (`content/clients.ts` —
-  `Wordmark` drops SVGs into the same slot).
-- Case studies are aggregate program summaries; replace with real
-  per-engagement narratives + dates when available.
-- Testimonials need real company/role; FAQ and legal copy are drafts.
-- Social profile URLs are empty — icons stay hidden until supplied.
+## Open items
+
+**`CONTENT-TODO.md` is the sign-off checklist** — 12 items ordered by risk.
+The highest-risk one: the homepage marquee asserts a customer relationship for
+seven bank and enterprise brands, and each mark needs written permission.
