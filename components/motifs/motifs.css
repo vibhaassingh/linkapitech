@@ -177,6 +177,26 @@
 .node[data-lit] .node-glow {
   opacity: 1;
 }
+/* Sequenced lighting from the section's --sp (the WhatWeDo manifold, Phase 6):
+   a `.node-flow` Node lights as the Conduit's band reaches it. `--lit-at`
+   (set inline per node, a 0–1 progress) is the CENTRE of the ramp; the glow
+   rises .35 → 1 over ±0.04 of progress either side (slope 8). A static
+   computed value that changes with --sp, not an animation — nothing for the
+   composited audit to see, no JS per element. An UNWRITTEN --sp (no driver,
+   reduced motion, no JS) resolves to the :root 0, so a sequenced node rests
+   dim: the fail-closed default for decoration. Reduced motion re-lights every
+   node by name in the block at the bottom (Part C: RM = static, lit). */
+.node-flow .node-glow {
+  opacity: clamp(0.35, 0.35 + (var(--sp) - var(--lit-at, 0) + 0.04) * 8, 1);
+}
+/* Any glass card lights the Nodes inside it on hover / keyboard focus. This is
+   the Challenges beat — dim Nodes ("flow blocked") that light when the visitor
+   reaches for the card ("we solve it") — and it lets a sequenced node be lit
+   early by hand. Declared after .node-flow so it wins the (0,2,0) tie. */
+.liq:hover .node-glow,
+.liq:focus-within .node-glow {
+  opacity: 1;
+}
 /* The glyph is positioned too, so DOM order (glow first) puts it on top; an
    in-flow glyph would paint UNDER the absolutely positioned glow. */
 .node > :not(.node-glow) {
@@ -388,5 +408,11 @@
   .caustic-loop,
   .conduit-loop .conduit-flow {
     animation: none !important;
+  }
+  /* Part C: a Node under reduced motion is static AND lit. Without this the
+     --sp-driven `.node-flow` glow (--sp is never written under RM) would rest
+     dim forever, and the Challenges hover beat has no hover-less equivalent. */
+  .node-glow {
+    opacity: 1 !important;
   }
 }

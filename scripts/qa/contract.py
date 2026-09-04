@@ -61,6 +61,19 @@ CLASSES = [
     "droplet", "node", "seam", "meniscus",
     "band-hero", "display-0", "lens-caustic", "lens-glint", "drift-lead",
     "hero-lens",
+    # V4 Phase 6 — the dark card language (StatBand dark, WhatWeDo manifold,
+    # Challenges sweep cards): the material modifiers these sections are the
+    # first to wire, the first DOM <Caustic> / <Pool> / <Conduit> call sites,
+    # the three plum bands, the sheet shadow and two drift tiers. `node-flow`
+    # is the --sp-sequenced Node glow (motifs.css). `conduit-scroll` is
+    # composed at render as `conduit-${flow}` (Conduit.tsx); the `used`
+    # regex finds the literal only in WhatWeDo.tsx's doc comment, so its
+    # column reads True by that accident — either way it is defined, and the
+    # class/token lists only ever fail on orphans.
+    "liq-spec", "liq-sweep", "liq-enter", "liq-inset", "liq-static-mobile",
+    "pool", "conduit", "conduit-flow", "conduit-scroll", "conduit-v",
+    "caustic", "node-glow", "node-flow", "sheet-shadow",
+    "drift-far", "drift-mid", "band-a", "band-b", "band-c",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",
@@ -79,6 +92,11 @@ TOKENS = [
     "--liq-edge", "--liq-depth", "--liq-shadow",
     "--liq-spec", "--liq-spec-soft",
     "--liq-lift", "--liq-hover-scale", "--liq-press-scale",
+    # V4 Phase 6 — the frame width the .liq-spec mask reads (set inline per
+    # card), the sweep band's gradient, the Pool/Caustic alpha, the Node glow,
+    # and the veil .liq-inset fills with. `--lit-at` is NOT a token: it is a
+    # per-element inline value read with a fallback (`var(--lit-at, 0)`).
+    "--liq-pad", "--liq-sweep", "--violet-a24", "--violet-glow", "--veil-2",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
 JS_WIRING = {

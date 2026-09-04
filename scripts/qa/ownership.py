@@ -105,6 +105,8 @@ OWNERSHIP = [
     #     unowned. Existing files keep their original packet owner. ---
     ("V4", "components/motifs/*"),
     ("V4", "components/ui/LiquidGlassDefs.tsx"),
+    # Phase 6: the one-hook client wrapper that writes --sp on a server section.
+    ("V4", "components/sections/home/SectionProgress.tsx"),
 
     # --- orchestrator-owned (not a packet) ---
     ("ORCH", "scripts/qa/*"),

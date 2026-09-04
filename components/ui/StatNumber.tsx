@@ -10,6 +10,13 @@ interface StatNumberProps {
   className?: string;
   /** class for the numeral itself */
   numClassName?: string;
+  /**
+   * class for the affix boxes (`odo-fix`: prefix, separators, suffix) — lets a
+   * call site colour the ₹ / commas / unit apart from the digits (the V4
+   * StatBand sets them lavender against ink-inv digits). Class only; the boxes
+   * keep their fixed-height, proportional geometry.
+   */
+  affixClassName?: string;
   labelClassName?: string;
   /** Roll duration for a single column, ms (the stagger is added per digit). */
   duration?: number;
@@ -59,9 +66,11 @@ export function StatNumber({
   stat,
   className,
   numClassName,
+  affixClassName,
   labelClassName,
   duration = 550,
 }: StatNumberProps) {
+  const fix = cn("odo-fix", affixClassName);
   const digits =
     stat.count != null ? Math.round(stat.count).toLocaleString("en-IN") : "";
   const animated = digits !== "";
@@ -88,11 +97,11 @@ export function StatNumber({
               data-roll={rolling || undefined}
               data-settled={settled || undefined}
             >
-              {stat.prefix && <span className="odo-fix">{stat.prefix}</span>}
+              {stat.prefix && <span className={fix}>{stat.prefix}</span>}
               {[...digits].map((ch, i) => {
                 if (!/\d/.test(ch)) {
                   return (
-                    <span key={i} className="odo-fix">
+                    <span key={i} className={fix}>
                       {ch}
                     </span>
                   );
@@ -111,7 +120,7 @@ export function StatNumber({
                   </span>
                 );
               })}
-              {stat.suffix && <span className="odo-fix">{stat.suffix}</span>}
+              {stat.suffix && <span className={fix}>{stat.suffix}</span>}
             </span>
           </>
         ) : (
