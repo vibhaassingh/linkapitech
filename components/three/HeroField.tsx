@@ -14,7 +14,8 @@ import type { HeroLiquid as Field } from "./scene/createHeroLiquid";
  * benefit from it:
  *  - prefers-reduced-motion → never mounts
  *  - viewport < 1024        → never mounts (phones keep the SVG only)
- *  - no WebGL context       → never mounts
+ *  - no WebGL2              → never mounts (three ≥ r163 is WebGL2-only;
+ *                              without it the SVG poster is the hero)
  *  - three is dynamically imported on idle, so it stays out of the critical
  *    bundle and cannot delay the hero's LCP text
  *  - rAF is halted whenever the hero scrolls out of view or the tab is hidden
@@ -37,13 +38,21 @@ export function HeroField() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (window.innerWidth < 1024) return;
 
-    // WebGL probe — some environments throw rather than returning null.
+    // WebGL2 probe on a THROWAWAY canvas, never on the scene's own. A canvas
+    // hands back its existing context on every later getContext() call and
+    // ignores the attributes of that call, so probing on `canvas` silently
+    // discarded three's `antialias: false` / `powerPreference: "low-power"`
+    // (MSAA on, default GPU). three ≥ r163 is WebGL2-only, so there is no
+    // WebGL1 fallback worth probing for: a page with only WebGL1 would boot
+    // onto a canvas three then throws on. Without WebGL2 the SVG poster is
+    // the hero. Some environments throw rather than returning null, hence
+    // the try.
     try {
-      const gl =
-        canvas.getContext("webgl2") ??
-        canvas.getContext("webgl") ??
-        canvas.getContext("experimental-webgl");
-      if (!gl) return;
+      const probe = document.createElement("canvas").getContext("webgl2");
+      if (!probe) return;
+      // Release the probe's context now rather than at GC: browsers cap live
+      // WebGL contexts (Chromium: 16) and a route can mount this many times.
+      probe.getExtension("WEBGL_lose_context")?.loseContext();
     } catch {
       return;
     }

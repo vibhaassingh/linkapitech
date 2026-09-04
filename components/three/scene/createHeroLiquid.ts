@@ -22,11 +22,13 @@ import { FRAGMENT, VERTEX } from "./liquidShaders";
  * except a single string lookup of `--scroll-velocity` off the inline style.
  * Everything that moves is a uniform.
  *
- * The scene boots at `uWake = 0`, which the shader renders as the SVG's exact
- * rest pose (same palette hexes, same LENS/BLOBS literals via lensLayout.ts),
- * and eases to 1 over 1.4s after the first start(). That is what makes the
- * harness's 900ms canvas fade + the poster's data-live fade read as one lens
- * waking up rather than two images swapping.
+ * The scene boots at `uWake = 0`, which the shader renders as the SVG's rest
+ * pose (same palette hexes, same LENS/BLOBS/CAUSTICS literals via
+ * lensLayout.ts), and eases to 1 over 1.4s after the first start() with a
+ * quartic EASE-IN — so uWake is still ≈ 0 while the harness's 900ms canvas
+ * fade and the poster's data-live fade cross. Two near-identical images
+ * crossfade, then motion emerges: one lens waking up, not two images swapping.
+ * QA pins that pose with `?liquid=rest` (see restPinned below).
  *
  * Budget: ≤ 2ms GPU/frame at 1440p on integrated GPUs (DPR ≤ 1.5, ≤ ~565k
  * fragments inside the 560px lens box), rAF callback well under 1ms.
@@ -53,8 +55,11 @@ const SPRING_K = 38;
 const SPRING_C = 6.5;
 /** Second lerp on the (already lerped) velocity bus so the field never steps. */
 const VEL_LERP = 0.08;
-/** Adaptive quality: median rAF interval over this many frames above this
- *  many ms → drop to DPR 1.0 once (F6). */
+/** Adaptive quality (F6): over a window of this many frame intervals, more
+ *  than half above QUALITY_MS ⇔ the window's median is above it → drop to
+ *  DPR 1.0 once. Counted rather than sorted: a running tally is
+ *  allocation-free, where a literal median copied and sorted 90 numbers
+ *  inside the rAF callback every 90 frames. */
 const QUALITY_WINDOW = 90;
 const QUALITY_MS = 20;
 
@@ -147,9 +152,18 @@ export function createHeroLiquid(
   let pointerTY = 0;
 
   // ---- adaptive quality ----------------------------------------------------
-  const intervals = new Float64Array(QUALITY_WINDOW);
-  let intervalCount = 0;
+  let intervalCount = 0; // frame intervals seen in the current window
+  let slowCount = 0; // of which > QUALITY_MS
   let degraded = false;
+
+  // ---- QA affordance ---------------------------------------------------------
+  // `?liquid=rest` pins the scene in its boot pose: uWake, uTime, uFlow,
+  // uVelocity and uPointer stay 0 for as long as the page lives, so a test can
+  // screenshot the canvas against the SVG poster and measure the rest-pose
+  // match (REDESIGN-V4 Part J, Phase 5 review fixes). Read once here, never per
+  // frame. Harmless in production — the frame still renders, it never wakes.
+  const restPinned =
+    new URLSearchParams(window.location.search).get("liquid") === "rest";
 
   // ---- scroll-velocity coupling -------------------------------------------
   // The velocity bus writes --scroll-velocity (−1..1, already lerped) onto
@@ -204,11 +218,6 @@ export function createHeroLiquid(
     }
   };
 
-  const median = (xs: Float64Array) => {
-    const sorted = Array.from(xs).sort((a, b) => a - b);
-    return sorted[sorted.length >> 1];
-  };
-
   const frame = (now: number) => {
     raf = 0;
     if (!running || disposed || lost) return;
@@ -221,54 +230,63 @@ export function createHeroLiquid(
       // (0.75 softens the 1.2u rim line). Intervals straight after a start()
       // are skipped (last = 0), so a resume never trips it.
       if (!degraded) {
-        intervals[intervalCount++] = ms;
-        if (intervalCount === QUALITY_WINDOW) {
-          intervalCount = 0;
-          if (median(intervals) > QUALITY_MS && renderer.getPixelRatio() > 1) {
+        if (ms > QUALITY_MS) slowCount++;
+        if (++intervalCount === QUALITY_WINDOW) {
+          // More than half the window slow ⇔ its median > QUALITY_MS.
+          if (slowCount > QUALITY_WINDOW / 2 && renderer.getPixelRatio() > 1) {
             degraded = true;
             renderer.setPixelRatio(1);
             resize();
           }
+          intervalCount = 0;
+          slowCount = 0;
         }
       }
     }
     last = now;
 
-    const v = readVelocity();
+    // Pinned at rest (QA): every motion uniform stays at its boot value.
+    if (!restPinned) {
+      const v = readVelocity();
 
-    // Churn: flow advances at 0.7..1.3 × real time — always positive, so it
-    // is monotonic and a fast scroll can never run the liquid backwards.
-    // Both clocks wrap at T; the shader is periodic in T by construction.
-    flow += (1 + 0.3 * v) * dt;
-    if (flow >= T) flow -= T;
-    time += dt;
-    if (time >= T) time -= T;
+      // Churn: flow advances at 0.7..1.3 × real time — always positive, so it
+      // is monotonic and a fast scroll can never run the liquid backwards.
+      // Both clocks wrap at T; the shader is periodic in T by construction.
+      flow += (1 + 0.3 * v) * dt;
+      if (flow >= T) flow -= T;
+      time += dt;
+      if (time >= T) time -= T;
 
-    // Slosh spring toward the bus velocity: overshoots once, settles in ~1s —
-    // the "liquid coming to rest" beat. Semi-implicit Euler; dt ≤ 50ms keeps
-    // it stable (ω·dt ≈ 0.31 worst case).
-    const acc = SPRING_K * (v - sloshX) - SPRING_C * sloshV;
-    sloshV += acc * dt;
-    sloshX += sloshV * dt;
+      // Slosh spring toward the bus velocity: overshoots once, settles in ~1s —
+      // the "liquid coming to rest" beat. Semi-implicit Euler; dt ≤ 50ms keeps
+      // it stable (ω·dt ≈ 0.31 worst case).
+      const acc = SPRING_K * (v - sloshX) - SPRING_C * sloshV;
+      sloshV += acc * dt;
+      sloshX += sloshV * dt;
 
-    // Pointer: exponential ease with τ = .35s, frame-rate independent.
-    const k = 1 - Math.exp(-dt / POINTER_TAU);
-    const pointer = uniforms.uPointer.value;
-    pointer.x += (pointerTX - pointer.x) * k;
-    pointer.y += (pointerTY - pointer.y) * k;
+      // Pointer: exponential ease with τ = .35s, frame-rate independent.
+      const k = 1 - Math.exp(-dt / POINTER_TAU);
+      const pointer = uniforms.uPointer.value;
+      pointer.x += (pointerTX - pointer.x) * k;
+      pointer.y += (pointerTY - pointer.y) * k;
 
-    // Wake: 0 → 1 over 1.4s, quartic ease-out, starting with the first frame
-    // after the first start() and never reset — a tab hide/show does not
-    // re-wake.
-    if (wake < 1) {
-      wake = Math.min(1, wake + dt / WAKE_S);
-      const u = 1 - wake;
-      uniforms.uWake.value = 1 - u * u * u * u;
+      // Wake: 0 → 1 over 1.4s with a quartic EASE-IN (t⁴), from the first frame
+      // after the first start(), never reset — a tab hide/show does not
+      // re-wake. Ease-in, not out: the canvas itself fades in over 900ms, so
+      // the pose on screen during that fade must be the rest pose the poster
+      // beneath is showing. t⁴ holds uWake at .005 at 300ms and .09 at 800ms;
+      // the ease-out it replaces was already .62 at 300ms with the canvas 90%
+      // opaque, so the rest pose was never actually on screen.
+      if (wake < 1) {
+        wake = Math.min(1, wake + dt / WAKE_S);
+        const t2 = wake * wake;
+        uniforms.uWake.value = t2 * t2;
+      }
+
+      uniforms.uTime.value = time;
+      uniforms.uFlow.value = flow;
+      uniforms.uVelocity.value = sloshX;
     }
-
-    uniforms.uTime.value = time;
-    uniforms.uFlow.value = flow;
-    uniforms.uVelocity.value = sloshX;
 
     renderer.render(scene, camera);
 
@@ -312,13 +330,26 @@ export function createHeroLiquid(
   resize();
 
   // Compile off the critical path: the rAF loop is only scheduled once the
-  // program reports ready, so the first frame never stalls on a link. The
-  // promise never rejects (three polls isReady()); `disposed` inside
-  // schedule() cancels the continuation if the harness unmounted meanwhile.
-  void renderer.compileAsync(scene, camera).then(() => {
+  // program reports ready, so the first frame never stalls on a link;
+  // `disposed` inside schedule() cancels that continuation if the harness
+  // unmounted meanwhile. The promise is KEPT because dispose() has to wait on
+  // it: with KHR_parallel_shader_compile present, three's compileAsync polls
+  // `properties.get(material).currentProgram.isReady()` every 10ms via
+  // setTimeout, and renderer.dispose() → properties.dispose() empties that map
+  // — so a GL teardown inside the compile window (unmount during a fast
+  // navigation off "/") made the next poll throw an uncaught TypeError.
+  const compiled = renderer.compileAsync(scene, camera).then(() => {
     ready = true;
     schedule();
   });
+
+  /** The GL teardown proper — only ever run after the compile poller is done. */
+  const teardown = () => {
+    scene.clear();
+    geometry.dispose();
+    material.dispose();
+    renderer.dispose();
+  };
 
   return {
     start() {
@@ -335,13 +366,16 @@ export function createHeroLiquid(
     },
     dispose() {
       stop();
+      // Immediate: from here start() and frame() are inert whatever teardown
+      // still waits on, so nothing can render into a half-disposed renderer.
       disposed = true;
       canvas.removeEventListener("webglcontextlost", onContextLost);
       canvas.removeEventListener("webglcontextrestored", onContextRestored);
-      scene.clear();
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
+      // `ready` is the synchronous fast path once the compile has resolved;
+      // otherwise defer the GL teardown until it has (either way it settles —
+      // three's promise never rejects, but the rejection arm costs nothing).
+      if (ready) teardown();
+      else compiled.then(teardown, teardown);
     },
   };
 }

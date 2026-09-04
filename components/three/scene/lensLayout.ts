@@ -36,10 +36,11 @@ export const LENS = { cx: 250, cy: 205, rx: 148, ry: 132 } as const;
 export const RIM = { w: 16, inner: 9 } as const;
 
 /** The poster draws each blob as `<circle r={r · BLOB_DRAW_SCALE}>`
- *  (REDESIGN-V4 Part E §1 item 2). `r` is the metaball FIELD radius (the
- *  shader's kernel is ≈ 1 there); the poster's radial gradient reaches α 0 at
- *  the disc edge, so the disc is drawn 15% larger for that fade to sit
- *  outside the field radius rather than eat into it. */
+ *  (REDESIGN-V4 Part E §1 item 2), and the shader's depth kernel
+ *  (liquidShaders.ts `depth()`) is parameterised on that same drawn radius —
+ *  its alpha at each fraction of it is the `#hl-blob` gradient's — so a lone
+ *  blob is the same disc on both renderers. `r` is the seeded radius; the 15%
+ *  is the margin the poster's fade-to-zero sits in. */
 export const BLOB_DRAW_SCALE = 1.15;
 
 /** DOM chip disc diameter, px (the Node `size`). CHIPS[] gives the centres;
@@ -73,7 +74,10 @@ export const CAUSTICS = [
  *   x(t) = ax · sin(2π · kx · t / T + phx)
  *   y(t) = ay · cos(2π · ky · t / T + phy) + 14      (gravity bias)
  * `kx`/`ky` are integer harmonics of the shader's 360s wrap period, so the
- * paths close seamlessly. `r` is the field radius, `w` its weight.
+ * paths close seamlessly. `r` is the radius, `w` a density weight the shader
+ * applies only once awake (`mix(1, w, uWake)`): the poster draws every disc
+ * with the one gradient, so at rest w must not show. It stays in the seeded
+ * sequence regardless — dropping the draw would shift every later value.
  * `restX/restY` are the absolute positions at t = 0.
  * Named `LensBlob`, not `Blob`: `Blob` would shadow the DOM global.
  */

@@ -29,8 +29,11 @@ async function probeSession({ width, height, reducedMotion, mobile, cpuThrottle 
 // indexed draw per frame, no textures, no per-frame buffer uploads. Under
 // swiftshader that shader rasterises at ~20–30fps, so a 500ms window sees
 // 10–15 draws — comfortably above the >5 floor and below the ≤35 ceiling
-// (one per 60Hz frame). If the floor ever flakes here, widen the WINDOW; do
-// not lower the bar — that is test tuning, not a regression.
+// (one per 60Hz frame). The ceiling is only an absolute bound: under
+// swiftshader 2–3 draws per frame would still pass it, so "one draw per
+// frame" is asserted as a RATIO against the scene's own rAF callbacks in the
+// same window. If the floor ever flakes here, widen the WINDOW; do not lower
+// the bar — that is test tuning, not a regression.
 const DRAW_WINDOW_MS = 500;
 
 /** Every error a page can emit, across all three CDP channels (see 1.). */
@@ -128,8 +131,23 @@ const collectErrors = (s) => [
         p[m] = function (...a) { window.__b++; return orig.apply(this, a); };
       }
     }
+    // Frames for the draws-per-frame RATIO: wrap requestAnimationFrame for
+    // the window and count the callbacks that issued ≥ 1 draw (the scene's),
+    // plus the most draws any one of them issued. The callback already
+    // scheduled before this patch runs unwrapped — its draw counts, its frame
+    // does not — hence the +1 slack in the assertion below.
+    const origRaf = window.requestAnimationFrame;
+    let frames = 0, maxPerFrame = 0;
+    window.requestAnimationFrame = (cb) => origRaf.call(window, (ts) => {
+      const d0 = window.__n;
+      try { return cb(ts); } finally {
+        const dn = window.__n - d0;
+        if (dn > 0) { frames++; if (dn > maxPerFrame) maxPerFrame = dn; }
+      }
+    });
     await sleep(${DRAW_WINDOW_MS});
-    const running = window.__n;
+    const running = window.__n, runningFrames = frames;
+    window.requestAnimationFrame = origRaf;
 
     Object.defineProperty(document, 'hidden', { value: true, configurable: true });
     document.dispatchEvent(new Event('visibilitychange'));
@@ -151,7 +169,7 @@ const collectErrors = (s) => [
     const drawsDuringUploadWindow = window.__n;
 
     for (const [p, m, orig] of patched) p[m] = orig;
-    return { running, paused, resumed, uploads, drawsDuringUploadWindow };
+    return { running, runningFrames, maxPerFrame, paused, resumed, uploads, drawsDuringUploadWindow };
   })()`);
   ok(
     "desktop: scene draws while visible",
@@ -159,9 +177,20 @@ const collectErrors = (s) => [
     `gl draws/${DRAW_WINDOW_MS}ms=${rafCounts?.running}`,
   );
   ok(
-    "desktop: one draw per frame (≤ 35 draws per 500ms)",
+    "desktop: draw ceiling (≤ 35 draws per 500ms)",
     (rafCounts?.running ?? 99) <= 35 * (DRAW_WINDOW_MS / 500),
     `gl draws/${DRAW_WINDOW_MS}ms=${rafCounts?.running}`,
+  );
+  // The ceiling cannot fail under swiftshader (9–12 draws/500ms there, so 2–3
+  // draws per frame still pass it); the ratio can. One indexed draw per scene
+  // frame ⇒ draws ≤ scene rAF callbacks, +1 for the callback in flight when
+  // the counters were installed. Proven able to fail (scratch run of this same
+  // measurement with drawElements patched to draw twice): 30 draws over 14
+  // scene frames → FAIL, against 19 over 18 as shipped.
+  ok(
+    "desktop: one draw per scene frame (draws ≤ scene rAF frames + 1)",
+    (rafCounts?.runningFrames ?? 0) > 0 && (rafCounts?.running ?? 99) <= (rafCounts?.runningFrames ?? 0) + 1,
+    `gl draws=${rafCounts?.running} scene rAF frames=${rafCounts?.runningFrames} max draws in one callback=${rafCounts?.maxPerFrame}`,
   );
   ok(
     "desktop: scene halts when tab hidden",
@@ -226,7 +255,7 @@ const collectErrors = (s) => [
   s.close();
 }
 
-// ---------- 1c. GPU time per frame (hardware GL only) ----------
+// ---------- 2. GPU time per frame (hardware GL only) ----------
 // EXT_disjoint_timer_query_webgl2 around the scene's one draw call. This
 // session asks for NO software GL: headless Chrome then uses the machine's GPU
 // where it can (this Mac: ANGLE Metal), which is the only place the number
@@ -283,6 +312,13 @@ const collectErrors = (s) => [
   // (156k → 239k fragments: same 0.8–0.9ms median) and its minimum is ~0.07ms,
   // so the median bounds the frame's GPU cost from above and the p95 (~1.7–2.1
   // on an M1 Max) is GPU wake/scheduling jitter. Both are printed.
+  // Proven able to fail (Phase 5 review fixes): with 512 extra fbm2 evaluations
+  // per fragment this same measurement read min 4.94 / median 6.17 (5.40 on a
+  // rerun) / p95 9.62ms → FAIL, against min 0.09 / median 0.87 / p95 1.88ms as
+  // shipped — the timer does follow shader cost once it clears the ~0.8ms
+  // command-buffer floor. An M1 Max median is a sanity bound only: it is NOT
+  // evidence for F1's integrated-GPU (Iris Xe / HD 4000) budget, which only a
+  // run on such a machine can give.
   if (gpu?.skip) {
     skip("hardware GL: GPU time per frame < 2ms", gpu.skip + " — not measured");
   } else {
@@ -295,7 +331,7 @@ const collectErrors = (s) => [
   s.close();
 }
 
-// ---------- 1b. desktop, 4x CPU: main-thread cost of the scene ----------
+// ---------- 3. desktop, 4x CPU: main-thread cost of the scene ----------
 // Every rAF callback is timed by wrapping requestAnimationFrame BEFORE any page
 // script runs. A callback that issues a GL draw is the scene's frame; the rest
 // (Lenis, the velocity bus, Magnetic, section progress) are reported alongside
@@ -306,8 +342,9 @@ const collectErrors = (s) => [
 //     1.1–1.4ms run to run while its median holds at 0.5ms: the p95 of a
 //     throttled callback measures the slice length, the median measures the
 //     callback.
-//   • the p95 with the throttle lifted (< 1ms; measured 0.2ms on both software
-//     and hardware GL). This is the tail the user actually experiences.
+//   • the p95 with the throttle lifted (< 0.5ms; measured 0.2ms on both
+//     software and hardware GL — the 1ms bar it replaces was five times the
+//     measurement). This is the tail the user actually experiences.
 // Together they are what "zero per-frame layout reads, zero DOM writes, zero
 // uploads" buys; a single getBoundingClientRect per frame trips the first.
 {
@@ -361,14 +398,14 @@ const collectErrors = (s) => [
     `scene frames=${slow?.nScene} median=${slow?.medScene}ms p95=${slow?.p95Scene}ms; other rAF callbacks=${slow?.nOther} median=${slow?.medOther}ms p95=${slow?.p95Other}ms`,
   );
   ok(
-    "desktop 1x CPU: scene rAF callback p95 < 1ms",
-    live && (fast?.nScene ?? 0) >= 10 && (fast?.p95Scene ?? 99) < 1,
+    "desktop 1x CPU: scene rAF callback p95 < 0.5ms",
+    live && (fast?.nScene ?? 0) >= 10 && (fast?.p95Scene ?? 99) < 0.5,
     `scene frames=${fast?.nScene} median=${fast?.medScene}ms p95=${fast?.p95Scene}ms; other rAF callbacks=${fast?.nOther} p95=${fast?.p95Other}ms`,
   );
   s.close();
 }
 
-// ---------- 2. mobile ----------
+// ---------- 4. mobile ----------
 {
   const s = await probeSession({ width: 390, height: 844, mobile: true });
   await s.goto("/");
@@ -381,7 +418,7 @@ const collectErrors = (s) => [
   s.close();
 }
 
-// ---------- 3. reduced motion ----------
+// ---------- 5. reduced motion ----------
 {
   const s = await probeSession({ width: 1440, height: 900, reducedMotion: true });
   await s.goto("/");
