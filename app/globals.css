@@ -668,6 +668,15 @@
 .band-hero {
   background-image: var(--grad-hero);
 }
+/* Footer pool (REDESIGN-V4 Part G / Part J Phase 7): the page's final dark
+   surface, nested INSIDE the sticky footer curtain (never on the sticky element
+   itself — .section-dark sets position: relative). The gradient runs the other
+   way from the bands — plum-800 at the top, plum-950 at the bottom — so the
+   page reads as settling into its deepest plum. Same background-image-only
+   contract as .band-a/b/c: ink, grain and selection come from .section-dark. */
+.footer-pool {
+  background-image: linear-gradient(180deg, var(--plum-800), var(--plum-950));
+}
 
 /* Light lavender-washed hero shell (inner pages). */
 .section-wash {
@@ -1057,6 +1066,21 @@
     --_blur: 18px;
   }  /* .liq-light.liq-3 is (0,2,0) and would out-specify the cap */
 }
+/* Escape hatch at EVERY size (REDESIGN-V4 Part J, Phase 7): fill, edge, rim
+   and shadow without the frost. For glass that sits on a flat --surface
+   (there is nothing behind it to frost, so the blur is pure GPU cost) or a
+   cluster that would overrun §A7 on desktop — the Ecosystem's ten chips share
+   one 1440px viewport, and ten .liq-light.liq-1 layers would be 10 of 8.
+   Declared after the mobile block so it is the last word on backdrop-filter at
+   equal specificity. NEVER combine with .liq-refract: both are (0,1,0) and
+   .liq-refract sits EARLIER in this file (L1033, inside its @supports — an
+   at-rule adds no specificity), so .liq-flat wins the tie on source order and
+   would silently delete the refraction. Whichever way the tie fell the pairing
+   would be a contradiction; this is which half actually loses. */
+.liq-flat {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 /* No pointer specular or sweep band where there is no fine pointer, or no
    room for a 240px highlight to read as one. */
 @media (max-width: 1023px), (any-pointer: coarse) {
@@ -1442,38 +1466,78 @@ html {
     /* Part D (iii): pinned story. `view()` on a sticky child STALLS — the
        sticky box does not move through the scrollport — so the TALL wrapper
        owns a NAMED view timeline and the steps inside the sticky stage
-       subscribe to it by name. Three steps take a third each, with a 1%
-       overlap so no frame is empty. Default markup is stacked blocks, so
-       below 1024 / without support / under reduced motion the fallback is
-       complete with no JS. One use: ProcessRail (Phase 7) — three viewport
-       heights of pinned content is a UX cost on phones. */
+       subscribe to it by name. Default markup is stacked blocks, so below
+       1024 / without support / under reduced motion the fallback is complete
+       with no JS. One use: ProcessRail (Phase 7) — viewport-heights of pinned
+       content are a UX cost on phones.
+
+       THE RANGES ARE `contain`, NOT BARE PERCENTAGES (Phase 7 correction to
+       the spec text). A bare `0% 34%` on a view timeline is the COVER range:
+       0% is the wrapper's top edge entering the scrollport bottom — i.e. the
+       steps would play while the wrapper is still scrolling INTO view and be
+       finished before the stage ever sticks. `contain` on a subject taller
+       than the scrollport runs from "subject top at scrollport top" to
+       "subject bottom at scrollport bottom", which is exactly the sticky
+       phase: 260vh − 100vh = 1.6 viewports of scroll, split four ways.
+
+       FOUR steps (PROCESS has four phases), each a quarter with a 1% overlap
+       so no frame is empty. The first step is visible from the start (no
+       fade-in — it would otherwise be blank for the whole viewport of scroll
+       while the wrapper enters) and the last step HOLDS (no fade-out — the
+       stage's exit would otherwise show lit Nodes beside nothing). 260vh, not
+       300: four short steps at 0.5vh each read as slow; 0.4vh per step keeps
+       the Ledger's typing and the rail in step. */
     .pin {
       view-timeline-name: --pin;
       view-timeline-axis: block;
-      min-height: 300vh;
+      min-height: 260vh;
     }
+    /* NO `contain: paint` HERE (it was a nicety, and it was removed in the
+       Phase-7 review). Two reasons, both of which it caused rather than
+       solved:
+         - paint containment makes the element a BACKDROP ROOT, so the Ledger's
+           and the four Nodes' `backdrop-filter` would sample an empty backdrop
+           inside the stage and their frost would flatten to a plain fill —
+           which is the entire point of Part C's glass Ledger;
+         - it clips to the padding box while computed `overflow` stays
+           `visible`, so `scripts/qa/layout.mjs`'s clipping check (which tests
+           `overflowX/overflowY === 'hidden'`) is structurally unable to see the
+           cut. At 1024–1279 on a short viewport the left column plus the
+           Ledger comes close to 100vh, so that is exactly where a silent clip
+           would have lived. The sweep gained a 1024×700 viewport in the same
+           pass, and this stage is now the last thing that could hide from it.
+       Nothing needed the clip. Everything inside the stage is in flow, and the
+       fit was measured at the tightest size the pin can be: at 1024×700 the
+       stage is 690px and its content grid 673px — 17px of slack, the header
+       and four rows and the Ledger all inside the fold. The only boxes that
+       reach past the stage edge are the `.pin-step`s sitting at their
+       `translateY(24px)` off-state, and those are at opacity 0. */
     .pin-stage {
       position: sticky;
       top: 0;
       height: 100vh;
-      contain: paint;
     }
-    /* Steps must be the ONLY element children of .pin-stage (a heading or a
-       Seam goes outside the stage). The selector counts same-tag siblings
-       only, so a stray child of another tag would not shift the ranges, but a
-       same-tag one still would. */
+    /* :nth-of-type counts same-TAG siblings within one parent, so the four
+       steps must share a parent and be its only children of their tag (the
+       rail's Nodes are <span>s beside <div> steps in ProcessRail; a Seam or
+       heading goes outside). A stray same-tag sibling WOULD shift the ranges. */
     .pin-step {
       animation: pinStep linear both;
       animation-timeline: --pin;
     }
     .pin-step:nth-of-type(1) {
-      animation-range: 0% 34%;
+      animation-name: pinStepFirst;
+      animation-range: contain 0% contain 25.5%;
     }
     .pin-step:nth-of-type(2) {
-      animation-range: 33% 67%;
+      animation-range: contain 24.5% contain 50.5%;
     }
     .pin-step:nth-of-type(3) {
-      animation-range: 66% 100%;
+      animation-range: contain 49.5% contain 75.5%;
+    }
+    .pin-step:nth-of-type(4) {
+      animation-name: pinStepLast;
+      animation-range: contain 74.5% contain 100%;
     }
     @keyframes pinStep {
       0% {
@@ -1488,6 +1552,30 @@ html {
       100% {
         opacity: 0;
         transform: translateY(-24px);
+      }
+    }
+    /* First step: already in place, only leaves. */
+    @keyframes pinStepFirst {
+      0%,
+      82% {
+        opacity: 1;
+        transform: none;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-24px);
+      }
+    }
+    /* Last step: arrives, then holds through the stage's exit. */
+    @keyframes pinStepLast {
+      0% {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      18%,
+      100% {
+        opacity: 1;
+        transform: none;
       }
     }
   }
@@ -1612,7 +1700,13 @@ html {
     transform: rotate(360deg);
   }
 }
-/* Ecosystem constellation — dashes drift toward the hub, hub breathes. */
+/* Ecosystem constellation. `.eco-wire` is the legacy dash-flow (still used by
+   /connected-banking's diagram and /industries' Rails — Phase 9 retires it;
+   the Ecosystem section itself moved to the motif kit's `.conduit-pulse` in
+   Phase 7). `.eco-halo` replaces the old `.eco-hub` box-shadow pulse, which
+   animated box-shadow — an off-compositor property: the halo is a radial
+   violet disc behind the hub whose OPACITY breathes (Node-glow style), so it
+   stays on the compositor. The constellation renders ≥1024 only. */
 .eco-wire {
   animation: ecoWire 3.4s linear infinite;
   animation-delay: var(--wire-delay, 0s);
@@ -1622,16 +1716,17 @@ html {
     stroke-dashoffset: -20;
   }
 }
-.eco-hub {
-  animation: ecoHub 5s ease-in-out infinite;
+.eco-halo {
+  background: radial-gradient(circle, var(--violet-a24), transparent 70%);
+  animation: ecoHalo 5s ease-in-out infinite;
 }
-@keyframes ecoHub {
+@keyframes ecoHalo {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(142, 36, 170, 0.25);
+    opacity: 0.35;
   }
   50% {
-    box-shadow: 0 0 0 16px rgba(142, 36, 170, 0);
+    opacity: 0.9;
   }
 }
 

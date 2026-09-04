@@ -248,9 +248,16 @@ function Rails() {
             >
               <p
                 className={
+                  /* 10px, not 9.5: scripts/qa/layout.mjs flags anything under
+                     10px as unreadable, and it is right — these are real
+                     labels, not decoration. Safe at every width: the row is
+                     `flex-col` below sm (full-width boxes) and `sm:flex-1`
+                     thirds above it, ~186px of inner width at 768px against
+                     ~90px of 10px uppercase text, so `truncate` still never
+                     engages. */
                   i === 1
-                    ? "truncate text-[9.5px] font-semibold uppercase tracking-wide text-ink-inv-2"
-                    : "truncate text-[9.5px] font-semibold uppercase tracking-wide text-ink-3"
+                    ? "truncate text-[10px] font-semibold uppercase tracking-wide text-ink-inv-2"
+                    : "truncate text-[10px] font-semibold uppercase tracking-wide text-ink-3"
                 }
               >
                 {n.kicker}

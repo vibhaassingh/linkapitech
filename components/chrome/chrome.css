@@ -105,16 +105,41 @@
    ::before (rim) and box-shadow — layers the walk cannot see and which are
    geometrically text-free (honest, not a loophole).
 
-   WHY background-color / color TRANSITION — a documented exception to the
-   transform/opacity/filter rule. They are paint-only, and they fire when the
-   state flips: a scroll crossing, or a client-side route change whose new
-   hero differs in tone. In a browser WITHOUT :has() there is one more: the
-   baseline arm below is dropped there, so a dark-hero route paints light and
-   fades to dark over --dur-menu when the observer's first delivery lands at
-   hydration. Every browser Lighthouse runs in has :has(), so no trace ever
-   sees one. Nothing else on the pill animates; border-radius never does.
-   Under reduced motion the global block collapses them to 0.001ms; the
-   observer keeps running because tone is a contrast feature, not motion.
+   THE TONE FLIP IS INSTANT — no transition on background-color or on color,
+   anywhere in the pill (V4 Phase-7 review fix; Phase 3 crossfaded both over
+   --dur-menu). Three reasons, in order of weight:
+
+   1. `color` is not a compositable property, and Lighthouse's
+      non-composited-animations audit caught it: three elements on /services,
+      /connected-banking and /banks/axis — `.chrome-pill`, `a.chrome-mark`
+      and `button.chrome-mark` — each with one `color` animation and the
+      reason "Unsupported CSS Property: color". (The `background-color` leg of
+      the same flip ran on the same elements and was NOT reported: Chrome
+      composites background-color animations. So dropping `color` alone would
+      have passed the gate.)
+   2. Dropping `color` ALONE would have been a contrast defect, which is why
+      the fill fade went with it. The ink would snap to the destination tone
+      while the fill was still 320ms from arriving: --ink-inv (#f7f3f9) on the
+      light fill still white is ~1.05:1, and on the CTA --plum-700 on a fill
+      still --plum-600 is ~1.6:1. A third of a second of unreadable nav on
+      every crossing is worse than the audit finding.
+   3. "ONE CROSSFADE" was never actually true. ::before's rim (--_pill-rim)
+      and .chrome-seam's hairline (--_pill-seam) are plain background changes
+      with no transition and always snapped, so a flip was already half fade
+      and half cut. Flipping every layer in one frame is the coherent read,
+      and it is also the honest one: the crossing is a hard geometric event
+      (a section edge passing the pill's own edge), and a 320ms fade puts the
+      pill's tone in disagreement with what is behind it for the duration.
+      The silhouette, frost, rim geometry and elevation are unchanged through
+      the flip, so it reads as a material changing state, not as a flash.
+
+   What still transitions on the pill: opacity (::after's elevation ramp and
+   .chrome-seam) and the thumb's transform spring — all compositable. Hover
+   on the links and the CTA is now a colour cut too; the CTA keeps its
+   `data-magnetic` transform as its motion affordance. border-radius never
+   animates. Nothing here needs the reduced-motion block any more, though the
+   global collapse remains harmless; the observer keeps running because tone
+   is a contrast feature, not motion.
 
    STATE IS ONE SWITCH. Every state-dependent colour is a private --_pill-*
    custom property set by the ONE dark rule below; the pieces (rim, links,
@@ -154,9 +179,6 @@
   color: var(--_pill-ink);
   backdrop-filter: blur(var(--liq-pill-blur)) saturate(1.5);
   -webkit-backdrop-filter: blur(var(--liq-pill-blur)) saturate(1.5);
-  transition:
-    background-color var(--dur-menu) var(--ease-out-expo),
-    color var(--dur-menu) var(--ease-out-expo);
 }
 :is(
     .chrome-pill[data-over="dark"],
@@ -201,20 +223,15 @@
    accent under the pointer (the pre-V4 behaviour). Logo and burger both draw
    in currentColor (Logo.tsx), so `.chrome-mark` is the only colour they need.
 
-   ONE CROSSFADE. Every piece that reads a --_pill-* colour transitions on the
-   fill's own clock and curve (--dur-menu / --ease-out-expo, declared once
-   below), so a state flip is a single fade. Before this the links and CTA
-   carried Tailwind's `transition-colors duration-ui` (200ms), the mark had no
-   transition at all and the thumb's background snapped (§2) — so on a
-   crossing the logo and burger flipped 120ms before the fill had finished.
-   Hover on links and CTA rides the same declaration; still paint-only. */
-.chrome-mark,
-.chrome-nav-link,
-.chrome-cta {
-  transition:
-    color var(--dur-menu) var(--ease-out-expo),
-    background-color var(--dur-menu) var(--ease-out-expo);
-}
+   ONE FRAME, NOT ONE CROSSFADE. Every piece that reads a --_pill-* colour
+   now changes with the fill in the same frame, because none of them
+   transitions — see the §1b note above for why the Phase 3 crossfade was
+   removed (a non-composited `color` animation, and a 320ms window of
+   near-invisible ink if only `color` were dropped). Phase 3's own problem
+   — the links and CTA on Tailwind's 200ms `transition-colors`, the mark on
+   nothing and the thumb snapping, so the logo flipped 120ms before the fill
+   finished — is solved the other way round: nothing is on a clock, so
+   nothing can be out of step. There is deliberately no rule here at all. */
 .chrome-nav-link {
   color: var(--_pill-ink);
 }
@@ -314,10 +331,10 @@
    generated. That rule is `.chrome-pill .nav-thumb[data-animate="false"]` at
    (0,3,0): it must out-rank the (0,2,0) `.chrome-pill .nav-thumb` rule below
    — which now declares its own `transition` list — whatever their source
-   order, and it keeps ONLY the background-color fade so a tone flip that
-   lands before the first route change (data-animate stays "false" until
-   publish(true)) still crossfades with the rest of the pill (§1b). No
-   !important anywhere in it.
+   order. Phase 3 had it keep the background-color fade so a tone flip landing
+   before the first route change (data-animate stays "false" until
+   publish(true)) still crossfaded with the rest of the pill; §1b's flip is
+   one frame now, so it keeps nothing. No !important anywhere in it.
 
    V4 (REDESIGN-V4 Part B): the marker is a 6px Droplet DOT, not the 2px
    underline, and it is TRANSLATE ONLY. B0's rule scales a 1px bar by the
@@ -349,20 +366,21 @@
      only ever in effect before hydration. */
   opacity: var(--thumb-o, 0);
   /* `transition` is a shorthand, so B0's transform/opacity pair is RESTATED
-     rather than extended — a bare `transition: background-color …` here would
-     silently drop the spring. The third entry is V4's: the dot reads
-     --_pill-thumb, and without it the dot snapped to lavender while the fill,
-     links, CTA and mark were still fading over --dur-menu (§1b). */
+     rather than extended — a bare `transition: opacity …` here would silently
+     drop the spring. Phase 3 carried a third entry, a --dur-menu
+     background-color fade, so the dot did not snap to lavender ahead of the
+     fill; §1b's flip is one frame now, so that entry would make the dot the
+     only piece LAGGING the flip. Dropped with it (V4 Phase-7 review). */
   transition:
     transform var(--dur-spring-smooth) var(--spring-smooth),
-    opacity var(--dur-ui) linear,
-    background-color var(--dur-menu) var(--ease-out-expo);
+    opacity var(--dur-ui) linear;
 }
-/* First placement — see the section comment: no spring, no fade-in, tone
-   crossfade kept. Declared after the rule above and one attribute more
-   specific, so it wins on both counts. */
+/* First placement — see the section comment: no spring and no fade-in. With
+   the tone crossfade gone there is nothing left to keep, so this rule kills
+   the transition outright. Declared after the rule above and one attribute
+   more specific, so it wins on both counts. */
 .chrome-pill .nav-thumb[data-animate="false"] {
-  transition: background-color var(--dur-menu) var(--ease-out-expo);
+  transition: none;
 }
 
 /* ------------------------------------------------------------

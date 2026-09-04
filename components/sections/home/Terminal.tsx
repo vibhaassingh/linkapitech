@@ -16,6 +16,24 @@ interface TerminalProps {
    * below for why this cannot be inferred from `--sp` alone.
    */
   progress?: boolean;
+  /**
+   * `"ledger"` adds `.ledger` — Part C's glass code window. Inside a
+   * `.section-dark` at ≥1024 the shell goes translucent
+   * (`rgba(23,27,33,.78)`) and frosts the plum behind it; on light sections
+   * and on phones globals.css keeps it the opaque `--terminal`.
+   *
+   * AA, measured on the COMPOSITE as globals.css's call-site note demands
+   * (not against `--terminal`): `rgba(23,27,33,.78)` over `band-a`'s
+   * BRIGHTEST stop (`--plum-700` #42174c) is rgb(32.5, 26.1, 42.5), and
+   * `--terminal-cmt` #8b93a0 on it is **5.44:1** — over the 4.5:1 floor, so
+   * the ledger stays translucent. It holds across the whole band (5.44 at
+   * plum-700 → 5.76 at plum-950, vs 5.58 on the opaque `--terminal`) and even
+   * with a Caustic core directly behind it (violet-a24 over plum-700 → 5.32:1).
+   * The rest of the palette on the same worst-case composite: `--t-key` 8.14,
+   * `--t-str` 8.61, `--t-num` 9.29, `--t-punct` 9.66, the caption's #8d97a3
+   * 5.69. Nothing needs recalibrating.
+   */
+  variant?: "ledger";
 }
 
 /**
@@ -35,6 +53,11 @@ interface TerminalProps {
  * 5.58:1 after an AA failure and must not be re-derived here. Softening it
  * further is the one change this palette must never make.
  *
+ * V4: `variant="ledger"` makes the shell translucent on dark bands, so every
+ * one of these was re-measured on the COMPOSITE rather than on `--terminal`.
+ * All five clear AA with room to spare (worst: `--t-cmt` at 5.44:1) — see the
+ * `variant` prop's note for the arithmetic. No value changed.
+ *
  * The values live on the element because globals.css's `.terminal .t-key`
  * rules are (0,2,0) and would outrank any utility — so the `t-key`/`t-str`/
  * `t-num`/`t-cmt` classes are dropped from the spans and the colour comes from
@@ -50,9 +73,49 @@ const SYNTAX: CSSProperties = {
   color: "var(--t-punct)",
 } as CSSProperties;
 
-/** Sub-range of the host section's transit that the lines type across. */
-const TYPE_FROM = 0.18;
-const TYPE_TO = 0.58;
+/**
+ * Sub-range of the host section's `--sp-live` transit that the scroll-linked
+ * scrub runs across — SINGLE SOURCE OF TRUTH for both consumers.
+ *
+ * Part E row 10 requires the rail fill, the four Node lightings and this
+ * terminal's typing to be ONE measure, which means ProcessRail's rail window
+ * and this window must be the same two numbers. They were two pairs of
+ * literals — `TYPE_FROM/TO` here, `RAIL_FROM/TO` there — with a comment
+ * in each file asserting the identity, and Phase 7 retuned only ProcessRail's:
+ * the rail moved to the pinned window while the typing stayed on the old
+ * pre-pin one, so the terminal started 26% of the pin BEFORE the stage stuck
+ * and finished before its own step arrived. No gate assertion could see it.
+ * So the pair lives in exactly one place now, as commit 279024a did for the
+ * lens rim/chip constants.
+ *
+ * WHY HERE AND NOT IN ProcessRail. The dependency runs ProcessRail → Terminal,
+ * so exporting from ProcessRail and importing here would be a cycle; and
+ * ProcessRail is `"use client"` while this module is not (`/solutions` and
+ * `/industries` render Terminal on the server), so a constant imported from
+ * there would reach a server component as a client reference and throw on
+ * access. A third module was the other candidate and was rejected because a
+ * new file under `components/sections/home/` is unowned by
+ * `scripts/qa/ownership.py` — both files are S3, so this direction keeps the
+ * ownership map untouched.
+ *
+ * V4 (Phase 7) RETUNED from 0.18 / 0.58 to the PINNED WINDOW. `--sp` is
+ * `(scrollY + vh − sectionTop) / (vh + sectionHeight)`, so where the numbers
+ * land depends on how tall the host section is — and ProcessRail's pin makes
+ * it 260vh taller. The pin's `contain 0% → 100%` range maps to sp
+ * [0.2895, 0.7105] at 1440×900 and [0.2899, 0.7100] at 1024×768 (stable:
+ * 260vh scales with the viewport and only `.section-pad`'s
+ * clamp(80px, 10vh, 140px) does not). FROM = 0.29 puts the first drop of fill
+ * and the first code line on the frame the stage sticks; TO = 0.68 lands the
+ * rail front and Node 04's glow on 92.8% of the pin, with the last line's
+ * 1.8× overlap tail completing at 100.0% — see REDESIGN-V4 Part J, Phase 7,
+ * for the full frame-by-frame mapping.
+ *
+ * Below 1024, and wherever `animation-timeline: view()` is unsupported, `.pin`
+ * is not tall and this is simply the middle 39% of an ordinary section transit
+ * — a later, tighter measure than 0.18–0.58, which suits a stacked column.
+ */
+export const SCRUB_FROM = 0.29;
+export const SCRUB_TO = 0.68;
 
 /**
  * Per-line reveal, driven entirely by CSS off the host section's progress.
@@ -71,8 +134,8 @@ const TYPE_TO = 0.58;
  * is the only acceptable default for content.
  */
 function lineStyle(i: number, count: number): CSSProperties {
-  const step = (TYPE_TO - TYPE_FROM) / Math.max(1, count);
-  const from = (TYPE_FROM + i * step).toFixed(4);
+  const step = (SCRUB_TO - SCRUB_FROM) / Math.max(1, count);
+  const from = (SCRUB_FROM + i * step).toFixed(4);
   // 1.8 × the step, so consecutive lines overlap and it reads as typing
   // rather than as a queue of separate fades.
   const span = (step * 1.8).toFixed(4);
@@ -112,6 +175,7 @@ export function Terminal({
   lines,
   className,
   progress = false,
+  variant,
 }: TerminalProps) {
   const rows = lines ?? PROCESS_SAMPLE.lines;
   const caption =
@@ -121,7 +185,7 @@ export function Terminal({
   return (
     <div
       style={SYNTAX}
-      className={`terminal group relative min-w-0 overflow-hidden ${className ?? ""}`}
+      className={`terminal ${variant === "ledger" ? "ledger " : ""}group relative min-w-0 overflow-hidden ${className ?? ""}`}
     >
       {/*
         Wet top edge, matching `.glass::after`'s 170° highlight so the code

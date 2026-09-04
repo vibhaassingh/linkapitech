@@ -14,7 +14,8 @@
     "qa:kbd": "node scripts/qa/kbd1.mjs",
     "qa:rm": "node scripts/qa/kbd2.mjs",
     "gate": "bash scripts/qa/gate.sh",
-    "qa:cascade": "node scripts/qa/cascade.mjs"
+    "qa:cascade": "node scripts/qa/cascade.mjs",
+    "qa:layout": "node scripts/qa/layout.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

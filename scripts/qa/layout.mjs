@@ -21,9 +21,17 @@ const BASE = process.argv[2] ?? "http://localhost:3411";
 const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking",
   "/industries", "/contact", "/privacy", "/terms",
   "/banks", "/banks/axis", "/banks/indusind", "/banks/hsbc"];
+// 1024×700 is NARROW-DESKTOP-SHORT, and it is here because nothing else
+// reaches it: `.pin` and the whole pinned ProcessRail stage exist only at
+// ≥1024, so at 1024 they are at their narrowest — the left column plus the
+// glass Ledger against a `height: 100vh` sticky stage — and 700px is the
+// shortest viewport that combination has to survive. The four viewports above
+// miss it from both sides (768 is below the breakpoint, 1280/1440 are wide and
+// 900 tall), so the pin was never swept at the size where it is tightest.
 const VIEWPORTS = [
   { w: 390, h: 844, name: "mobile", mobile: true },
   { w: 768, h: 1024, name: "tablet", mobile: false },
+  { w: 1024, h: 700, name: "narrow-short", mobile: false },
   { w: 1280, h: 900, name: "laptop", mobile: false },
   { w: 1440, h: 900, name: "desktop", mobile: false },
 ];
@@ -116,12 +124,68 @@ const AUDIT = `(() => {
   // them. Two texts stacked directly on each other collide; two texts with
   // main's opaque background in between do not. elementsFromPoint gives the full
   // paint stack at a point, so walk between them and look for an opaque layer.
-  const opaque = (el) => {
-    const m = cs(el).backgroundColor.match(/rgba?\(([^)]+)\)/);
+  // "Does this layer hide what is behind it?" Two ways to qualify:
+  //
+  //   an opaque FILL — alpha >= 0.99, the original test; or
+  //   FROST plus a substantial fill — a \`backdrop-filter\` other than \`none\`
+  //   AND its own fill at alpha >= 0.7.
+  //
+  // The second clause is the frosted-chrome case (V4 phase 7, narrowed in its
+  // review). The pill nav is \`position: fixed\` with \`backdrop-filter:
+  // blur(18px)\` and a fill of \`rgba(37,13,41,.78)\` (dark) or white at .78
+  // (light): DESIGNED to float over the page, and what it covers is frosted
+  // rather than legible. Under the 0.99 bar, correctly — a translucent fill
+  // ALONE would let glyphs through — so what actually hides them is the frost,
+  // which \`backgroundColor\` cannot see. Its wordmark therefore geometrically
+  // overlapped every text run that scrolls beneath it, on every route, at some
+  // scroll position, and that was the large majority of this sweep's standing
+  // findings.
+  //
+  // WHY THIS RATHER THAN A MEMBERSHIP TEST. The first version of the fix was a
+  // \`frostedFixedLayer()\` predicate applied BEFORE \`collide()\`: skip the pair
+  // if exactly one side is inside a fixed+frosted layer. That decided on
+  // MEMBERSHIP in such a layer, never on whether the layer is actually ABOVE
+  // the other text at the sampled point — so a frosted fixed panel sitting
+  // BEHIND content would have silenced a real pile. Teaching \`opaque()\`
+  // instead puts the same knowledge inside the existing between-the-two
+  // hit-stack walk, which supplies the occlusion proof for free: the frosted
+  // layer only counts when it lies BETWEEN the two runs in
+  // \`elementsFromPoint\`'s order, i.e. over the lower one. Content-vs-content
+  // pairs are untouched by construction (no frost, no exemption), and two runs
+  // inside the SAME frosted layer still report, because the layer is then not
+  // between them.
+  //
+  // The 0.7 floor is empirical and deliberately high: every frosted surface in
+  // this design that carries a fill heavy enough to obscure text is at .78
+  // (the pill in both tones, \`.ledger\`). The \`.liq\` glass tiers, whose fills
+  // run .06–.22, do NOT qualify — a card that faint really would let text
+  // through, and the check should say so.
+  const occludes = (el) => {
+    const s = cs(el);
+    const m = s.backgroundColor.match(/rgba?\(([^)]+)\)/);
     if (!m) return false;
     const parts = m[1].split(',').map(Number);
-    return (parts.length > 3 ? parts[3] : 1) >= 0.99;
+    const a = parts.length > 3 ? parts[3] : 1;
+    if (a >= 0.99) return true;
+    return a >= 0.7 && !!s.backdropFilter && s.backdropFilter !== 'none';
   };
+  // THERE IS NO SEPARATE FOOTER-CURTAIN EXEMPTION, and there was: a
+  // curtain-descendant × \`.chrome-main\`-descendant skip, applied before
+  // \`collide()\`. \`footer.chrome-curtain\` is \`sticky; bottom: 0\` BEHIND
+  // \`main.chrome-main\` (chrome.css §3), so for the whole page its rect
+  // intersects main's content and every footer link geometrically overlaps
+  // every paragraph — but the walk below already answers that on its own,
+  // because \`.chrome-main\` sets \`background: var(--canvas)\`, an opaque colour,
+  // and lands between the two in the hit stack. Its own comment conceded the
+  // redundancy and called itself a belt to that brace.
+  //
+  // A redundant exemption only ever FIRES when the reasoning behind it has
+  // failed. If \`.chrome-main\` ever stops being opaque, footer text showing
+  // through mid-page is a real defect, this sweep is the only automated thing
+  // that would catch it, and an unconditional skip on membership would silence
+  // it — in the very phase that made the footer dark. Deleted rather than
+  // conditioned on \`opaque('.chrome-main')\`: the sweep reports 0 without it,
+  // so the brace holds and the belt was never load-bearing.
   const collide = (a, b, x, y) => {
     if (x < 0 || y < 0 || x > document.documentElement.clientWidth || y > window.innerHeight) return false;
     const stack = document.elementsFromPoint(x, y);
@@ -131,7 +195,7 @@ const AUDIT = `(() => {
     const ia = idx(a), ib = idx(b);
     if (ia < 0 || ib < 0) return false;
     const lo = Math.min(ia, ib), hi = Math.max(ia, ib);
-    for (let k = lo + 1; k < hi; k++) if (opaque(stack[k])) return false;
+    for (let k = lo + 1; k < hi; k++) if (occludes(stack[k])) return false;
     return true;
   };
 
@@ -164,8 +228,11 @@ const AUDIT = `(() => {
       // layers text, and a hover/expand surface sits over its trigger.
       if (a.closest('[data-carousel], .marquee, [role="tablist"], details, summary')) continue;
       if (b.closest('[data-carousel], .marquee, [role="tablist"], details, summary')) continue;
-      // Final gate: are they really stacked on each other, with nothing opaque
-      // between? Sampled at the centre of the intersection.
+      // Final gate, and the ONLY exemption that is not about deliberate
+      // stacking: are they really stacked on each other, with nothing that
+      // occludes between them? Sampled at the centre of the intersection. The
+      // frosted pill and the opaque page are both answered here, by proven
+      // occlusion rather than by membership — see \`occludes()\`.
       const cx = (Math.max(ra.left, rb.left) + Math.min(ra.right, rb.right)) / 2;
       const cy = (Math.max(ra.top, rb.top) + Math.min(ra.bottom, rb.bottom)) / 2;
       if (!collide(a, b, cx, cy)) continue;
@@ -323,8 +390,13 @@ const groups = [
     (x) => `${x.page} <${x.tag} class="${x.cls}"> -> ${x.child} ${x.childBox}`],
   ["media loaded but rendering at zero size", uniq(found.zeroMedia, (x) => x.page + x.cls + x.tag),
     (x) => `${x.page} <${x.tag}> box=${x.box} natural=${x.natural} cls=${x.cls}`],
+  // The element labels are printed, not just the two strings: the standing
+  // "LinkAPI Tech" findings were recorded in REDESIGN-V4 Part J as the footer
+  // curtain's heading for two phases, when they were the fixed pill nav's
+  // wordmark. Both render the same text, the dedup key is page+textA+textB, and
+  // the report gave a reader nothing else to tell them apart.
   ["text overlapping text", uniq(found.textOverlap, (x) => x.page + x.a.txt + x.b.txt),
-    (x) => `${x.page} "${x.a.txt}" x "${x.b.txt}" (${x.coverPct}% of the smaller box)`],
+    (x) => `${x.page} "${x.a.txt}" <${x.a.tag}.${x.a.cls}> x "${x.b.txt}" <${x.b.tag}.${x.b.cls}> (${x.coverPct}% of the smaller box)`],
   ["text clipped by an overflow:hidden ancestor", uniq(found.clipped, (x) => x.page + x.cls + x.txt),
     (x) => `${x.page} <${x.tag}> cut ${x.by}px "${x.txt}" by .${x.clipper}`],
   ["painted text outside the canvas", uniq(found.offCanvas, (x) => x.page + x.txt),

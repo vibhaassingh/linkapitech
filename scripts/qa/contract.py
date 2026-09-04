@@ -74,6 +74,32 @@ CLASSES = [
     "pool", "conduit", "conduit-flow", "conduit-scroll", "conduit-v",
     "caustic", "node-glow", "node-flow", "sheet-shadow",
     "drift-far", "drift-mid", "band-a", "band-b", "band-c",
+    # V4 Phase 7 — Ecosystem conduits, the pinned ProcessRail with its glass
+    # Ledger, the CtaBand pool and the footer pool. Every entry below has its
+    # FIRST RENDERED call site in this phase:
+    #   liq-light / node-light  the light material and the light Node. Both
+    #     were composed in components/motifs/{Card,Droplet,Node}.tsx from
+    #     phase 2, but nothing RENDERED either until the Ecosystem chips and
+    #     their port beads; Card and `Droplet light` land in phase 9.
+    #   liq-flat        the §A7 escape hatch (Ecosystem's ten chips).
+    #   conduit-pulse   the SVG packet, allowlisted in gate.sh since phase 2
+    #                   and first wired here (Ecosystem's ten connectors).
+    #   pin/-stage/-step  Part D (iii)'s pinned story (ProcessRail).
+    #   ledger          Part C's glass code window (Terminal variant).
+    #   footer-pool     the final dark surface (SiteFooter).
+    #   eco-halo        replaces `.eco-hub`'s off-compositor box-shadow pulse.
+    #   drift-near      composed at render as `drift-${drift}` by Caustic.tsx,
+    #                   so — exactly like `conduit-scroll` in phase 6 — the
+    #                   `used` regex finds the literal only in CtaBand.tsx's
+    #                   doc comment. A print either way: the class list fails
+    #                   on orphans, not on dead rules.
+    # `conduit-custom` is deliberately NOT here: `flow="custom"` emits no such
+    # class (that is the point — the kit declares no transform on a
+    # caller-owned flow element), so listing it would be an orphan by
+    # construction.
+    "liq-light", "liq-flat", "node-light", "conduit-pulse",
+    "pin", "pin-stage", "pin-step", "ledger", "footer-pool", "eco-halo",
+    "drift-near",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",
@@ -97,6 +123,21 @@ TOKENS = [
     # and the veil .liq-inset fills with. `--lit-at` is NOT a token: it is a
     # per-element inline value read with a fallback (`var(--lit-at, 0)`).
     "--liq-pad", "--liq-sweep", "--violet-a24", "--violet-glow", "--veil-2",
+    # V4 Phase 7 — the palette entries phase 7's components name DIRECTLY in
+    # an inline style or an SVG presentation attribute, which is what makes
+    # them orphan-checkable here (`used` is `tok in app_code`):
+    #   --lavender-300  ConduitPath's light base stroke (Ecosystem ×10)
+    #   --lavender-400  the ProcessRail rail fill's top stop
+    #   --violet-500    the same fill's bottom stop, and the Ecosystem chips'
+    #                   port bead — the colour of the packet arriving at it
+    #   --terminal-cmt  the Ledger's comment ink; the AA-critical one (5.44:1
+    #                   on the translucent composite, measured in Terminal.tsx)
+    # --line-inv is the footer's hairline. It reaches components only through
+    # the Tailwind `border-line-inv` utility, so the orphan test cannot see it
+    # and this entry is documentation plus the `defined` assertion — the same
+    # standing this token had before, now with a call site.
+    "--lavender-300", "--lavender-400", "--violet-500", "--terminal-cmt",
+    "--line-inv",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
 JS_WIRING = {

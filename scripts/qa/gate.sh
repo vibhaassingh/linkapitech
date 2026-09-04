@@ -3,6 +3,18 @@
 #
 #   bash scripts/qa/gate.sh [--since <ref>] [--skip-pixdiff]
 #
+# The steps, in dependency order: tsc · contract · ownership (only with
+# --since) · build + BUILD_ID · production server · route health · a11y +
+# layout sweep (qa.mjs) · motion · WebGL/magnetic · cascade · GEOMETRIC LAYOUT
+# (layout.mjs — wired in at V4 phase 7) · keyboard · reduced motion ·
+# composited-animation audit × 5 routes · pixel diff.
+#
+# 15 named steps → 23 pass/fail assertions with --since and pixdiff (the
+# composited audit contributes TWO per route: disallowed animations, and TBT),
+# 22 with --skip-pixdiff, 21 without --since. One more than before phase 7,
+# which is the layout sweep. README.md's headline "24 checks" predates this
+# accounting; reconciling it is Phase 10's docs pass.
+#
 # Every step here encodes a failure this project actually hit:
 #
 #   • the build is NEVER piped through head/grep — SIGPIPE kills it partway and
@@ -123,6 +135,14 @@ if node scripts/qa/probe.mjs "$BASE"; then ok "webgl gating clean"; else bad "we
 
 step "cascade conflicts (an animation silently overriding an inline transform)"
 if node scripts/qa/cascade.mjs "$BASE"; then ok "no cascade conflicts"; else bad "an animation clobbers an inline transform"; fi
+
+# Wired in at Phase 7. It was written during Phase 5 and run by hand until now,
+# which is exactly the blind spot it was built to close: /connected-banking's
+# hero shipped as a pile of overlapping labels for weeks through an all-green
+# gate, because nothing in the gate looked at GEOMETRY. A hard step, like the
+# others — its own findings are the argument for that.
+step "geometric layout sweep (overlaps, sub-10px text, collapsed boxes)"
+if node scripts/qa/layout.mjs "$BASE"; then ok "layout geometry clean"; else bad "geometric layout defects"; fi
 
 step "keyboard + mobile menu"
 if node scripts/qa/kbd1.mjs; then ok "keyboard clean"; else bad "keyboard findings"; fi

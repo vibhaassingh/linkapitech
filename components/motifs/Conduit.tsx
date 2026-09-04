@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 interface ConduitProps {
@@ -9,12 +9,20 @@ interface ConduitProps {
    * useSectionProgress onto the section). With no driver `--sp` is the :root
    * `0`, so the band parks off-track and is invisible: decoration fails closed.
    * `loop` — a 7s ambient loop, desktop (≥ 1024) only; static below.
+   * `custom` — the caller supplies the moving part as `children` and owns its
+   * geometry and transform; NO `conduit-*` flow class is emitted, so the kit
+   * declares no transform on it and there is no second driver to collide with
+   * (REDESIGN-V4 Part J, Phase 7). ProcessRail needs this: its rail is a FILL
+   * that grows down the track from `--sp-live` (`scaleY(var(--fill))`, origin
+   * top), not the 38%-long band travelling on `--sp`.
    */
-  flow?: "scroll" | "loop";
+  flow?: "scroll" | "loop" | "custom";
   /** Light-section palette: lavender track, soft hairline. */
   light?: boolean;
   className?: string;
   style?: CSSProperties;
+  /** `flow="custom"` only: the flow element, rendered instead of `.conduit-flow`. */
+  children?: ReactNode;
 }
 
 /**
@@ -27,6 +35,7 @@ export function Conduit({
   light,
   className,
   style,
+  children,
 }: ConduitProps) {
   return (
     <span
@@ -35,12 +44,12 @@ export function Conduit({
       className={cn(
         "conduit",
         orientation === "v" && "conduit-v",
-        `conduit-${flow}`,
+        flow !== "custom" && `conduit-${flow}`,
         light && "conduit-light",
         className,
       )}
     >
-      <span className="conduit-flow" />
+      {flow === "custom" ? children : <span className="conduit-flow" />}
     </span>
   );
 }

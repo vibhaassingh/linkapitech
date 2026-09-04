@@ -51,13 +51,19 @@ const isActive = (pathname: string, href: string) =>
  *    It is driven by ONE IntersectionObserver whose root is the viewport
  *    inset (rootMargin) to the pill's own top and bottom edges — a band as
  *    tall as the pill — observing every `.section-dark` /
- *    `[data-surface="dark"]` in <main>: a Set of the sections currently
- *    crossing that band decides the state. IO rather than a scroll listener
- *    because it does zero per-frame work — the intersection test runs on the
- *    compositor side and the callback fires only on a crossing. It runs under
- *    reduced motion too: which tone is under the pill is a CONTRAST feature,
- *    not motion (the colour transitions themselves collapse to 0.001ms via
- *    the global block). Before hydration, and with JS off, chrome.css's
+ *    `[data-surface="dark"]` in <main>, the footer pool (V4 Phase 7:
+ *    `footer .section-dark`, a sibling of <main>, not inside it) and
+ *    `main.chrome-main` itself. Two Sets and one boolean, because the sticky
+ *    curtain's box crosses the band from the FIRST PAINT on every route: the
+ *    page's own dark sections decide the tone while the opaque page covers
+ *    the band, and the curtain's only once the page has slid off it (V4
+ *    Phase-7 review fix — see the callback for the measurement). IO rather
+ *    than a scroll listener because it does zero per-frame work — the
+ *    intersection test runs on the compositor side and the callback fires
+ *    only on a crossing. It runs under reduced motion too: which tone is
+ *    under the pill is a CONTRAST feature, not motion (the tone flip itself
+ *    is instant — chrome.css §1b). Before hydration, and with JS off,
+ *    chrome.css's
  *    `.chrome-header:has(~ main [data-hero="dark"])` baseline reads the
  *    hero's own `data-hero` (Hero.tsx / PageHero.tsx), so a dark-hero route
  *    paints dark on its first frame; the observer only ever confirms or
@@ -215,11 +221,18 @@ export function SiteHeader(_props: SiteHeaderProps) {
     if (!pill || typeof IntersectionObserver === "undefined") return;
 
     let io: IntersectionObserver | null = null;
+    // Dark sections inside <main> that currently cross the pill's band.
     const under = new Set<Element>();
+    // Dark sections inside the sticky footer curtain that cross it.
+    const curtain = new Set<Element>();
+    // Is the OPAQUE page box itself crossing the band? See `next` below.
+    let covered = true;
 
     const arm = () => {
       io?.disconnect();
       under.clear();
+      curtain.clear();
+      covered = true;
       // The root band is the pill's own vertical extent: rootMargin insets the
       // implicit root to [pill.top, pill.bottom). The header is fixed, so both
       // edges are scroll-invariant.
@@ -246,6 +259,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
       const rootHeight = document.documentElement.clientHeight;
       const top = Math.max(0, Math.round(rect.top));
       const below = Math.max(0, Math.round(rootHeight - rect.bottom));
+      const page = document.querySelector("main.chrome-main");
       try {
         io = new IntersectionObserver(
           (records, self) => {
@@ -254,10 +268,38 @@ export function SiteHeader(_props: SiteHeaderProps) {
             // only the live instance may write.
             if (self !== io) return;
             for (const r of records) {
-              if (r.isIntersecting) under.add(r.target);
-              else under.delete(r.target);
+              if (r.target === page) covered = r.isIntersecting;
+              else {
+                const set = page?.contains(r.target) ? under : curtain;
+                if (r.isIntersecting) set.add(r.target);
+                else set.delete(r.target);
+              }
             }
-            const next = under.size ? "dark" : "light";
+            // WHICH SET DECIDES IS THE OCCLUSION QUESTION, not a union.
+            // `.chrome-curtain` is `sticky; bottom: 0`, so chrome.css §3's own
+            // words are that it is "pinned to the bottom of the viewport from
+            // the first paint" — its BOX therefore crosses the pill's band at
+            // scroll 0 on every route, while `.chrome-main` (opaque, one layer
+            // above) covers it completely. Phase 7 added `footer .section-dark`
+            // to the target list and unioned it in, which made the pill read
+            // dark over every LIGHT hero on all 12 inner routes from the first
+            // frame — measured, not theorised: `data-over="dark"` at scroll 0
+            // on /services, /connected-banking and /banks/axis with
+            // `[data-hero="light"]`, the footer's rect at [0, 1422] in an 823px
+            // viewport. It also made the pre-hydration CSS baseline (light,
+            // correctly) disagree with the observer's first delivery, so the
+            // §1b tone crossfade RAN at hydration and Lighthouse's trace caught
+            // its non-composited `color` leg on those three routes.
+            //
+            // So: while the opaque page is under the band, only the page's own
+            // dark sections can be seen there; once it has slid off the band
+            // (the end of the scroll, where the curtain is exposed) the curtain
+            // is the surface the pill floats over. `covered` defaults to true
+            // and stays true if `.chrome-main` is somehow absent, which is the
+            // pre-Phase-7 behaviour rather than a guess.
+            const next = (covered ? under.size : curtain.size)
+              ? "dark"
+              : "light";
             if (pill.dataset.over !== next) pill.dataset.over = next;
           },
           { rootMargin: `-${top}px 0px -${below}px 0px`, threshold: 0 },
@@ -279,9 +321,18 @@ export function SiteHeader(_props: SiteHeaderProps) {
         return;
       }
       const observer = io;
+      // `footer .section-dark` is the footer pool (V4 Phase 7): the footer is a
+      // SIBLING of <main>, not a descendant, so the first two arms cannot see
+      // it, and at the end of the scroll the exposed curtain IS what the pill
+      // floats over. `main.chrome-main` is observed as well — not as a tone
+      // source but as the occluder that decides which of the two sets counts
+      // (see the callback).
       document
-        .querySelectorAll('main .section-dark, main [data-surface="dark"]')
+        .querySelectorAll(
+          'main .section-dark, main [data-surface="dark"], footer .section-dark',
+        )
         .forEach((el) => observer.observe(el));
+      if (page) observer.observe(page);
     };
     arm();
 
