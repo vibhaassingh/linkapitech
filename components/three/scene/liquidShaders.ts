@@ -1,4 +1,4 @@
-import { GLINTS, LENS, VIEW } from "./lensLayout";
+import { GLINTS, LENS, RIM, VIEW } from "./lensLayout";
 import { LIQUID, PALETTE, glsl } from "./palette";
 
 /**
@@ -13,7 +13,7 @@ import { LIQUID, PALETTE, glsl } from "./palette";
  * the fp16 notes).
  *
  * The palette arrives as `#define` literals from palette.ts, and the lens
- * geometry (VIEW, LENS, GLINTS) from lensLayout.ts, both built once at module
+ * geometry (VIEW, LENS, RIM, GLINTS) from lensLayout.ts, both built once at module
  * load — so the shader and the SVG poster read the same hexes and the same
  * numbers, and neither can drift from the other.
  */
@@ -67,6 +67,12 @@ uniform vec4  uBlobB[5];   // phX, phY, radius, weight
 const vec2  VIEW = ${v2(VIEW.w, VIEW.h)};
 const vec2  CEN  = ${v2(LENS.cx, LENS.cy)};
 const vec2  RAD  = ${v2(LENS.rx, LENS.ry)};
+// Rim geometry is lensLayout.ts's RIM, so the fresnel ramp (RIM_W) and the
+// internal-reflection line (RIM_IN) sit exactly where the poster draws its
+// annulus and inner hairline. f() always emits a decimal point: GLSL ES 1.00
+// has no int→float promotion, so a bare 16 here would fail to compile. (No
+// backticks in these comments — this is a JS template literal.)
+const float RIM_W = ${f(RIM.w)}, RIM_IN = ${f(RIM.inner)};
 // Noise lattice period P and flow period T. Every time-varying term is either
 // periodic in T (integer harmonics of W = 2π/T) or advects an exact multiple
 // of P cells per T, so uFlow and uTime can wrap at T without a visible seam,
@@ -148,7 +154,7 @@ void main() {
   float inside = 1.0 - smoothstep(-aa, aa, d);
   vec2  n  = q / (RAD * RAD);                        // outward normal of the ellipse
   n /= max(length(n), 1e-6);                         // (guarded: normalize(0) is NaN)
-  float rimT = smoothstep(-16.0, 0.0, d);            // 0 deep inside → 1 at the edge
+  float rimT = smoothstep(-RIM_W, 0.0, d);           // 0 deep inside → 1 at the edge
 
   // Slosh: the whole liquid frame tilts ≤ ~6° and lifts 8u with the spring
   // output. Gated by uWake so the wake pose is the SVG's exactly.
@@ -176,14 +182,14 @@ void main() {
   vec3 liquid = mix(C_VIOLET600, C_VIOLET500, smoothstep(2.0, 8.0, m));
   vec3 col = mix(bg, liquid, body * 0.92);
 
-  // Fresnel rim: dark band, bright line (1.2u in), inner reflection (9u in),
+  // Fresnel rim: dark band, bright line (1.2u in), inner reflection (RIM_IN in),
   // all keyed toward KEY. breathe is 1.0 at t = 0 (the SVG's .34 line) and
   // dips 15% on a 15.7s cycle — harmonic 23 of W, so it wraps with uTime.
   float breathe = 0.925 + 0.075 * cos(23.0 * W * uTime);
   float facing  = 0.5 + 0.5 * dot(n, KEY);
   float dark  = smoothstep(-18.0, -2.0, d) * L_RIM_DARK;
   float line  = 1.0 - smoothstep(0.0, 1.6 + aa, abs(d + 1.2));
-  float inner = (1.0 - smoothstep(0.0, 1.2 + aa, abs(d + 9.0))) * L_RIM_INNER;
+  float inner = (1.0 - smoothstep(0.0, 1.2 + aa, abs(d + RIM_IN))) * L_RIM_INNER;
   col = mix(col, C_PLUM950, dark);
   col += C_INKINV * ((line * L_RIM_LINE * mix(0.35, 1.0, facing) + inner) * breathe + pow(rimT, 3.0) * 0.10 * facing);
 

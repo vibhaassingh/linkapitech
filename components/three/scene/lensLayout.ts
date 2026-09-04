@@ -14,9 +14,10 @@
  * viewBox units, y increasing downward.
  *
  * `HERO_SEED` pins the composition: `makeRandom` is a deterministic LCG
- * (ported verbatim from createHeroField.ts, which Phase 5 deletes), evaluated
- * once at module load, identical on server and client. Change the seed and
- * every blob moves — on both renderers at once, which is the point.
+ * (ported verbatim from the retired createHeroField.ts, deleted in Phase 5;
+ * this module is now its only home), evaluated once at module load,
+ * identical on server and client. Change the seed and every blob moves — on
+ * both renderers at once, which is the point.
  */
 
 export const HERO_SEED = 20260812;
@@ -26,6 +27,25 @@ export const VIEW = { w: 500, h: 400 } as const;
 
 /** The lens body: an ellipse 148 × 132 about (250, 205). */
 export const LENS = { cx: 250, cy: 205, rx: 148, ry: 132 } as const;
+
+/** Rim geometry, viewBox units, shared by the SVG and the shader: `w` is the
+ *  annulus width — the poster's evenodd inner ellipse sits at −w and the
+ *  shader's fresnel ramp (`rimT`) runs from −w to the edge; `inner` is the
+ *  inset of the inner hairline, which the shader draws as its internal
+ *  reflection line. */
+export const RIM = { w: 16, inner: 9 } as const;
+
+/** The poster draws each blob as `<circle r={r · BLOB_DRAW_SCALE}>`
+ *  (REDESIGN-V4 Part E §1 item 2). `r` is the metaball FIELD radius (the
+ *  shader's kernel is ≈ 1 there); the poster's radial gradient reaches α 0 at
+ *  the disc edge, so the disc is drawn 15% larger for that fade to sit
+ *  outside the field radius rather than eat into it. */
+export const BLOB_DRAW_SCALE = 1.15;
+
+/** DOM chip disc diameter, px (the Node `size`). CHIPS[] gives the centres;
+ *  HeroLens.tsx offsets each wrapper by half of this so the centre lands on
+ *  the viewBox point at any rendered size. */
+export const CHIP_SIZE = 52;
 
 /** DOM chip centres — top, left and right of the lens; two graze the rim. */
 export const CHIPS = [
@@ -72,7 +92,7 @@ export interface LensBlob {
 
 /** Deterministic PRNG — the layout must be identical on every load and on the
  *  server-rendered poster, so Math.random is never used. (LCG, Numerical
- *  Recipes constants; ported from createHeroField.ts.) */
+ *  Recipes constants; carried over from the retired createHeroField.ts.) */
 export function makeRandom(seed: number) {
   let s = seed >>> 0;
   return () => {

@@ -1664,14 +1664,15 @@ html {
 
 /* Hero lens idle motion (REDESIGN-V4 Part E) — on SVG <g> groups inside
    HeroLens.tsx. `transform-box: view-box` makes transform-origin resolve in
-   viewBox units, so the caustic rocks about the lens centre (250, 205) at any
-   rendered size. The <g> must carry NO `transform` attribute: an SVG transform
+   viewBox units, so the caustic rocks about the lens centre at any rendered
+   size; the origin itself is an inline style HeroLens.tsx computes from
+   lensLayout's LENS (not repeated here — that would be a third copy of the
+   centre). The <g> must carry NO `transform` attribute: an SVG transform
    attribute beside a CSS transform animation de-composites it in Chromium
    (Phase 4's composited audit on / is the proof). Transform-only; both join
    the reduced-motion by-name list. */
 .lens-caustic {
   animation: lensCausticSway 24s ease-in-out infinite alternate;
-  transform-origin: 250px 205px;
   transform-box: view-box;
 }
 @keyframes lensCausticSway {

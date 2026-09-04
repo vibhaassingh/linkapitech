@@ -15,7 +15,9 @@ import { HERO } from "@/content/home";
  * violet blooms over the plum base), so the shared ::after grain dithers it
  * like every other dark band — the hand-rolled gradient + grain divs are gone.
  * `.section-dark` also sets the inverted ink defaults, the plum scrollbar and
- * ::selection colours, and is the stacking context the motifs rely on.
+ * ::selection colours, and is the stacking context the motifs rely on — it
+ * declares `position: relative; isolation: isolate` itself, so the section
+ * carries no `relative isolate` utilities of its own.
  *
  * `.hero-recede` gives the section the iOS "sheet presenting over the app
  * window" read: as the hero scrolls out it drops a fraction of a percent of
@@ -40,7 +42,7 @@ export function Hero() {
          the pill dark; data-surface: the header's tone observer targets it. */
       data-surface="dark"
       data-hero="dark"
-      className="section-dark band-hero hero-recede relative isolate overflow-hidden"
+      className="section-dark band-hero hero-recede overflow-hidden"
     >
       <div className="relative z-[1] mx-auto grid w-full max-w-[1240px] grid-cols-1 items-center gap-12 px-6 pb-20 pt-[140px] md:px-10 md:pb-28 md:pt-[168px] lg:min-h-[min(92svh,920px)] lg:grid-cols-[minmax(0,54fr)_minmax(0,46fr)] lg:gap-10">
         <div>
@@ -53,13 +55,13 @@ export function Hero() {
           <Droplet className="text-[0.72rem] font-medium uppercase leading-[1.7] tracking-eyebrow text-ink-inv-2">
             <span>
               {eyebrowParts.map((part, i) => (
-                <Fragment key={part}>
+                <Fragment key={i}>
                   {i > 0 && (
                     <>
                       {" "}
                       <span
                         aria-hidden="true"
-                        className="mx-1.5 inline-block h-[3px] w-[3px] rounded-pill bg-lavender-400 align-middle"
+                        className="mx-1 inline-block h-[3px] w-[3px] rounded-pill bg-lavender-400 align-middle"
                       />{" "}
                     </>
                   )}

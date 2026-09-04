@@ -71,10 +71,13 @@ TOKENS = [
     # V4 Phase 3 — the --liq-* tokens the pill and the mobile sheet consume.
     "--liq-pill-light", "--liq-pill-dark", "--liq-pill-blur",
     "--liq-rim", "--liq-light-rim", "--liq-rim-w", "--liq-light-shadow",
-    # V4 Phase 4 — the material tokens the now-wired `.liq` (edge, depth,
-    # shadow), `.liq-spec-full` (soft specular) and `.liq-live` (lift/press)
-    # rules consume.
-    "--liq-edge", "--liq-depth", "--liq-shadow", "--liq-spec-soft",
+    # V4 Phase 4 — the material tokens the `.liq` recipe reads now that it has
+    # call sites: the tier-1/2 fill + blur aliases (of --glass-1/2-*), edge,
+    # depth, shadow, both speculars (`.liq-spec` reads --liq-spec,
+    # `.liq-spec-full` the soft one) and `.liq-live`'s lift/press scales.
+    "--liq-1-fill", "--liq-1-blur", "--liq-2-fill", "--liq-2-blur",
+    "--liq-edge", "--liq-depth", "--liq-shadow",
+    "--liq-spec", "--liq-spec-soft",
     "--liq-lift", "--liq-hover-scale", "--liq-press-scale",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
