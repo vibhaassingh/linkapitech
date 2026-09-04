@@ -1,9 +1,12 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { pageMetadata } from "@/lib/metadata";
 import { PageHero } from "@/components/sections/PageHero";
 import { CtaBand } from "@/components/sections/CtaBand";
 import { Reveal } from "@/components/motion/Reveal";
-import { Icon } from "@/components/ui/Icon";
+import { SectionProgress } from "@/components/sections/home/SectionProgress";
+import { Card, Conduit, Droplet, Node, Pool } from "@/components/motifs";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { CAPABILITIES, ARCHITECTURE } from "@/content/capabilities";
 import { ERPS } from "@/content/clients";
 import { cn } from "@/lib/cn";
@@ -14,6 +17,43 @@ export const metadata = pageMetadata({
     "Connected Banking Enterprise Solution brings full banking functionality into the accounting and ERP systems your teams already use — balances, payments, collections and automated reconciliation.",
   path: "/connected-banking",
 });
+
+/**
+ * Sub-range of the capabilities section's transit that the rail Conduit fills
+ * across, and the arithmetic behind it. `useSectionProgress` writes
+ * `--sp = (scrollY + vh − sectionTop) / (vh + sectionHeight)`, so an element
+ * `d` px below the section's top crosses the viewport CENTRE at
+ * `sp = (d + vh/2) / (vh + H)`. The rail runs from the first card's centre
+ * (d ≈ 0) to the ninth's (d ≈ H): at 1440×900 with H ≈ 1900px that is
+ * sp 0.16 → 0.84, and at 390×844 with H ≈ 2200px it is 0.14 → 0.86. 0.15 /
+ * 0.85 is the pair that fits both, and the nine Nodes light independently off
+ * their own `view()` transits, so a few points of drift costs nothing.
+ */
+const RAIL_FROM = 0.15;
+const RAIL_TO = 0.85;
+
+/**
+ * Fill for the rail Conduit — ProcessRail's mechanism, unchanged: the value is
+ * never React state, CSS derives it from the inherited progress, so the cost
+ * per frame is one custom-property write on the section.
+ *
+ * It reads `--sp-live`, not `--sp`, and falls back to 1. `--sp` is `0` on
+ * `:root` and the hook is a deliberate no-op under reduced motion, so a
+ * consumer reading `--sp` would show an EMPTY rail for reduced-motion users,
+ * with JS off and before hydration. `--sp-live` is published by
+ * <SectionProgress live> only once a real driver is running, so "no driver"
+ * means "finished": a full spine. Content fails open; decoration (the
+ * horizontal Conduits in How It Works, which read `--sp` directly) fails
+ * closed.
+ */
+function railFillStyle(): CSSProperties {
+  return {
+    "--fill": `clamp(0, calc((var(--sp-live, 1) - ${RAIL_FROM.toFixed(4)}) / ${(
+      RAIL_TO - RAIL_FROM
+    ).toFixed(4)}), 1)`,
+    transform: "scaleY(var(--fill))",
+  } as CSSProperties;
+}
 
 export default function ConnectedBankingPage() {
   return (
@@ -31,18 +71,49 @@ export default function ConnectedBankingPage() {
         visual={<ConnectionDiagram />}
       />
 
-      {/* Capabilities */}
-      <section id="capabilities" className="section-pad bg-canvas">
+      {/* Capabilities. <SectionProgress live> is the only client code here: it
+          writes `--sp` on the section and publishes the `--sp-live` alias, and
+          the rest of the section stays server-rendered. The anchor id is
+          load-bearing — the footer deep-links to it. */}
+      <SectionProgress
+        live
+        id="capabilities"
+        className="section-pad bg-canvas"
+      >
         <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
           <Reveal className="text-center">
             <h2 className="display-2 text-ink">Capabilities</h2>
           </Reveal>
 
           <div className="relative mt-14">
-            <span
+            {/*
+              The spine (V4 Part G): a vertical Conduit replacing the 1px
+              `bg-line-plum` rule, whose flow element is the FILL that grows
+              down the channel as the reader passes — ProcessRail's construction
+              verbatim. `flow="custom"` is what makes that safe: the kit then
+              emits no `conduit-*` class and declares no transform on the flow
+              element, so `scaleY(var(--fill))` below is the only driver and
+              there is nothing to collide with (Part J Phase 7).
+
+              `grid` on the wrapper is load-bearing — `.conduit-v` is
+              `height: auto`, so a block child would collapse to 0. The 6px
+              track is centred on the 16px Nodes: `left-[5px]` puts its centre
+              at x = 8px, and `lg:-ml-[3px]` does the same against the 50%
+              line. A negative MARGIN, not a translate: nothing else wants
+              `transform` on this element and keeping motifs transform-free is
+              what stops cascade collisions before they exist (Part J Phase 8).
+            */}
+            <div
               aria-hidden="true"
-              className="absolute bottom-6 left-[7px] top-6 w-px bg-line-plum lg:left-1/2"
-            />
+              className="pointer-events-none absolute bottom-6 left-[5px] top-6 grid w-1.5 lg:left-1/2 lg:-ml-[3px]"
+            >
+              <Conduit orientation="v" flow="custom">
+                <span
+                  style={railFillStyle()}
+                  className="absolute inset-0 origin-top rounded-[inherit] bg-[linear-gradient(180deg,var(--lavender-400),var(--violet-500))] opacity-90"
+                />
+              </Conduit>
+            </div>
 
             {/*
               One Reveal per row rather than a RevealGroup: the rail is nine
@@ -57,9 +128,10 @@ export default function ConnectedBankingPage() {
                 const right = i % 2 === 1;
                 return (
                   <li key={c.title} className="relative">
-                    {/* The rail dot is absolute, so it takes no grid cell — the
-                        card is placed by explicit column rather than `order`,
-                        which would have nothing in flow to swap with. */}
+                    {/* The rail Node is absolute, so it takes no grid cell —
+                        the card is placed by explicit column rather than
+                        `order`, which would have nothing in flow to swap
+                        with. */}
                     <div className="grid grid-cols-1 items-center gap-x-12 lg:grid-cols-2">
                       <Reveal
                         dir={right ? "right" : "left"}
@@ -71,51 +143,88 @@ export default function ConnectedBankingPage() {
                           // [data-reveal="left"] is — below lg every card is in
                           // one column, where an outward transform pushes the
                           // card past the viewport, widens the document and
-                          // produces a phone scrollbar. `peer` is the hook for
-                          // the rail dot below.
-                          "scrub-fade-side peer pl-9 lg:pl-0",
+                          // produces a phone scrollbar.
+                          "scrub-fade-side pl-9 lg:pl-0",
                           right
                             ? "lg:col-start-2 lg:pl-12"
                             : "lg:col-start-1 lg:pr-12",
                         )}
                       >
-                        <article className="rounded-lg border border-line-soft bg-surface p-6 shadow-card md:p-7">
-                          <span className="grad-fill grid h-11 w-11 place-items-center rounded-md text-ink-inv">
-                            <Icon name={c.icon} size={19} />
-                          </span>
-                          <h3 className="mt-5 text-[17px] font-semibold text-ink">
-                            {c.title}
-                          </h3>
-                          <p className="mt-2 max-w-[46ch] text-[14.5px] leading-relaxed text-ink-2">
-                            {c.body}
-                          </p>
-                        </article>
+                        {/*
+                          `liq-flat` is correct AND free here, not a budget
+                          compromise: nine `.liq-light` cards would be nine
+                          blur layers against §A7's ≤ 4 phone / ≤ 8 desktop,
+                          and they sit on a FLAT `--canvas`, where a Gaussian
+                          blur of a constant field is that constant and
+                          `saturate(1.15)` is achromatic — provably zero pixels
+                          of difference (Part J Phase 8). The rim ring, the wet
+                          edge and `--liq-light-shadow` are what draw the glass.
+                        */}
+                        <Card
+                          tone="light"
+                          icon={<Icon name={c.icon} size={19} />}
+                          title={c.title}
+                          className="liq-flat"
+                        >
+                          {c.body}
+                        </Card>
                       </Reveal>
 
                       {/*
-                        Rail node. Two layers of the same pulse, one per
-                        capability level, and they can never fight because each
-                        owns the transform in a state the other does not exist in:
+                        Rail Node (V4 Part G). The 16px plum dot is now a
+                        `Node`, and the LIGHTING is the page's existing
+                        `.orb-hand-off` logic mapped onto the Node's glow —
+                        the same keyframes, on a second `.node-glow` passed
+                        through the `icon` slot (ProcessRail's construction):
+                        `view()`-timed over the row's own transit, so the glow
+                        swells from .35/0.82 to 1/1 exactly as the card crosses
+                        the viewport CENTRE and falls away after — the light
+                        travelling down the rail with the reader.
 
-                        - where view() timelines exist, `.orb-hand-off` scrubs
-                          the dot from 0.82/0.35 → 1/1 at mid-transit → back,
-                          so it peaks exactly as its card crosses the viewport
-                          CENTRE. `!important` on the timing function replaces
-                          the utility's own `linear` with --spring-snappy, whose
-                          overshoot turns the swell into a pop. --orb-x carries
-                          the lg rail centring the keyframes would otherwise
-                          overwrite (Y centring moved to -mt-2 for the same
-                          reason — a margin survives every transform).
-                        - everywhere else (no view() support, or reduced motion,
-                          where globals.css sets `animation: none`) the keyframes
-                          are gone and the element's own transform applies:
-                          scale .55 → 1 on --spring-snappy, triggered by the
-                          card's reveal state through `peer`.
+                        Using the kit's own class rather than a hand-rolled
+                        overlay buys two things: `.node > :not(.node-glow)`'s
+                        forced `position: relative` skips it, and motifs.css's
+                        reduced-motion `.node-glow { opacity: 1 !important }`
+                        re-lights it — `!important` beats the animation, so
+                        Part C's "RM: static, lit" holds with no new rule.
+
+                        The old `peer-data-[inview]:scale-100` fallback is gone
+                        and needs no replacement: it existed because the bare
+                        dot was invisible until it scaled in, whereas a Node is
+                        a real 16px disc that paints from the server. Without
+                        `view()` support the glow simply rests at the kit's dim
+                        .35. `--orb-x` is likewise unnecessary now — the
+                        centring is on the wrapper's margins, not on the
+                        animated element, which is what `--orb-x` existed to
+                        preserve.
+
+                        The wrapper is required: `.node` declares
+                        `position: relative` in motifs.css, which is emitted
+                        after Tailwind and out-ranks an `absolute` utility on
+                        the same element.
+
+                        The FILL is `--violet-500` inline. `.node-light`'s
+                        `--lavender-200` disc is designed for a 44px plate
+                        carrying a `--violet-text` glyph; as a bare 16px bead on
+                        `--canvas` it is ~1.1:1 against its own host and is
+                        simply not visible (the Ecosystem port-bead and FAQ
+                        marker precedents, Part J Phases 7/8). `--violet-500` is
+                        also the colour of the rail fill's lower stop, so the
+                        bead reads as the channel it sits in.
                       */}
                       <span
                         aria-hidden="true"
-                        className="orb-hand-off absolute left-0 top-1/2 -mt-2 h-4 w-4 scale-[0.55] rounded-pill bg-plum-700 ring-4 ring-[color:var(--violet-soft)] transition-transform duration-[var(--dur-spring-snappy)] ease-[var(--spring-snappy)] ![animation-timing-function:var(--spring-snappy)] peer-data-[inview]:scale-100 lg:left-1/2 lg:-translate-x-1/2 lg:[--orb-x:-50%]"
-                      />
+                        className="absolute left-0 top-1/2 -mt-2 lg:left-1/2 lg:-ml-2"
+                      >
+                        <Node
+                          light
+                          size={16}
+                          style={{ background: "var(--violet-500)" }}
+                          icon={
+                            <span className="node-glow orb-hand-off" />
+                          }
+                        />
+                      </span>
                     </div>
                   </li>
                 );
@@ -123,9 +232,12 @@ export default function ConnectedBankingPage() {
             </ul>
           </div>
         </div>
-      </section>
+      </SectionProgress>
 
-      {/* ERP band */}
+      {/* ERP band. Deliberately untouched by Phase 9a: Part G's
+          /connected-banking list covers the hero, the capabilities rail and
+          How It Works, and Part E row 9's restyle is the HOMEPAGE ErpBand.
+          Rebuilding this strip on the light Conduit is a later pass. */}
       <section className="border-y border-line-soft bg-surface py-14">
         <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
           <Reveal className="text-center">
@@ -154,8 +266,10 @@ export default function ConnectedBankingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="section-pad bg-canvas">
+      {/* How It Works. The section writes `--sp` (no `live`: the two Conduits
+          in the inset are DECORATION and must fail closed — no driver means no
+          flow). The anchor id is load-bearing. */}
+      <SectionProgress id="how-it-works" className="section-pad bg-canvas">
         <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
           <Reveal>
             <h2 className="display-2 text-ink">How It Works</h2>
@@ -165,32 +279,64 @@ export default function ConnectedBankingPage() {
           </Reveal>
 
           <Reveal delay={160}>
-            <div className="section-dark mt-12 grid grid-cols-1 items-center gap-8 rounded-lg p-8 md:p-10 lg:grid-cols-[1fr_auto_1.15fr_auto_1fr]">
+            {/*
+              The dark inset: three Vessels joined by two Conduits (V4 Part G),
+              replacing the dashed `.eco-wire` arrows. `.section-dark` gives the
+              panel the plum band, the grain and the inverted ink defaults, and
+              declares `position: relative; isolation: isolate` itself — so the
+              `.liq` Vessels inside are on band A and take band A's AA matrix.
+              No Caustic here, deliberately: a `--violet-a24` core behind a
+              tier-2 Vessel takes `--ink-inv-2` from 4.52 to 4.01:1, and the
+              contrast walk cannot see a sibling overlay (§A6, Part J Phase 6).
+
+              Below lg the five items stack in the base `grid-cols-1` and the
+              Conduits switch to vertical; at lg they take the two `auto`
+              tracks. Only one of each pair is ever rendered — `display: none`
+              removes the other from grid layout entirely.
+            */}
+            <div className="section-dark mt-12 grid grid-cols-1 items-center gap-4 rounded-lg p-6 md:p-8 lg:grid-cols-[1fr_auto_1.15fr_auto_1fr] lg:gap-6">
               <Column
                 heading={ARCHITECTURE.left.heading}
                 items={ARCHITECTURE.left.items}
               />
 
-              <Flow />
+              <ArchConduit />
 
-              {/* Explicit `.glass-2` rather than the `.glass` alias. The tiers
-                  paint their wet edge as a background LAYER instead of an
-                  absolute ::after, so the `relative z-[1]` that every child used
-                  to need in order to sit above that ::after is now dead weight
-                  and has been dropped. */}
-              <div className="glass-2 rounded-lg p-7 text-center">
-                <span className="glass-3 mx-auto grid h-12 w-12 place-items-center rounded-md text-ink-inv">
-                  <Icon name="chip" size={22} />
-                </span>
-                <h3 className="mt-5 text-[16.5px] font-semibold text-ink-inv">
-                  {ARCHITECTURE.centre.title}
-                </h3>
-                <p className="mx-auto mt-2 max-w-[34ch] text-[14px] leading-relaxed text-ink-inv-2">
-                  {ARCHITECTURE.centre.body}
-                </p>
+              {/*
+                The centre Vessel is tier 3 with a Pool: the data layer is where
+                value accumulates. Two consequences, both required:
+                  • §A6 — tier 3 over band A composites to a surface where
+                    `--ink-inv-2` measures 4.04:1, so EVERY run here is
+                    `--ink-inv` (the body copy was `--ink-inv-2`; qa.mjs's
+                    ink-on-glass rule fails the build on it). Text overlapping a
+                    Pool is `--ink-inv` only anyway.
+                  • the Pool is positioned with no z-index and would paint OVER
+                    in-flow text, so the content is `relative z-[1]` and the
+                    Vessel is `overflow-hidden` so `border-radius: inherit`
+                    rounds the basin's bottom corners (StatBand's trap).
+                It rises with the surrounding <Reveal>'s `data-inview` and rests
+                full, so no-JS and reduced motion show the settled pool.
+              */}
+              <div className="liq liq-3 liq-static-mobile overflow-hidden rounded-lg p-6 text-center md:p-7">
+                <Pool />
+                <div className="relative z-[1]">
+                  <Node
+                    inset
+                    lit
+                    size={48}
+                    className="mx-auto"
+                    icon={<Icon name="chip" size={22} />}
+                  />
+                  <h3 className="mt-5 text-[16.5px] font-semibold text-ink-inv">
+                    {ARCHITECTURE.centre.title}
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-[34ch] text-[14px] leading-relaxed text-ink-inv">
+                    {ARCHITECTURE.centre.body}
+                  </p>
+                </div>
               </div>
 
-              <Flow delay="-1.1s" />
+              <ArchConduit />
 
               <Column
                 heading={ARCHITECTURE.right.heading}
@@ -199,32 +345,48 @@ export default function ConnectedBankingPage() {
             </div>
           </Reveal>
         </div>
-      </section>
+      </SectionProgress>
 
       <CtaBand ctaLabel="See Connected Banking in Action" />
     </>
   );
 }
 
+/**
+ * One flank of the architecture inset: a tier-2 Vessel whose rows are
+ * `.liq-inset` chips — nested glass never blurs, which is what keeps three
+ * Vessels plus nine chips at three blur layers instead of twelve (§A7).
+ *
+ * `liq-static-mobile`: below lg the three Vessels stack and all three can share
+ * an 844px phone viewport, so three blurs plus the pill nav would be exactly
+ * §A7's phone budget with nothing left for CtaBand's glass CTA further down.
+ * Above 1024 they keep the frost (3 + CtaBand's 2 + the pill = 6 of 8).
+ *
+ * Tier 2 over band A puts `--ink-inv-2` at 4.52:1 — the calibrated minimum, so
+ * the heading keeps the secondary ink and every row label is `--ink-inv`. The
+ * row icons stay `--lavender-400`: 4.36:1 on that composite, which is under the
+ * 4.5 TEXT floor and comfortably over 1.4.11's 3:1 for a non-text glyph — so
+ * `--lavender-400` must not be used for a text run inside this glass.
+ */
 function Column({
   heading,
   items,
 }: {
   heading: string;
-  items: { label: string; icon: Parameters<typeof Icon>[0]["name"] }[];
+  items: { label: string; icon: IconName }[];
 }) {
   return (
-    <div>
+    <div className="liq liq-static-mobile rounded-lg p-6">
       <h3 className="text-[11.5px] font-semibold uppercase tracking-eyebrow text-ink-inv-2">
         {heading}
       </h3>
-      {/* Rows are nested inside the architecture card, so they take the 12px
+      {/* Rows are nested inside the architecture panel, so they take the 12px
           nested step of the radius scale, not the 20px card step. */}
       <ul className="mt-4 flex flex-col gap-3">
         {items.map((it) => (
           <li
             key={it.label}
-            className="glass-2 flex items-center gap-3 rounded-md px-4 py-3 text-[14px] font-medium text-ink-inv"
+            className="liq-inset flex items-center gap-3 rounded-md px-4 py-3 text-[14px] font-medium text-ink-inv"
           >
             <Icon name={it.icon} size={17} className="text-lavender-400" />
             <span>{it.label}</span>
@@ -236,171 +398,142 @@ function Column({
 }
 
 /**
- * Dashed connector between architecture columns — horizontal on lg, vertical
- * below. The dashes drift toward the arrowhead so the diagram reads as a
- * direction of travel (bank → server → ledger) rather than a static schematic.
+ * The channel between two architecture Vessels: horizontal at lg, vertical
+ * below it. `flow="scroll"` means the band crosses the track as the section's
+ * `--sp` goes 0 → 1, so the diagram reads as a direction of travel (gateway →
+ * server → ledger) rather than a static schematic — the read the retired
+ * dashed `.eco-wire` arrows were carrying.
  *
- * Mechanics: `.eco-wire` (globals.css) is the project's dash-drift primitive —
- * `stroke-dashoffset: 0 → -20` on a loop, with `--wire-delay` to de-phase
- * instances. The dash PERIOD is therefore 10 (`3 7`), never 8: -20 has to be a
- * whole number of periods or the loop restart jumps. That also makes the
- * reduced-motion end state (offset -20, i.e. two whole periods) pixel-identical
- * to the resting state, so the global `animation-duration: 0.001ms` collapse
- * leaves the connector looking exactly as it does with motion off.
- *
- * Only one of the two SVGs is ever rendered — the other is `display: none`,
- * which does not run animations — so this costs one animated 1.4px stroke.
+ * Both tracks render, one `hidden lg:block` and one `lg:hidden`, on WRAPPERS:
+ * `.conduit` declares `position: relative; display: block` in motifs.css,
+ * which is emitted after Tailwind and would out-rank `hidden` on its own
+ * element. The vertical wrapper is `grid` so `.conduit-v`'s `height: auto`
+ * stretches to it; a block child would collapse to 0.
  */
-function Flow({ delay = "0s" }: { delay?: string }) {
-  const dash = {
-    stroke: "currentColor",
-    strokeWidth: 1.4,
-    strokeDasharray: "3 7",
-    strokeLinecap: "round" as const,
-    className: "eco-wire",
-    style: { ["--wire-delay" as string]: delay },
-  };
+function ArchConduit() {
   return (
-    <span
-      aria-hidden="true"
-      className="mx-auto grid place-items-center text-lavender-400"
-    >
-      <svg
-        viewBox="0 0 60 12"
-        width="60"
-        height="12"
-        fill="none"
-        className="hidden lg:block"
-      >
-        <path d="M0 6h44" {...dash} />
-        <path
-          d="m46 1.5 5 4.5-5 4.5"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <svg
-        viewBox="0 0 12 40"
-        width="12"
-        height="40"
-        fill="none"
-        className="lg:hidden"
-      >
-        <path d="M6 0v28" {...dash} />
-        <path
-          d="M1.5 30 6 35l4.5-5"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
+    <>
+      <span aria-hidden="true" className="hidden w-16 self-center lg:block">
+        <Conduit flow="scroll" />
+      </span>
+      <span aria-hidden="true" className="mx-auto grid h-10 w-1.5 lg:hidden">
+        <Conduit orientation="v" flow="scroll" />
+      </span>
+    </>
   );
 }
 
 /**
- * Hero diagram — the ERP platform and the bank's infrastructure meeting at a
- * LinkAPI hub. The Figma labelled one side "AXIS BANK"; a generic label ships
- * instead, since naming a bank in a product diagram implies an endorsement.
+ * Hero diagram (V4 Part G) — the horizontal Conduit run that replaces the
+ * orbiting-pills composition:
+ *
+ *     [Node "LinkAPI platform"] ═══ [hub] ═══ [Node "Bank infrastructure"]
+ *
+ * with the "Partner bank" Droplet above the hub and the "Secure API
+ * connection" caption below it. Every label is the previous diagram's, VERBATIM
+ * — and "Partner bank" stays generic on purpose: the Figma named a bank here,
+ * and naming one inside a product architecture diagram reads as an
+ * endorsement (CONTENT-TODO §2).
  * TODO: client to confirm whether a named bank may appear here.
+ *
+ * TWO CONDUITS PER RUN, FLOWING IN OPPOSITE DIRECTIONS — payments out on the
+ * upper track, statements back on the lower one. The reversal is a
+ * `-scale-x-100` on a wrapper, which mirrors the track and its band together
+ * so the band's bright leading edge stays leading; there is no animation on
+ * that wrapper, so nothing contends for its transform.
+ *
+ * `flow="loop"` rather than `"scroll"`: a hero has no `--sp` driver (it is
+ * already mid-transit when the page paints, so a scroll-driven band would sit
+ * parked mid-channel and then simply leave). The loop is desktop-only by
+ * design; below 1024, and under reduced motion where motifs.css kills it by
+ * name, `.conduit-flow` has no transform of its own and the band rests at the
+ * head of its channel — a visible, settled pose, not an empty pipe.
+ *
+ * GEOMETRY. Everything is in normal flow (the old version was absolutely
+ * positioned inside an aspect-locked box, which is what made it collapse to
+ * 0×0 when the grid track was content-sized — see PageHero's note). All three
+ * disc CENTRES line up at y = 28px: the 56px hub's own centre, and the 48px
+ * endpoints' via `mt-1` on their columns; the Conduit pair is 20px tall and
+ * takes `mt-[18px]`. Widths at the narrowest real case — 390px viewport, less
+ * the hero's `px-6` and the Vessel plate's `p-6`, is 294px — are 2×76 + 56 +
+ * 4×6 of gap = 224px, leaving 35px for each Conduit run; at lg the plate is
+ * 472px wide and each run gets ~84px.
+ *
+ * The whole diagram stays `aria-hidden`, as it was: it restates the lead
+ * paragraph beside it, and duplicating that for assistive tech adds noise, not
+ * information.
  */
 function ConnectionDiagram() {
   return (
-    <div
-      className="relative mx-auto aspect-[5/4] w-full max-w-[520px]"
-      aria-hidden="true"
-    >
-      {/*
-        Inner ring: an SVG ellipse instead of a dashed CSS border, so its dashes
-        can drift slowly around the ring (`.eco-wire`) and read as an orbit.
-        A rotation was the other option and is wrong here: the ring is an
-        ELLIPSE (the box is 5:4), and a rotating ellipse sweeps its own bounding
-        box, which wobbles. Flowing the dash pattern along the path has no such
-        problem and needs no transform at all.
+    <div aria-hidden="true" className="mx-auto w-full max-w-[520px]">
+      <div className="flex justify-center">
+        <Droplet
+          light
+          className="px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-violet-text"
+        >
+          Partner bank
+        </Droplet>
+      </div>
 
-        Geometry is unchanged to the pixel: the viewBox matches the container's
-        5:4 aspect, so rx/ry = 58% of each half-axis, exactly the old
-        h-[58%] w-[58%]. `pathLength` normalises the perimeter to 820 = 82 whole
-        dash periods, which removes the seam where the pattern would otherwise
-        wrap, and keeps `.eco-wire`'s -20 offset a whole number of periods.
-      */}
-      <svg
-        viewBox="0 0 500 400"
-        fill="none"
-        className="pointer-events-none absolute inset-0 h-full w-full"
-      >
-        <ellipse
-          cx="250"
-          cy="200"
-          rx="145"
-          ry="116"
-          pathLength="820"
-          stroke="var(--lavender-400)"
-          strokeWidth="1"
-          strokeDasharray="3 7"
-          strokeLinecap="round"
-          className="eco-wire"
+      <div className="mt-4 flex items-start gap-1.5 sm:gap-3">
+        <Endpoint icon="chip" label="LinkAPI platform" />
+
+        <ConduitRun />
+
+        {/* The hub is LinkAPI's mark, so it keeps `grad-fill`'s gradient —
+            Part E row 5 keeps it for the Ecosystem hub for the same reason.
+            It arrives as an inline `background`/`color` pair rather than the
+            `.grad-fill` class because `.node-light` sets both properties in
+            motifs.css, which is emitted after globals.css and after Tailwind
+            and would win every one of those ties (the Ecosystem port-bead
+            precedent, Part J Phase 7). `.liq liq-1` was the alternative and is
+            worse: `.grad-fill` is LATER in globals.css than `.liq`, so its
+            `background-image` would silently delete the wet edge, and the
+            frost would be a wasted blur layer behind an opaque gradient. */}
+        <Node
+          light
+          lit
+          size={56}
+          className="flex-none"
+          style={{ background: "var(--grad-tile)", color: "var(--ink-inv)" }}
+          icon={<Icon name="link" size={24} />}
         />
-      </svg>
-      <span className="absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-pill border border-line-soft" />
 
-      {/* Smaller hub on phones, for the same reason the pills shrink: it widens
-          the clear space on each side from ~125px to ~135px so the side labels
-          have somewhere to sit. */}
-      <span className="grad-fill absolute left-1/2 top-1/2 grid h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-pill text-[15px] font-semibold text-ink-inv shadow-float sm:h-[92px] sm:w-[92px]">
-        <Icon name="link" size={32} />
-      </span>
+        <ConduitRun />
 
-      <Pill
-        className="left-1/2 top-[6%] -translate-x-1/2"
-        label="Partner bank"
-        dot
-      />
-      <Pill
-        className="left-0 top-1/2 -translate-y-1/2"
-        label="LinkAPI platform"
-      />
-      <Pill
-        className="right-0 top-1/2 -translate-y-1/2"
-        label="Bank infrastructure"
-      />
+        <Endpoint icon="bank" label="Bank infrastructure" />
+      </div>
 
-      <span className="absolute bottom-[4%] left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap text-[12.5px] text-ink-3">
+      <p className="mt-5 flex items-center justify-center gap-2 whitespace-nowrap text-[12.5px] text-ink-3">
         <Icon name="shield" size={14} className="text-success" />
         Secure API connection
-      </span>
+      </p>
     </div>
   );
 }
 
-function Pill({
-  className,
-  label,
-  dot,
-}: {
-  className?: string;
-  label: string;
-  dot?: boolean;
-}) {
+/** One end of the run: a 48px light Node over its label. */
+function Endpoint({ icon, label }: { icon: IconName; label: string }) {
   return (
-    <span
-      className={cn(
-        // Nested chrome inside the diagram: 12px, the nested step of the radius
-        // scale (cards 20 / nested 12 / pills 999).
-        // The phone step is not cosmetic. The diagram box is aspect-locked, so at
-        // 390px it is ~342 wide with a 92px hub centred in it, leaving ~125px of
-        // clear space each side — and "Bank infrastructure" measured 151px, so
-        // the side pills sat ON the hub (26x39px of overlap, measured). Smaller
-        // type and tighter padding below sm bring them inside that gap.
-        "absolute inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-soft bg-surface px-2.5 py-1.5 text-[10.5px] font-medium text-ink shadow-card sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[12.5px]",
-        className,
-      )}
-    >
-      {dot && <span className="h-2.5 w-2.5 rounded-pill bg-plum-700" />}
-      {label}
+    <span className="mt-1 flex w-[76px] flex-none flex-col items-center gap-2 text-center sm:w-[104px]">
+      <Node light size={48} icon={<Icon name={icon} size={20} />} />
+      {/* 10px is the floor scripts/qa/layout.mjs enforces, and it is right —
+          these are real labels, not decoration. */}
+      <span className="text-[10px] font-medium leading-tight text-ink-2 sm:text-[11.5px]">
+        {label}
+      </span>
+    </span>
+  );
+}
+
+/** Payments out, statements back — see the ConnectionDiagram note. */
+function ConduitRun() {
+  return (
+    <span className="mt-[18px] flex min-w-0 flex-1 flex-col gap-2">
+      <Conduit flow="loop" />
+      <span className="block -scale-x-100">
+        <Conduit flow="loop" />
+      </span>
     </span>
   );
 }

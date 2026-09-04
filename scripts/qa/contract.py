@@ -116,6 +116,30 @@ CLASSES = [
     # call site — the same standing `conduit-scroll` and `drift-near` have.
     "conduit-light", "pool-light", "seam-light", "caustic-light",
     "droplet-light",
+    # V4 Phase 9a — the inner-page grammar (PageHero, the Card language,
+    # /connected-banking's conduits, /industries' Vessels). Three classes reach
+    # the page for the first time here:
+    #   liq-3            tier-3 glass. Composed in components/motifs/Card.tsx
+    #                    from phase 2 (the dark FEATURE card) but nothing
+    #                    rendered it until /connected-banking's How-It-Works
+    #                    centre Vessel — which is also why §A6's tier-3 rule
+    #                    (`--ink-inv` only) now has a real host for the
+    #                    ink-on-glass check to walk.
+    #   card-icon-light  the light Card's 44px --lavender-200 icon disc
+    #                    (motifs.css). Card had no call sites before this phase.
+    #   conduit-loop     the 7s ambient flow, ≥1024, on the hero diagram's four
+    #                    tracks — a hero has no `--sp` driver, so `flow="loop"`
+    #                    is the only mechanism that can move a band there.
+    #                    Composed at render as `conduit-${flow}` by Conduit.tsx,
+    #                    so — exactly like `conduit-scroll` (phase 6) and
+    #                    `drift-near` (phase 7) — the `used` regex finds no
+    #                    literal and prints False. A print either way: the class
+    #                    list fails on orphans, not on dead rules.
+    # `mk-bar` / `mk-press` are deliberately NOT listed: they are declared in a
+    # React 19 <style href precedence> inside Mocks.tsx, not in any stylesheet
+    # app/layout.tsx imports, so listing them would be an orphan by
+    # construction — the same standing as `--lit-at` and `--marquee-d`.
+    "liq-3", "card-icon-light", "conduit-loop",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",
@@ -173,6 +197,22 @@ TOKENS = [
     "--liq-light-2-fill", "--liq-light-2-blur",
     "--liq-light-edge", "--liq-light-spec",
     "--violet-soft", "--lavender-200", "--line-violet",
+    # V4 Phase 9a — the inner-page grammar.
+    #   --liq-3-fill / --liq-3-blur  read by `.liq-3`, which has a rendered
+    #       host for the first time in this phase (see the class note above).
+    #   --grad-tile   LinkAPI's own gradient, named inline on the hero
+    #       diagram's hub Node and the Fintech rails' router Node. It arrives
+    #       inline rather than through `.grad-fill` because `.node-light` sets
+    #       `background` in motifs.css and would win that tie (Part J Phase 7's
+    #       Ecosystem port-bead precedent).
+    #   --ink-inv / --surface  both are named DIRECTLY by components — the hub
+    #       Nodes' inline `color`, and PageHero's `nextSurface` default, which
+    #       is the colour the Meniscus is filled with. Both actually reached
+    #       components in phase 4 (`Meniscus fill="var(--surface)"` on the Hero
+    #       and StatBand, HeroLens' `--ink-inv` glint core) and were simply
+    #       never listed; the phase-4 note already records that its "complete
+    #       list" was not. Listing them adds the `defined` assertion.
+    "--liq-3-fill", "--liq-3-blur", "--grad-tile", "--ink-inv", "--surface",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
 JS_WIRING = {

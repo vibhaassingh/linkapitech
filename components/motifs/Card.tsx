@@ -40,6 +40,47 @@ interface CardProps {
  *        no-op class this repo has shipped before. `.spotlight` is allowed
  *        there because the element is not `.liq`.
  * `icon-draw` is kept on every variant so an `<Icon draw>` replays on hover.
+ *
+ * ── MEASURED (Phase 9a, the first call sites) ─────────────────────────────
+ * Composited the way qa.mjs's contrast walk does it — brightest stop of every
+ * background layer, source-over:
+ *   dark tier 2 (.liq)  over band A (plum-700)  --ink-inv-2  4.52:1  ✓
+ *                       over band B (its .22 bloom over plum-800)  4.54:1  ✓
+ *   dark tier 3 (.liq-3) over band A            --ink-inv-2  4.04:1  ✗
+ *                                               --ink-inv    6.56:1  ✓
+ *   light tier 2 (.liq liq-light) over the wash --ink-3      5.41:1  ✓
+ *                                               --ink-2      9.27:1  ✓
+ * Tier 2's 0.02–0.04 of headroom is the whole reason for the two rules below.
+ *
+ * A CAUSTIC CORE BEHIND A CARD SPENDS THAT HEADROOM. A `.caustic` is a sibling
+ * overlay, so the walk cannot see it, and a full `--violet-a24` core under a
+ * tier-2 card takes `--ink-inv-2` to 4.01:1 — a fail no check will report.
+ * Either keep the disc off the card (Part J Phase 7's CtaBand placement) or
+ * promote every run in the card to `--ink-inv` (Part J Phase 9a, the
+ * /industries dark mocks).
+ *
+ * ── BLUR BUDGET (§A7: ≤ 4 layers per phone viewport, ≤ 8 per desktop) ──────
+ * A grid of Cards is a glass CLUSTER and will overrun the budget on its own.
+ * Both escape hatches ride in through `className`, no prop needed:
+ *   `liq-flat`           never blurs. Correct — and free — wherever the card
+ *                        sits on a FLAT surface (`--surface`, `--canvas`): a
+ *                        Gaussian blur of a constant field is that constant,
+ *                        and `saturate(1.15)` on it is achromatic, so the
+ *                        frost is provably zero pixels of difference (Part J
+ *                        Phase 8). The rim, the wet edge and the shadow are
+ *                        what draw the glass.
+ *   `liq-static-mobile`  keeps the frost ≥ 1024 and drops it below.
+ * `liq-flat` is also the fix — not a nicety — when the card sits inside an
+ * ancestor with `opacity < 1` or `contain: paint`: that ancestor is a BACKDROP
+ * ROOT in Chromium and the frost samples an empty backdrop (Testimonials'
+ * `.card-depth`, Part J Phase 8). A `[data-reveal]` wrapper is only opacity < 1
+ * DURING its entry transition and rests at 1, so that case is transient and
+ * needs nothing.
+ *
+ * ── `.liq-live` IS EXCLUSIVE ON ITS ELEMENT ────────────────────────────────
+ * It owns `transform`, so `className` must never add `liq-enter`, `card-depth`,
+ * `scrub-drift` or `[data-tilt]` here — nest a wrapper instead (§A4). Nothing
+ * enforces this; the symptom is a dead hover lift, not an error.
  */
 export function Card({
   tone,
