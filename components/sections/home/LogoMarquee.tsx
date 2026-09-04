@@ -1,10 +1,12 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
+import { Droplet, Seam } from "@/components/motifs";
 import { CLIENTS } from "@/content/clients";
 import { TRUST_LINE } from "@/content/stats";
 
 /**
- * Trust band — an infinite marquee of client marks on white.
+ * Trust band — an infinite marquee of client marks on white
+ * (REDESIGN-V4 Part E §2).
  *
  * The row is duplicated in the DOM and the track translates -50%, which loops
  * seamlessly without JS. The copy is aria-hidden so the list is announced once;
@@ -27,6 +29,30 @@ import { TRUST_LINE } from "@/content/stats";
  * stops, which is the effect that was asked for, jump-free.
  * Reduced motion: the bus never starts, so --scroll-velocity keeps its 0
  * default and the translate resolves to 0px.
+ *
+ * V4 — WHAT CHANGED, AND THE EDGE TREATMENT
+ * 1. The trust line is a light `Droplet` centred above the row: the kit's small
+ *    liquid capsule, `.liq liq-light liq-1`. Its ink is `--ink-2`, NOT the
+ *    `--ink-3` this line used to carry — `--ink-3` on `.liq-light.liq-1`'s
+ *    .55 white measures 4.17:1 and is forbidden by §A6 (qa.mjs's ink-on-glass
+ *    rule enforces it).
+ * 2. `liq-flat` on the capsule. This section is a flat `--surface` (#ffffff),
+ *    so there is nothing behind the pill to frost: a blur of a constant field
+ *    IS that constant, and `saturate(1.15)` of an achromatic white is white, so
+ *    the frost is provably zero pixels of difference for real GPU cost. The
+ *    Ecosystem chips are `liq-flat` for exactly this reason (Part J, Phase 7).
+ *    `.liq-1` already has no blur below 1024, so the class only removes a
+ *    desktop no-op. The capsule still reads as glass — the rim ring, the wet
+ *    edge and `--liq-light-shadow` are what draw it, not the frost.
+ * 3. The `border-y` is GONE and the only edge is a light `Seam` at the bottom.
+ *    The hero's Meniscus lands on this section's top edge (Hero.tsx renders
+ *    `Seam` + `Meniscus fill="var(--surface)"` there), so a second hairline
+ *    across the top would compete with the curve the liquid already draws —
+ *    Part E row 2 asks for "Seam bottom" only, and the marks are meant to read
+ *    as floating on the surface the meniscus rises to.
+ * `.seam` declares `position: relative` in motifs.css (emitted after Tailwind),
+ * so it can never be positioned from its own element — hence the absolute
+ * wrapper, and hence `relative` on the section.
  */
 
 /** Lead at full bus saturation. ≈25% of the loop's own per-second advance. */
@@ -36,10 +62,17 @@ export function LogoMarquee() {
   return (
     <section
       aria-label={TRUST_LINE}
-      className="border-y border-line-soft bg-surface py-10 md:py-12"
+      className="relative bg-surface py-10 md:py-12"
     >
-      <p className="mb-8 text-center text-[12px] font-semibold uppercase tracking-eyebrow text-ink-3">
-        {TRUST_LINE}
+      {/* `.droplet` is `inline-flex`, so the capsule is centred by its parent
+          rather than by `mx-auto` (which does nothing to an inline box). */}
+      <p className="mb-8 flex justify-center">
+        <Droplet
+          light
+          className="liq-flat px-4 py-1.5 text-[12px] font-semibold uppercase tracking-eyebrow text-ink-2"
+        >
+          {TRUST_LINE}
+        </Droplet>
       </p>
 
       <div className="marquee-mask no-scrollbar mask-fade-x overflow-hidden">
@@ -50,6 +83,13 @@ export function LogoMarquee() {
           <Row />
           <Row aria-hidden dup />
         </div>
+      </div>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0"
+      >
+        <Seam light />
       </div>
     </section>
   );

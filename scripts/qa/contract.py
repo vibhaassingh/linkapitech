@@ -100,6 +100,22 @@ CLASSES = [
     "liq-light", "liq-flat", "node-light", "conduit-pulse",
     "pin", "pin-stage", "pin-step", "ledger", "footer-pool", "eco-halo",
     "drift-near",
+    # V4 Phase 8 — the six LIGHT home sections (marquee, WhoWeAre, WhyUs,
+    # ErpBand, Testimonials, HomeFaq). Every motif in the kit has a light
+    # variant that was composed in components/motifs/*.tsx from phase 2 and
+    # RENDERED for the first time here — `node-light` above is the one
+    # exception (the Ecosystem port beads wired it in phase 7):
+    #   conduit-light   WhyUs's vertical spine, ErpBand's underline
+    #   pool-light      WhoWeAre's basin, Testimonials' per-card basin
+    #   seam-light      LogoMarquee's bottom edge (the only edge it has now —
+    #                   the hero's Meniscus owns the top)
+    #   caustic-light   HomeFaq's one ambient disc
+    #   droplet-light   the LogoMarquee trust line and the FAQ eyebrow
+    # Every one is emitted by a `light` prop on its motif, so the `used`
+    # regex finds the literal in components/motifs/*.tsx rather than at the
+    # call site — the same standing `conduit-scroll` and `drift-near` have.
+    "conduit-light", "pool-light", "seam-light", "caustic-light",
+    "droplet-light",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",
@@ -138,6 +154,25 @@ TOKENS = [
     # standing this token had before, now with a call site.
     "--lavender-300", "--lavender-400", "--violet-500", "--terminal-cmt",
     "--line-inv",
+    # V4 Phase 8 — the LIGHT half of the material, first rendered by the six
+    # light home sections. The tier-1 fill/blur pair reached the page in phase
+    # 7 (the Ecosystem chips) and tier 2 does so here (the WhoWeAre, HomeFaq
+    # and Testimonials Vessels); the edge and the violet specular are read by
+    # `.liq-light` itself, which had no rendered instance before phase 7.
+    # `--violet-soft` is the light Pool's and light Caustic's alpha (the
+    # counterpart of phase 6's `--violet-a24`), `--lavender-200` is the light
+    # Conduit's track and the light Node's disc, and `--line-violet` is the
+    # light Seam's specular segment — white is invisible on a light band.
+    # All six reach the page through CSS rather than an inline style, so
+    # `used` resolves via `var(--tok)` in the stylesheets, as `--line-inv`
+    # does. `--marquee-d` is deliberately NOT listed: `.marquee` only ever
+    # READS it (`var(--marquee-d, 36s)`) and LogoMarquee sets it inline, so it
+    # is never `--marquee-d:`-declared in a stylesheet and listing it would be
+    # an orphan by construction — the same standing as `--lit-at`.
+    "--liq-light-1-fill", "--liq-light-1-blur",
+    "--liq-light-2-fill", "--liq-light-2-blur",
+    "--liq-light-edge", "--liq-light-spec",
+    "--violet-soft", "--lavender-200", "--line-violet",
 ]
 # JS contract: module path -> a symbol that proves a real consumer exists.
 JS_WIRING = {

@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { Reveal } from "@/components/motion/Reveal";
+import { Caustic, Droplet, Node } from "@/components/motifs";
 import { Button } from "@/components/ui/Button";
 import { FAQ } from "@/content/faq";
 import { HOME_SECTIONS } from "@/content/home";
@@ -45,25 +46,108 @@ const CHEVRON_SPRING: CSSProperties = {
 };
 
 /**
- * FAQ — accordion (button + aria-expanded + grid-rows height animation) beside
- * a "still have a question" card, per the Figma. First item open by default.
+ * The row marker. A 6px light `Node` — the kit's endpoint disc, so it brings
+ * `data-lit`'s glow, `.node`'s geometry and the reduced-motion re-light for
+ * free — with two call-site deviations, both for visibility:
+ *
+ *  • the FILL is `--violet-500` inline. `.node-light`'s `--lavender-200` disc
+ *    is designed for a 44px plate carrying a `--violet-text` glyph; as a bare
+ *    6px bead on `--canvas` it measures ~1.1:1 against its own host and simply
+ *    is not there. This is the Ecosystem port-bead precedent verbatim (Part J,
+ *    Phase 7), and `--violet-500` is the palette's flow colour.
+ *  • the STATE is opacity, as Part E row 12 asks: 0.32 closed, 1 open. `.35 →
+ *    1` on `.node-glow` (a .16-alpha radial) is invisible at 6px, so the whole
+ *    bead fades instead. Closed still resolves to a visible pale violet
+ *    (~(216,183,226) over `--canvas`), which is the point — this is quiet
+ *    reinforcement, not the affordance. The affordance is the chevron plus
+ *    `aria-expanded`, and the bead is `aria-hidden`, so WCAG 1.4.11 does not
+ *    ride on it.
+ *
+ * `opacity` is composited and this transition only ever runs on a click, never
+ * inside a Lighthouse trace. Under reduced motion the global 0.001ms clamp
+ * makes it an instant state change and the resting pose stays visible.
+ */
+const DOT = (open: boolean): CSSProperties => ({
+  background: "var(--violet-500)",
+  opacity: open ? 1 : 0.32,
+  transition: "opacity var(--dur-ui) var(--ease-out-expo)",
+});
+
+/**
+ * FAQ — accordion beside a "still have a question" glass card, per the Figma
+ * (REDESIGN-V4 Part E §12). First item open by default.
+ *
+ * The mechanics are UNCHANGED: `.acc-panel`'s grid-rows height animation,
+ * `PANEL_SPRING` on the inner content, `CHEVRON_SPRING` on the flip, one
+ * `useState` index, `aria-expanded` / `aria-controls`. What V4 changes is the
+ * surface language.
+ *
+ * LEFT COLUMN. A light `Droplet` eyebrow (replacing `.eyebrow-capsule`),
+ * `display-2` heading, then a tier-2 light Vessel holding the mail CTA.
+ * The Droplet's ink is `--violet-text`: on `.liq-light.liq-1`'s .55 white,
+ * `--ink-3` measures 4.17 and is forbidden (§A6, and qa.mjs enforces it), so a
+ * plain eyebrow colour cannot go inside one (Part J, Phase 2). It carries
+ * `liq-flat` for the Ecosystem reason — a small pill on a flat surface has
+ * nothing behind it to frost, and `.liq-1` has no blur below 1024 anyway, so
+ * the class only removes a desktop no-op. The Vessel KEEPS its frost: it is
+ * one blur, and the worst viewport it can share (with CtaBand below) is 1 + 2
+ * + the pill = 4 of the desktop 8, or 1 + 1 + pill = 3 of the phone 4.
+ *
+ * THE CAUSTIC. One light disc, upper-right, in its OWN `absolute inset-0
+ * overflow-hidden` clip box. The box needs `isolate`, and that is the opposite
+ * of what the dark bands do: `.section-dark` is itself a stacking context, so
+ * there the clip box is left plain and the disc's `z-index: -2` resolves
+ * against the band. A LIGHT section is not a stacking context, so without
+ * `isolate` on the box `z-index: -2` would climb past the section and the disc
+ * would paint behind its `bg-canvas` — invisible (Part J, Phase 7).
+ *
+ * The disc sits over the accordion's upper rows, and the contrast walk is
+ * BLIND to it (a sibling overlay is not a background layer of the text's
+ * ancestors), so the cost is computed by hand: `--violet-soft` is
+ * rgba(142,36,170,.10), which over `--canvas` composites to rgb(239,227,244).
+ * On that core `--ink-2` is 7.49:1 (8.78 without it) and `--ink` is 13.59:1 —
+ * both far above AA. The light case has room the dark one does not, where
+ * `--ink-inv-2` has 0.02 of headroom and a Caustic core costs 0.3–0.5.
  */
 export function HomeFaq() {
   const [open, setOpen] = useState(0);
 
   return (
-    <section id="faq" className="section-pad bg-canvas">
-      <div className="mx-auto grid grid-cols-1 w-full max-w-[1240px] gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+    <section id="faq" className="section-pad relative bg-canvas">
+      {/* Caustic clip box — `isolate` for the reason in the block comment.
+          x/y are the TOP-LEFT corner: a 520px disc centred at (88%, 16%). */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 isolate overflow-hidden"
+      >
+        <Caustic
+          light
+          x="calc(88% - 260px)"
+          y="calc(16% - 260px)"
+          size="520px"
+          drift="far"
+        />
+      </span>
+
+      <div className="relative mx-auto grid grid-cols-1 w-full max-w-[1240px] gap-12 px-6 md:px-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <div>
           <Reveal>
-            <span className="eyebrow-capsule">{HOME_SECTIONS.faq.eyebrow}</span>
+            <Droplet
+              light
+              className="liq-flat px-4 py-1.5 text-[12px] font-semibold uppercase tracking-eyebrow text-violet-text"
+            >
+              {HOME_SECTIONS.faq.eyebrow}
+            </Droplet>
             <h2 className="display-2 mt-6 max-w-[16ch] text-ink">
               {HOME_SECTIONS.faq.heading}
             </h2>
           </Reveal>
 
           <Reveal delay={140}>
-            <div className="mt-10 rounded-lg border border-line-soft bg-surface p-7">
+            <div
+              className="liq liq-light liq-spec relative isolate mt-10 rounded-lg p-7"
+              style={{ "--liq-pad": "28px" } as CSSProperties}
+            >
               <h3 className="text-[18px] font-semibold text-ink">
                 Still have a question?
               </h3>
@@ -103,7 +187,15 @@ export function HomeFaq() {
                       onClick={() => setOpen(isOpen ? -1 : i)}
                       className="flex w-full items-center justify-between gap-6 py-5 text-left text-[16.5px] font-semibold text-ink transition-colors duration-ui hover:text-plum-700"
                     >
-                      {item.q}
+                      <span className="flex min-w-0 items-center gap-3.5">
+                        <Node
+                          light
+                          size={6}
+                          lit={isOpen}
+                          style={DOT(isOpen)}
+                        />
+                        <span>{item.q}</span>
+                      </span>
                       <span
                         aria-hidden="true"
                         style={CHEVRON_SPRING}

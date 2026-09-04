@@ -2,6 +2,7 @@
 
 import { useRef, useState, type CSSProperties } from "react";
 import { Reveal } from "@/components/motion/Reveal";
+import { Pool } from "@/components/motifs";
 import { SectionHeader } from "./SectionHeader";
 import { TESTIMONIALS } from "@/content/testimonials";
 import { HOME_SECTIONS } from "@/content/home";
@@ -55,6 +56,47 @@ const PRESS_SPRING: CSSProperties = {
  *
  * `overscroll-x-contain` adds the iOS rubber-band stop at the track ends: the
  * bounce is absorbed here instead of chaining to the page/back-gesture.
+ *
+ * V4 (Phase 8) — the cards become light glass Vessels (Part E row 11). The
+ * snap track, `.card-depth`, the sprung dot morph and the press springs are
+ * all unchanged; what changed is the material and one motif.
+ *
+ * MATERIAL. `.liq liq-light` (tier 2, .70 white) at radius 20 with
+ * `.liq-spec` — the pointer specular masked to the padding frame, `--liq-pad`
+ * 32px = the `md:p-8` padding exactly (it is `display: none` below 1024 and on
+ * coarse pointers, so the mobile `p-7` never has to match). The flat
+ * `border-line-soft` and `shadow-card` are gone: on `.liq` the rim ring IS the
+ * border and `--liq-light-shadow` is the elevation (§A2, Part J Phase 2). Ink:
+ * `--ink` for the name, `--ink-2` for the quote, `--ink-3` for the role —
+ * `--ink-3` is legal from `.liq-light` TIER 2 up (§A6 puts it at 4.56; over
+ * this section's `--surface` it measures 5.41:1) and is forbidden only on
+ * `.liq-light.liq-1`, which these cards are not. The monogram keeps
+ * `grad-fill`: one saturated point per card.
+ *
+ * `liq-flat` — no backdrop-filter at any size — and here that is CORRECTNESS,
+ * not just the §A7 budget. `.card-depth`'s keyframes animate `opacity`
+ * (0.75 → 1 → 0.75, `both`, so an off-centre card RESTS at 0.75), and an
+ * ancestor with opacity < 1 is a backdrop root in Chromium: the frost inside
+ * it would sample an empty backdrop for all but the one perfectly centred
+ * card. On top of that the track sits on a flat `--surface` (#ffffff), where a
+ * blur of a constant field is that constant and `saturate(1.15)` of an
+ * achromatic white is white — so the frost was provably zero pixels of
+ * difference before `.card-depth` even got to it. The glass still reads: rim
+ * ring, wet edge and shadow are what draw it.
+ *
+ * THE POOL. A faint light Pool per card, in the reserved bottom padding.
+ * `.pool` is `inset: auto 0 0 0; height: 46%` of a positioned parent, so a
+ * 120px box gives a 55.2px basin (measured) and `pb-20` (80px) reserves the
+ * room — the basin clears the figcaption by ~25px. `pb-16` also cleared it,
+ * by 8.8px, but `.pool::before`'s 1px lavender meniscus line then read as an
+ * underline under the role rather than as a liquid surface. That clearance is
+ * the point either way: §A6
+ * allows only `--ink` over a light Pool, and the role line is `--ink-3`, so
+ * the pool is kept geometrically off the text rather than recoloured. It is
+ * FIRST in DOM and the copy carries `relative z-[1]`, because `.pool` is
+ * positioned with no z-index and would otherwise paint over in-flow text.
+ * The basin rises with the card's `Reveal` (motifs.css `[data-inview] .pool`)
+ * and rests full, so reduced motion and no-JS both show the settled pool.
  */
 export function Testimonials() {
   const trackRef = useRef<HTMLUListElement | null>(null);
@@ -109,12 +151,24 @@ export function Testimonials() {
                 key={t.name}
                 className="card-depth w-[86%] shrink-0 snap-center sm:w-[60%] lg:w-[calc((100%-40px)/3)]"
               >
-                <figure className="flex h-full flex-col rounded-lg border border-line-soft bg-canvas p-7 shadow-card md:p-8">
+                <figure
+                  className="liq liq-light liq-flat liq-spec relative isolate flex h-full flex-col overflow-hidden rounded-lg p-7 pb-20 md:p-8 md:pb-20"
+                  style={{ "--liq-pad": "32px" } as CSSProperties}
+                >
+                  {/* Basin in the reserved bottom padding — see the block
+                      comment for the 46% arithmetic and the §A6 clearance. */}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-[120px]"
+                  >
+                    <Pool light />
+                  </span>
+
                   <QuoteMark />
-                  <blockquote className="mt-5 flex-1 text-[15.5px] italic leading-relaxed text-ink-2">
+                  <blockquote className="relative z-[1] mt-5 flex-1 text-[15.5px] italic leading-relaxed text-ink-2">
                     &ldquo;{t.quote}&rdquo;
                   </blockquote>
-                  <figcaption className="mt-7 flex items-center gap-3">
+                  <figcaption className="relative z-[1] mt-7 flex items-center gap-3">
                     <span
                       aria-hidden="true"
                       className="grid h-11 w-11 shrink-0 place-items-center rounded-pill grad-fill text-[13px] font-semibold text-ink-inv"
@@ -187,7 +241,7 @@ function QuoteMark() {
       width="40"
       height="30"
       aria-hidden="true"
-      className="text-lavender-300"
+      className="relative z-[1] text-lavender-300"
     >
       <path
         d="M0 30V16.5C0 7.4 5.6 1.2 15 0v6.4c-4.9 1.1-7.4 4-7.4 8.4H15V30H0Zm25 0V16.5C25 7.4 30.6 1.2 40 0v6.4c-4.9 1.1-7.4 4-7.4 8.4H40V30H25Z"
