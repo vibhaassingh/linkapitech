@@ -226,9 +226,42 @@ const AUDIT = `(() => {
   return out;
 })()`;
 
+// ---- hero lens registration (REDESIGN-V4 Part F, F7) ----
+// The WebGL canvas and the SVG poster share one wrapper and one 500×400
+// coordinate space: the shader letterboxes its frustum ("meet") exactly as the
+// SVG's xMidYMid meet does, so at uWake = 0 they must be the same picture.
+// This checks the geometric half of that promise from the DOM: map the body
+// <ellipse>'s own cx/cy/rx/ry through the canvas rect's letterbox and compare
+// with where the browser actually painted the ellipse. The ellipse carries
+// `data-lens-body` (HeroLens.tsx) so the selector cannot drift onto the
+// clipPath's or the rim's ellipse. A 1px tolerance covers sub-pixel rounding
+// of the rect; a wrong viewBox, a stretched canvas or a lost `inset-0` would
+// miss by tens of px.
+const LENS_REGISTRATION = `(() => {
+  const body = document.querySelector('.hero-lens [data-lens-body]');
+  const canvas = document.querySelector('.hero-lens canvas');
+  if (!body || !canvas) return { missing: !body ? 'svg [data-lens-body]' : 'hero canvas' };
+  const svg = body.ownerSVGElement;
+  const vb = (svg.getAttribute('viewBox') || '').split(/\\s+/).map(Number);
+  if (vb.length !== 4 || vb.some(Number.isNaN)) return { missing: 'svg viewBox' };
+  const [, , VW, VH] = vb;
+  const ex = +body.getAttribute('cx'), ey = +body.getAttribute('cy');
+  const erx = +body.getAttribute('rx'), ery = +body.getAttribute('ry');
+  const c = canvas.getBoundingClientRect(), b = body.getBoundingClientRect();
+  const s = Math.min(c.width / VW, c.height / VH);                 // px per viewBox unit ("meet")
+  const ox = c.left + (c.width - VW * s) / 2, oy = c.top + (c.height - VH * s) / 2;
+  const exp = { cx: ox + ex * s, cy: oy + ey * s, w: 2 * erx * s, h: 2 * ery * s };
+  const got = { cx: b.left + b.width / 2, cy: b.top + b.height / 2, w: b.width, h: b.height };
+  const d = {};
+  for (const k of Object.keys(exp)) d[k] = +(got[k] - exp[k]).toFixed(2);
+  return { canvas: Math.round(c.width) + 'x' + Math.round(c.height), viewBox: VW + 'x' + VH,
+           d, max: Math.max(...Object.values(d).map(Math.abs)) };
+})()`;
+
 const R = reporter("layout defects");
 const found = { collapsed: [], zeroMedia: [], textOverlap: [], clipped: [], offCanvas: [], tinyText: [] };
 let audited = 0;
+let lensReg = null;
 
 for (const vp of VIEWPORTS) {
   const s = await session({ w: vp.w, h: vp.h, mobile: vp.mobile, gl: true, base: BASE });
@@ -242,6 +275,9 @@ for (const vp of VIEWPORTS) {
       s.close();
       process.exit(2);
     }
+    // Measured at scroll 0, before the wheel steps below move the parallax
+    // wrapper (canvas and SVG move together, but the numbers read cleaner here).
+    if (p === "/" && vp.w === 1440) lensReg = await s.evalJs(LENS_REGISTRATION);
     // The overlap check hit-tests, and hit-testing only works on what is
     // currently ON SCREEN. Running it once would therefore audit the first
     // viewport and silently ignore the rest of the page — trading the 287 false
@@ -307,4 +343,13 @@ for (const [name, rows, fmt] of groups) {
 
 R.ok(`audited ${audited} page-views`, audited === PAGES.length * VIEWPORTS.length, `${audited}`);
 for (const [name, rows] of groups) R.ok(`no ${name}`, rows.length === 0, `${rows.length}`);
+R.ok(
+  "hero lens registers with its WebGL canvas (SVG body ellipse == canvas letterbox, ≤ 1px) @1440",
+  !!lensReg && !lensReg.missing && lensReg.max <= 1,
+  lensReg
+    ? lensReg.missing
+      ? `missing ${lensReg.missing}`
+      : `canvas ${lensReg.canvas} viewBox ${lensReg.viewBox} Δ(cx,cy,w,h)=${JSON.stringify(lensReg.d)} max=${lensReg.max}px`
+    : "not measured",
+);
 R.finish();

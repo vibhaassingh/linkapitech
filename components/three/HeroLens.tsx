@@ -160,6 +160,7 @@ export function HeroLens() {
           {/* 2. Lens body, then the five metaballs at rest, clipped to it. */}
           <g data-poster="">
             <ellipse
+              data-lens-body=""
               cx={LENS.cx}
               cy={LENS.cy}
               rx={LENS.rx}

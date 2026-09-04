@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { HeroField as Field } from "./scene/createHeroField";
+import type { HeroLiquid as Field } from "./scene/createHeroLiquid";
 
 /**
- * Lifecycle harness for the hero's ambient WebGL layer.
+ * Lifecycle harness for the hero's liquid-lens WebGL layer.
+ *
+ * The scene (scene/createHeroLiquid.ts) is one full-quad fragment-shader lens
+ * whose `uWake = 0` pose is the SVG poster's exactly, so the canvas fade below
+ * reads as the lens waking up rather than as a swap.
  *
  * Every gate here exists so the layer can never cost a client that won't
  * benefit from it:
@@ -68,10 +72,10 @@ export function HeroField() {
 
     const boot = async () => {
       if (cancelled) return;
-      const { createHeroField } = await import("./scene/createHeroField");
+      const { createHeroLiquid } = await import("./scene/createHeroLiquid");
       if (cancelled) return;
 
-      scene = createHeroField(canvas, wrap, () => setLive(true));
+      scene = createHeroLiquid(canvas, wrap, () => setLive(true));
 
       // start/stop with visibility so an off-screen hero costs nothing
       runIo = new IntersectionObserver(
@@ -111,6 +115,18 @@ export function HeroField() {
       scene = null;
     };
   }, []);
+
+  // Poster hand-off. Once the scene has drawn its first frame, flag the lens
+  // host so globals.css (`.hero-lens[data-live="true"] [data-poster]`) fades
+  // the SVG's poster groups on the same 900ms clock the canvas fades in with.
+  // Removed on unmount, so a remount starts from the whole poster again.
+  useEffect(() => {
+    if (!live) return;
+    const host = canvasRef.current?.closest(".hero-lens");
+    if (!host) return;
+    host.setAttribute("data-live", "true");
+    return () => host.removeAttribute("data-live");
+  }, [live]);
 
   return (
     <div
