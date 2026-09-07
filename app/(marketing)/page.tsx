@@ -2,6 +2,7 @@ import { pageMetadata } from "@/lib/metadata";
 import { JsonLd, organizationGraph } from "@/lib/jsonld";
 import { Hero } from "@/components/sections/home/Hero";
 import { LogoMarquee } from "@/components/sections/home/LogoMarquee";
+import { PluginSpotlight } from "@/components/sections/home/PluginSpotlight";
 import { WhoWeAre } from "@/components/sections/home/WhoWeAre";
 import { WhatWeDo } from "@/components/sections/home/WhatWeDo";
 import { Ecosystem } from "@/components/sections/home/Ecosystem";
@@ -28,6 +29,9 @@ export default function HomePage() {
       <JsonLd data={organizationGraph()} />
       <Hero />
       <LogoMarquee />
+      {/* Hero-product spotlight — the one addition to the Figma's order
+          (client brief 2026-08-27). */}
+      <PluginSpotlight />
       <WhoWeAre />
       <WhatWeDo />
       <Ecosystem />

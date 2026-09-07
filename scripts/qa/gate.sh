@@ -46,7 +46,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-ROUTES=(/ /about /services /solutions /connected-banking /industries /contact
+ROUTES=(/ /about /services /solutions /connected-banking /bank-plugin
+        /axisbank-lp /hsbc-lp /indusind-lp /industries /contact
         /privacy /terms /banks /banks/axis /banks/indusind /banks/hsbc)
 
 pass=(); fail=(); soft=()
@@ -159,25 +160,26 @@ if node scripts/qa/kbd2.mjs; then ok "reduced-motion clean"; else bad "reduced-m
 # ALLOWED_ANIM is an allowlist of animations permitted to be non-composited,
 # each of which needs a reason recorded here:
 #
-#   ecoWire — SVG dash-flow, animates stroke-dashoffset. There is no composited
-#     way to march dashes along a path; translating a longer dashed path only
-#     works for straight segments, and the ecosystem/orbit ring is an ellipse.
-#     Measured cost is nil: /connected-banking has the LOWEST TBT of every route
-#     (20ms) at perf 96. Kept as a documented exception, not an oversight.
-#
 #   conduitPulse — the motif kit's SVG Conduit packet (components/motifs/
 #     motifs.css), animates stroke-dashoffset on a <path pathLength="100">.
-#     Same reasoning as ecoWire: a dash marching along a CURVED path has no
-#     composited equivalent, and a translated longer dashed path only works for
-#     straight segments. Bounded by construction: one 8-unit packet per path per
-#     6s, rendered ≥1024 only, `display: none` under reduced motion
-#     (REDESIGN-V4 Part C). Allowlisted ahead of its first call site (Ecosystem,
-#     Phase 7) so it cannot be mistaken for a regression when it lands.
+#     A dash marching along a CURVED path has no composited equivalent, and a
+#     translated longer dashed path only works for straight segments. Bounded
+#     by construction: one 8-unit packet per path per 6s, rendered ≥1024 only,
+#     `display: none` under reduced motion (REDESIGN-V4 Part C). Allowlisted
+#     ahead of its first call site (Ecosystem, Phase 7) so it could not be
+#     mistaken for a regression when it landed.
+#
+#   `ecoWire` was the other entry and is RETIRED (V4 Phase 10) together with
+#     the `.eco-wire` rule and its keyframes. It lost its last call site in
+#     Phase 9a and survived two phases only because `contract.py` fails on
+#     orphan classes, not on dead rules, and dropping an allowlist entry is a
+#     gate change nobody wanted to make mid-phase. An allowlist entry with no
+#     call site is exactly the cover a real offender could ride in under.
 #
 # Anything not on that list fails, so a new offender cannot ride in silently.
 # Comma- or whitespace-separated; the Python below splits on both.
 step "composited-animation audit over key routes (authoritative: runs GPU-composited)"
-ALLOWED_ANIM="ecoWire,conduitPulse"
+ALLOWED_ANIM="conduitPulse"
 LH_FAIL=0
 # /about and /solutions joined the list in phase 9b, because the phase-7
 # failure was precisely a route-coverage gap: a chrome transition that `/` could
@@ -188,7 +190,7 @@ LH_FAIL=0
 # `.section-dark` inset under the pill observer; /solutions adds a `.sheet-enter`
 # dark band, a drifting Caustic and the Ledger's live backdrop-filter. Both were
 # argued safe in comments and verified by nothing.
-for r in / /about /services /solutions /connected-banking /contact /banks/axis; do
+for r in / /about /services /solutions /connected-banking /bank-plugin /hsbc-lp /contact /banks/axis; do
   LH="/tmp/gate-lh$(echo "$r" | tr '/' '-').json"
   if ! npx lighthouse "$BASE$r" --only-categories=performance --form-factor=mobile \
        --screenEmulation.mobile --throttling-method=simulate --quiet \

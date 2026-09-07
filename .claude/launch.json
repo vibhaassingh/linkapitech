@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--port", "3100"],
       "port": 3100
+    },
+    {
+      "name": "linkapitech-plugin-hosts",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:hosts", "--", "--port", "3100"],
+      "port": 3100
     }
   ]
 }

@@ -5,7 +5,8 @@ import { writeFileSync } from "node:fs";
 import { session, sleep } from "./lib/cdp.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3411";
-const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking",
+const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking", "/bank-plugin",
+  "/axisbank-lp", "/hsbc-lp", "/indusind-lp",
   "/industries", "/contact", "/privacy", "/terms",
   "/banks", "/banks/axis", "/banks/indusind", "/banks/hsbc"];
 const VIEWPORTS = [

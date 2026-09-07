@@ -108,6 +108,18 @@ OWNERSHIP = [
     # Phase 6: the one-hook client wrapper that writes --sp on a server section.
     ("V4", "components/sections/home/SectionProgress.tsx"),
 
+    # --- V5 "The Bank Plugin" hero-product landing page (2026-09, client
+    #     brief 2026-08-27): its route, its section kit and the homepage
+    #     spotlight that links to it. ---
+    ("V5", "app/(site)/bank-plugin/*"),
+    ("V5", "app/(plugin)/*"),
+    ("V5", "components/sections/plugin/*"),
+    ("V5", "components/sections/home/PluginSpotlight.tsx"),
+    ("V5", "components/chrome/PluginHeader.tsx"),
+    ("V5", "components/chrome/PluginFooter.tsx"),
+    ("V5", "lib/plugin-hosts.ts"),
+    ("V5", "middleware.ts"),
+
     # --- orchestrator-owned (not a packet) ---
     ("ORCH", "scripts/qa/*"),
     ("ORCH", "content/*"),

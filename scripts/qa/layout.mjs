@@ -18,7 +18,8 @@
 import { session, reporter, sleep } from "./lib/cdp.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3411";
-const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking",
+const PAGES = ["/", "/about", "/services", "/solutions", "/connected-banking", "/bank-plugin",
+  "/axisbank-lp", "/hsbc-lp", "/indusind-lp",
   "/industries", "/contact", "/privacy", "/terms",
   "/banks", "/banks/axis", "/banks/indusind", "/banks/hsbc"];
 // 1024×700 is NARROW-DESKTOP-SHORT, and it is here because nothing else

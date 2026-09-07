@@ -1844,38 +1844,45 @@ html {
   background: var(--plum-600);
   flex: none;
 }
+/* The expanding ring. TRANSFORM + OPACITY ONLY — this rule used to animate
+   `box-shadow` spread (0 → 10px) with a colour fade, which is an off-compositor
+   property and is exactly what the gate's composited-animation audit fails a
+   route for. It went unseen for the life of the class because `.pulse-dot` had
+   NO call site until /bank-plugin's mockup added one, and `contract.py` only
+   fails on orphan CLASSES, never on a dead rule with a latent defect. The dot
+   is 8px, so the old 10px spread grew the ring to 28px across: scale(3.5) is
+   the same silhouette, composited.
+
+   The colour now lives on the pseudo-element's `background` rather than in the
+   keyframes, so the dark variant needs only a background swap — which is why
+   `@keyframes quietpulse-inv` is gone rather than duplicated. Under reduced
+   motion the global block collapses the duration and `both` holds the end
+   frame, i.e. `opacity: 0` — an invisible ring, the same resting state the
+   box-shadow version ended on. */
 .pulse-dot::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(98, 33, 111, 0.35);
+  background: rgba(98, 33, 111, 0.35);
   animation: quietpulse 6s ease-out infinite;
 }
 @keyframes quietpulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(98, 33, 111, 0.35);
+    transform: scale(1);
+    opacity: 1;
   }
   30%,
   100% {
-    box-shadow: 0 0 0 10px rgba(98, 33, 111, 0);
+    transform: scale(3.5);
+    opacity: 0;
   }
 }
 .section-dark .pulse-dot {
   background: var(--lavender-400);
 }
 .section-dark .pulse-dot::after {
-  box-shadow: 0 0 0 0 rgba(201, 184, 216, 0.3);
-  animation-name: quietpulse-inv;
-}
-@keyframes quietpulse-inv {
-  0% {
-    box-shadow: 0 0 0 0 rgba(201, 184, 216, 0.3);
-  }
-  30%,
-  100% {
-    box-shadow: 0 0 0 10px rgba(201, 184, 216, 0);
-  }
+  background: rgba(201, 184, 216, 0.3);
 }
 
 /* ============================================================

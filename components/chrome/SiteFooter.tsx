@@ -151,7 +151,18 @@ export function SiteFooter() {
                  lib/site.ts so the shared nav data stays untouched. */
               const links =
                 col.heading === "Products"
-                  ? [...col.links, { href: "/banks", label: "Bank integrations" }]
+                  ? [
+                      ...col.links,
+                      /* The three bank plugin landing pages are NOT listed
+                         here. They are a separate site on their own
+                         subdomains (client instruction, 2026-09), reached
+                         from /bank-plugin rather than from the main site's
+                         IA — a footer column of cross-origin product links
+                         would read as site navigation and, before the hosts
+                         are configured, would point at paths this footer
+                         cannot know are live. */
+                      { href: "/banks", label: "Bank integrations" },
+                    ]
                   : col.links;
               return (
                 <nav key={col.heading} aria-label={col.heading}>

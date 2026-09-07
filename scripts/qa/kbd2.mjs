@@ -14,7 +14,7 @@ async function sess({w,h,mobile,rm}){
 // ---- reduced motion ----
 {
   const s=await sess({w:1440,h:900,rm:true});
-  for(const p of ["/","/about","/services","/solutions","/connected-banking","/industries","/contact"]) {
+  for(const p of ["/","/about","/services","/solutions","/connected-banking","/bank-plugin","/indusind-lp","/industries","/contact"]) {
     await s.goto(p);
     const r=await s.ev(`(() => {
       const hidden=[...document.querySelectorAll('[data-reveal]')].filter(e=>getComputedStyle(e).opacity!=='1').length;

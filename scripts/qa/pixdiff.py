@@ -38,7 +38,8 @@ CURRENT = os.path.join(ROOT, "scripts", "qa", "current")
 REVIEW = os.path.join(ROOT, "scripts", "qa", "review")
 
 ROUTES = [
-    "/", "/about", "/services", "/solutions", "/connected-banking",
+    "/", "/about", "/services", "/solutions", "/connected-banking", "/bank-plugin",
+    "/axisbank-lp", "/hsbc-lp", "/indusind-lp",
     "/industries", "/contact", "/privacy", "/terms",
     "/banks", "/banks/axis", "/banks/indusind", "/banks/hsbc",
 ]

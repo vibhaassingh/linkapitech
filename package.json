@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:hosts": "NEXT_PUBLIC_PLUGIN_HOST_AXIS=axis.plugin.localhost NEXT_PUBLIC_PLUGIN_HOST_HSBC=hsbc.plugin.localhost NEXT_PUBLIC_PLUGIN_HOST_INDUSIND=indusind.plugin.localhost next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

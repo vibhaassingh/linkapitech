@@ -20,7 +20,7 @@ import { session, reporter } from "./lib/cdp.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3411";
 const R = reporter("cascade conflicts");
-const ROUTES = ["/", "/about", "/services", "/solutions", "/connected-banking",
+const ROUTES = ["/", "/about", "/services", "/solutions", "/connected-banking", "/bank-plugin", "/hsbc-lp",
                 "/industries", "/contact", "/banks", "/banks/axis"];
 
 const CHECK = `(() => {

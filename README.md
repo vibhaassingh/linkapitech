@@ -44,8 +44,14 @@ light sections sit on `--canvas #FAF8FC`. Two-tone headlines use
 
 ## Navigation
 
-A **floating white pill navbar** with five flat links. There is deliberately
-**no mega menu** — the Figma has none. Below 1024px, `components/chrome/
+A **floating white pill navbar** with six flat links. There is deliberately
+**no mega menu** — the Figma has none. The Figma drew five; **"The Bank
+Plugin"** is the sixth, added at the client's request (2026-08-27) so the hero
+product is one click from every page. Six is the ceiling: at `lg` (a 976px
+pill) the row only fits because the gaps tighten to `gap-4` / 14px there and
+every item is `whitespace-nowrap` — without the nowrap a link wrapped and the
+64px pill became two lines at exactly 1024px. A seventh link needs a different
+header, not another tightening. Below 1024px, `components/chrome/
 MobileMenu.tsx` is a `role="dialog"` sheet with focus trap/restore and scroll
 lock. It keeps its dialog mounted via `hidden={!open}` rather than unmounting.
 
@@ -129,15 +135,18 @@ app/
   fonts.ts                   Poppins (400–700) + IBM Plex Mono 400
   globals.css                :root tokens + type scale + reveal/motion CSS
   (marketing)/               homepage route group (Lenis + lazy WebGL haze)
+  (plugin)/                  THE BANK PLUGIN landing sites — no site chrome
+    axisbank-lp/  hsbc-lp/  indusind-lp/     one page per bank
   (site)/                    inner pages (native smooth scroll)
-    about  services  solutions  connected-banking  industries
-    banks  banks/[slug]  contact  terms  privacy
+    about  services  solutions  connected-banking  bank-plugin
+    industries  banks  banks/[slug]  contact  terms  privacy
   api/contact/route.ts       zod + honeypot + Resend-optional form handler
   opengraph-image  icon  apple-icon  sitemap  robots
 components/
   chrome/   SiteHeader (pill nav), MobileMenu, SiteFooter, Logo,
-            SkipLink, RouteTransition, chrome.css
-  sections/ home/* (14 sections), services/*, industries/*,
+            SkipLink, RouteTransition, chrome.css,
+            PluginHeader + PluginFooter (the plugin sites' own chrome)
+  sections/ home/* (15 sections), services/*, industries/*, plugin/*,
             PageHero, CtaBand, ContactForm, LegalDoc
   three/    HeroLens (SVG, complete alone; `compact` for /about),
             HeroField (WebGL), scene/createHeroLiquid, scene/liquidShaders,
@@ -148,11 +157,148 @@ components/
   motion/   SmoothScrollProvider, Reveal, RevealGroup, Magnetic, CursorGlow,
             useInView, useSectionProgress, velocity, hooks
 content/    services, solutions, industries, banks, capabilities, process,
-            testimonials, faq, stats, clients, home, about, legal
+            testimonials, faq, stats, clients, home, about, legal, plugin
             (typed data — single source of truth)
-lib/        site (IA + contacts), metadata, analytics, jsonld, cn, springs
+lib/        site (IA + contacts), metadata, analytics, jsonld, cn, springs,
+            plugin-hosts (subdomain map for the plugin landing sites)
+middleware.ts  maps a plugin subdomain onto its bank's page
 scripts/qa/ verification harness — see below
 ```
+
+### `/bank-plugin` and the three bank pages — the hero product
+
+Four routes in **two different route groups**, and the split is the point.
+`/bank-plugin` is a `(site)` page — the main site's product page, linked from
+the pill nav and the homepage. The three bank pages are `(plugin)` pages:
+**a separate site each, with its own menu bar and none of the site chrome**
+(client instruction, 2026-09).
+
+#### The URLs
+
+Fixed by the client, and live on the main domain today:
+
+| Bank | URL |
+|---|---|
+| Axis Bank | `linkapitech.kerning.ooo/axisbank-lp` |
+| HSBC | `linkapitech.kerning.ooo/hsbc-lp` |
+| IndusInd Bank | `linkapitech.kerning.ooo/indusind-lp` |
+
+`PLUGIN_PATHS` in `lib/plugin-hosts.ts` is the **single** place that maps a
+bank to its path; the route folders, every cross-link, the canonical tags, the
+sitemap and the subdomain middleware all read it. Note Axis's segment is
+`axisbank`, not `axis` — matching the client's instruction and the host its
+live portal answers on.
+
+Each is **its own route file** (`app/(plugin)/axisbank-lp/page.tsx`, …), about
+20 lines, rendering the shared `BankPluginLanding` with its slug. Not one root
+`[slug]` segment: at the root of the app that is a catch-all sitting beside
+every top-level page, and while static routes still win, every unmatched path
+would resolve through it.
+
+#### Moving them to subdomains later
+
+The machinery is already wired and inert. `middleware.ts` maps an incoming
+Host onto a bank's page: the subdomain's **root is rewritten** to that bank's
+path (a rewrite, so the visitor's URL bar keeps the subdomain), and **every
+other path on that host 308s** to it, so one plugin origin serves exactly one
+page. Before that last rule existed, `hsbc.…/about` returned the main site's
+About page — three extra copies of the main site on origins whose canonicals
+point elsewhere.
+
+**No host is hardcoded, and the map is empty until the environment sets it:**
+
+```
+NEXT_PUBLIC_PLUGIN_HOST_AXIS=…
+NEXT_PUBLIC_PLUGIN_HOST_HSBC=…
+NEXT_PUBLIC_PLUGIN_HOST_INDUSIND=…
+```
+
+Unset — which is how it ships today — the pages serve at their
+`PLUGIN_PATHS` paths on the main domain, `pluginPageUrl()` returns that path
+and middleware rewrites nothing. Set, and the same code serves the
+subdomains, each page's canonical moves to its own host, and every cross-link
+between them becomes absolute. **No code change:** confirm the names, add them
+as domains in Vercel, set the three vars, redeploy.
+
+> **The obvious names are already taken by live software.**
+> `hsbc`, `indusind` and `axisbank`.linkapitech.com each serve the client's
+> existing plugin **portal** — a Bootstrap app with a working `/login`,
+> registration, OTP and plugin download (all three verified serving 200 on `/`
+> and `/login`, 2026-09-07). Pointing those at this app would take a working
+> product offline. That is why nothing defaults to them and why the real names
+> are an open question in `CONTENT-TODO.md`.
+
+To exercise it locally: `npm run dev:hosts` (or the `linkapitech-plugin-hosts`
+launch config) sets the three vars to `*.plugin.localhost` and you can drive it
+with a Host header:
+
+```bash
+curl -H "Host: hsbc.plugin.localhost" http://localhost:3000/
+```
+
+#### Why three pages rather than one The product is identical everywhere but the three things a buyer needs are
+not: Axis and HSBC register on the LinkAPI portal while **IndusInd registers
+inside IndusDirect** and receives the TCP by email; **only Axis publishes a
+price**; and support is a Google Form (HSBC), an email desk (Axis) or the
+bank's own Centralised Service Desk plus a categorised ticket form
+(IndusInd). All of that is per-bank data in `content/plugin.ts`; the shared
+product story is the section kit in
+`components/sections/plugin/PluginSections.tsx`, rendered by all four routes.
+
+#### The plugin chrome
+
+`PluginHeader` / `PluginFooter` share nothing with `SiteHeader` /
+`SiteFooter` but the wordmark: a full-width opaque bar flush to the top edge
+(not a floating frosted pill), in-page anchors for that page only (not six
+site sections), and Log in / Register on the bank's portal (not "Contact
+Us"). It is `sticky` and in flow, which is why these pages carry **none** of
+the `pt-[136px]` header clearance every `(site)` route needs, and it contains
+**no JavaScript at all** — the anchor row wraps onto its own scrollable line
+below `md` instead of collapsing into a dialog, so there is no menu state and
+no focus trap. A plum strip above it names LinkAPI and links back to the main
+domain, which is the honest disclosure that a page headed with a bank's name
+was published by LinkAPI.
+
+The `(plugin)` layout renders no `.chrome-main` and no `RouteTransition`; see
+its file header for why each is absent rather than forgotten.
+
+**Bank identity is the mark, never the palette.** These pages stay plum and do
+not adopt Axis burgundy / HSBC red / IndusInd crimson — recolouring reads as
+the bank having published the page (CONTENT-TODO §1), and every AA figure in
+`REDESIGN-V4.md` is calibrated against the plum range.
+
+They deliberately **do not** use the site's section grammar. The client asked for a standalone
+landing page for the plugin product whose "layouting and design can be a
+little different", with ringg.ai as the reference, so it runs the same tokens
+and chrome over a product-page structure: a centred hero above one large
+product mockup, flat `bg-surface` plates instead of glass clusters, one dark
+band, and **no scroll-driven Conduits or Caustics**. Consequences worth
+knowing before editing it:
+
+* **The hub keeps the site chrome; the bank pages do not.** `/bank-plugin`
+  is a normal `(site)` page with the pill nav and the footer curtain. Moving
+  a section between it and a bank page means moving it across route groups.
+* **Its hero is bespoke, not `<PageHero>`.** It still honours PageHero's two
+  contracts — `data-hero="light"` (chrome.css's first-frame pill tone) and the
+  `pt-[136px] md:pt-[156px]` header clearance — and its `h1` is the LCP
+  element, so it is not reveal-gated.
+* **The hero column is `text-center`.** `PluginMockup` therefore carries an
+  explicit `text-left`; without it every payee name centres inside the window
+  chrome.
+* **The blur budget is nearly free here** — the pill, the hero Droplet and the
+  eyebrow capsules only. The dark step cards are `liq liq-flat`: on a flat
+  plum band the frost is provably zero pixels of difference, so they get the
+  rim and shadow without a backdrop-filter.
+* **`components/sections/plugin/` is shared by five surfaces.** The hub, the
+  three bank pages, and `PluginSpotlight` (section 2 of the homepage, right
+  after the marquee, which renders `PluginMockup compact`). A change there
+  lands on all of them.
+* **`.pulse-dot` was fixed to reach this page.** It animated `box-shadow`
+  spread — off-compositor, and a hard gate failure — but had **no call site
+  at all** until the plugin mockup added one, and `contract.py` fails on
+  orphan classes, not on a dead rule with a latent defect. It is now a
+  `transform`/`opacity` ring; `@keyframes quietpulse-inv` is gone because the
+  colour moved out of the keyframes onto the pseudo-element's background.
 
 ### Retired routes
 
@@ -172,9 +318,9 @@ npm run gate -- --since <ref>
 ```
 
 `scripts/qa/gate.sh` covers tsc, the design-token/JS-wiring contract, build +
-BUILD_ID assertion, route health across 13 routes, an a11y + layout sweep
-(13 pages × 4 viewports), motion, WebGL, cascade conflicts, keyboard,
-reduced-motion, a composited-animation audit over 7 routes, and a pixel diff.
+BUILD_ID assertion, route health across 14 routes, an a11y + layout sweep
+(14 pages × 4 viewports), motion, WebGL, cascade conflicts, keyboard,
+reduced-motion, a composited-animation audit over 8 routes, and a pixel diff.
 The audit contributes two assertions per route (disallowed animations, and TBT).
 
 **The harness needs a global `WebSocket`.** That is Node 22+; on Node 20/21

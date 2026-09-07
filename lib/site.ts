@@ -67,9 +67,11 @@ export const SOCIALS: { label: string; href: string }[] = [
 ];
 
 /* ============================================================
-   Navigation IA — flat five-link pill header (Figma 2026-08).
-   The mega menu is retired: the Figma nav has no panels, and every
-   destination below is a real page.
+   Navigation IA — flat pill header (Figma 2026-08). The Figma drew five
+   links; "The Bank Plugin" is the sixth, added at the client's request
+   (2026-08-27) so the hero product is reachable from every page. The mega
+   menu is retired: the Figma nav has no panels, and every destination
+   below is a real page.
    ============================================================ */
 
 export interface NavLink {
@@ -79,6 +81,7 @@ export interface NavLink {
 
 export const NAV: NavLink[] = [
   { href: "/about", label: "About Us" },
+  { href: "/bank-plugin", label: "The Bank Plugin" },
   { href: "/solutions", label: "Solutions" },
   { href: "/connected-banking", label: "Connected Banking" },
   { href: "/services", label: "Services" },
@@ -105,6 +108,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     heading: "Products",
     links: [
+      { href: "/bank-plugin", label: "The Bank Plugin" },
       { href: "/connected-banking", label: "Connected Banking" },
       { href: "/solutions#payments-collections", label: "Payments & Collections" },
       { href: "/solutions#reconciliation", label: "Reconciliation Engine" },

@@ -39,7 +39,11 @@ const isActive = (pathname: string, href: string) =>
  * 2. NAV THUMB. One sliding underline for the whole nav instead of five static
  *    ones, so a route change springs it from the old item to the new (B0's
  *    `.nav-thumb` owns the paint and the spring; this component only publishes
- *    --thumb-x / --thumb-w / --thumb-o). Measurement is cached: it happens on
+ *    --thumb-x / --thumb-w / --thumb-o). Six links since "The Bank Plugin"
+ *    joined (2026-09): at lg the gaps tighten (gap-4, 14px) so the row still
+ *    fits the 976px pill with the CTA beside it, and every item is
+ *    whitespace-nowrap — a wrapped link turned the 64px pill into two lines
+ *    at exactly 1024px. Measurement is cached: it happens on
  *    mount, on route change, on a nav resize and once after webfont swap —
  *    never per frame, and never a read after a write in the same task.
  *    V4: the marker is a 6px dot placed by translate only (chrome.css §2);
@@ -363,7 +367,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
           ref={pillRef}
           data-stuck={stuck ? "true" : "false"}
           data-menu={mobileOpen ? "true" : "false"}
-          className="chrome-pill relative mx-auto flex h-[60px] w-full max-w-[1300px] items-center justify-between gap-6 rounded-[22px] pl-5 pr-3 shadow-card md:h-[64px] md:pl-7 md:pr-4"
+          className="chrome-pill relative mx-auto flex h-[60px] w-full max-w-[1300px] items-center justify-between gap-4 rounded-[22px] pl-5 pr-3 shadow-card md:h-[64px] md:pl-7 md:pr-4 xl:gap-6"
         >
           <Link
             href="/"
@@ -376,7 +380,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
           <nav
             ref={navRef}
             aria-label="Primary"
-            className="relative hidden items-center gap-7 lg:flex"
+            className="relative hidden items-center gap-4 lg:flex xl:gap-7"
           >
             {NAV.map((item, i) => {
               const active = i === activeIndex;
@@ -389,7 +393,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
                   }}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "chrome-nav-link rounded-sm py-1 text-[14.5px]",
+                    "chrome-nav-link whitespace-nowrap rounded-sm py-1 text-[14px] xl:text-[14.5px]",
                     active ? "font-semibold" : "font-medium",
                   )}
                 >
@@ -416,7 +420,7 @@ export function SiteHeader(_props: SiteHeaderProps) {
               /* py-2.5 is off the 8-pt grid on purpose: it is what puts the
                  button at a 44px box inside the 64px pill. The grid pass below
                  the fold only touched spacing that owns no component size. */
-              className="chrome-cta hidden items-center rounded-pill px-6 py-2.5 text-[14px] font-semibold lg:inline-flex"
+              className="chrome-cta hidden items-center whitespace-nowrap rounded-pill px-5 py-2.5 text-[14px] font-semibold lg:inline-flex xl:px-6"
             >
               {CTA.label}
             </Link>
