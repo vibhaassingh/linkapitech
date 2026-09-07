@@ -82,10 +82,18 @@ Hero, StatBand (now **dark**, Pools under the odometers), WhatWeDo (the Conduit 
 
 **Still genuinely open:**
 
-1. **StatBand numerals spill ~17px into the padding at 1024×800.** Cosmetic, measured in the Phase 6 review, never fixed. `layout.mjs` sweeps 1024×700 and does not flag it, so decide whether it is a defect or acceptable.
-2. **`--lavender-400` affixes measure 3.90–4.42 on glass.** They pass legitimately, as **large** text (`.stat-num` is 700 weight at 21–41.6px, floor 3:1). Recorded because the number looks like a failure to anyone who greps for it, and because it does **not** transfer: `--lavender-400` is never a body-copy colour on glass.
-3. **`@supports (backdrop-filter: url(#x))` was never verified false in Safari/Firefox.** If Safari parses-but-doesn't-render, gate `.liq-refract` behind a Chromium probe setting `html[data-refract]`.
-4. **`/solutions`' `RAIL_FROM/TO` (0.32/0.72) is not sampled** — see §1.
+1. **The hero shader costs ~5.5ms of GPU per frame on an integrated Intel GPU, against a 2ms budget.** `probe.mjs`'s `hardware GL: GPU time per frame < 2ms` FAILS on this machine: `n=60 min=5.377 median=5.507 p95=5.952ms` on *ANGLE Metal Renderer: Intel(R) UHD Graphics 630*, reproduced identically across two runs, one of them with nothing else on the machine.
+
+   **This is not a regression and not contention — it is the first honest measurement.** The shipped figure the assertion was calibrated against (median **0.87ms**) was taken on an **M1 Max**, and `probe.mjs`'s own comment says so explicitly: *"An M1 Max median is a sanity bound only: it is NOT evidence for F1's integrated-GPU (Iris Xe / HD 4000) budget, which only a run on such a machine can give."* This is such a machine. `createHeroLiquid.ts` and `liquidShaders.ts` are untouched since phase 5 (`c87cfb5`), and phase 9b's only `HeroLens.tsx` change *omits* the WebGL layer for /about's compact variant, so `/`'s render is byte-identical — the cost has been there since the scene landed and no run until now could see it.
+
+   For scale: 5.5ms is a third of a 60Hz frame's 16.7ms, on the GPU side, so it does not appear in TBT (`/` scores perf 93 / TBT 146ms) and every CPU-side rAF assertion passes (median 0.2–0.4ms). What it threatens is dropped frames while scrolling on integrated-GPU hardware, which is a large share of real visitors.
+
+   **Do not silently relax the threshold to get a green gate.** The options are a genuine design call: lower the adaptive DPR floor (currently 1.0), shrink the canvas, cheapen the shader's fbm octave count, or gate the WebGL layer off below a measured GPU class the way it is already gated off on mobile and under reduced motion. Whichever is chosen, the assertion should then grow an integrated-GPU branch with its own *documented, measured* budget rather than one number for all hardware.
+
+2. **StatBand numerals spill ~17px into the padding at 1024×800.** Cosmetic, measured in the Phase 6 review, never fixed. `layout.mjs` sweeps 1024×700 and does not flag it, so decide whether it is a defect or acceptable.
+3. **`--lavender-400` affixes measure 3.90–4.42 on glass.** They pass legitimately, as **large** text (`.stat-num` is 700 weight at 21–41.6px, floor 3:1). Recorded because the number looks like a failure to anyone who greps for it, and because it does **not** transfer: `--lavender-400` is never a body-copy colour on glass.
+4. **`@supports (backdrop-filter: url(#x))` was never verified false in Safari/Firefox.** If Safari parses-but-doesn't-render, gate `.liq-refract` behind a Chromium probe setting `html[data-refract]`.
+5. **`/solutions`' `RAIL_FROM/TO` (0.32/0.72) is not sampled** — see §1.
 
 **Carried, deliberately:**
 - `.eco-wire` and `@keyframes ecoWire` have **no rendered call site** anywhere, but both stay in `globals.css` and `ecoWire` stays in `gate.sh`'s `ALLOWED_ANIM`: `contract.py` fails on orphan classes, not on dead rules, and retiring an allowlist entry is a gate change. **Phase 10 deletes both.** `conduitPulse` is then the only allowlist entry.
