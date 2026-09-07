@@ -6,9 +6,13 @@ file *"LinkAPI Website"* and then elevated with liquid-glass surfaces and
 scroll motion the static Figma can't express. Populated entirely with
 **LinkAPI's real content**.
 
-> **Design lineage.** This is the third direction. It supersedes *Institutional
-> Light* (deep-navy, mega menu) which superseded the *allgoodstudio* design
-> clone. The authoritative spec is **`REDESIGN-V3.md`** in this folder. The
+> **Design lineage.** This is the third direction, now in its fourth
+> iteration — **V4 "Liquid Glass"**, which rebuilt every surface on the `.liq`
+> material and the nine-motif kit. It supersedes *Institutional Light*
+> (deep-navy, mega menu), which superseded the *allgoodstudio* design clone.
+> The authoritative spec is **`REDESIGN-V4.md`** in this folder (Part J is the
+> running decision log); `REDESIGN-V3.md` is the superseded V3 spec, and
+> `HANDOFF-V4.md` carries current state, open findings and hard-won gotchas. The
 > large spec documents in the parent folder (`DESIGN-SYSTEM.md`,
 > `HOMEPAGE-SECTIONS.md`, `INTERACTIONS-AND-MOTION.md`, `PAGES-AND-ROUTING.md`)
 > describe the **retired** first direction and are historical reference only.
@@ -45,17 +49,31 @@ A **floating white pill navbar** with five flat links. There is deliberately
 MobileMenu.tsx` is a `role="dialog"` sheet with focus trap/restore and scroll
 lock. It keeps its dialog mounted via `hidden={!open}` rather than unmounting.
 
-## The WebGL hero layer (lazy, additive)
+## The WebGL hero layer (lazy) — "the lens"
 
-`components/three/` — `HeroOrbit.tsx` renders the hero's SVG arc composition
-server-side and is **the whole composition on its own**. `HeroField.tsx` /
-`scene/createHeroField.ts` add an *additive* WebGL haze on top. Because the SVG
-is complete by itself there is no crossfade and no-WebGL clients lose nothing.
+`components/three/` — `HeroLens.tsx` server-renders the hero's SVG lens
+(an ellipse in a 500×400 viewBox) and is **the whole composition on its own**.
+`HeroField.tsx` / `scene/createHeroLiquid.ts` + `scene/liquidShaders.ts` add
+**one full-quad fragment shader** on top — one draw call, zero textures, zero
+per-frame buffer uploads. Its rest pose at `uWake = 0` matches the SVG
+colorimetrically (measured mean |ΔRGB| 3.8/255), so the 900ms canvas fade reads
+as the lens *waking* rather than as a crossfade, and no-WebGL clients lose
+nothing. `scene/lensLayout.ts` is the single source of truth for the geometry,
+shared by the server SVG and the shader, and `layout.mjs` asserts the two
+register to within 1px (measured Δ = 0).
+
+`HeroLens` also takes `compact`, which omits the WebGL layer and the chips —
+that is what `/about` renders, so only `/` ever creates a GL context.
 
 The scene is gated on: reduced motion, viewports ≥1024px, a WebGL capability
 probe, and an idle dynamic import. It halts its rAF when off-screen
 (IntersectionObserver) or the tab is hidden, and fully disposes on unmount. The
-ortho camera is mapped 1:1 to the SVG's 500×400 viewBox so the two cannot drift.
+ortho camera is mapped 1:1 to the SVG's viewBox so the two cannot drift.
+
+> **Known cost.** On an integrated GPU the shader measures ~5.5ms of GPU time
+> per frame against `probe.mjs`'s 2ms budget (the 0.87ms figure it was
+> calibrated against was an M1 Max). Shipped as-is by owner decision; see
+> `HANDOFF-V4.md` §4 finding 1 for the four mitigation options.
 
 ## Motion system
 
@@ -121,8 +139,11 @@ components/
             SkipLink, RouteTransition, chrome.css
   sections/ home/* (14 sections), services/*, industries/*,
             PageHero, CtaBand, ContactForm, LegalDoc
-  three/    HeroOrbit (SVG, complete alone), HeroField (additive WebGL),
-            scene/createHeroField, scene/palette
+  three/    HeroLens (SVG, complete alone; `compact` for /about),
+            HeroField (WebGL), scene/createHeroLiquid, scene/liquidShaders,
+            scene/lensLayout (geometry, shared with the SVG), scene/palette
+  motifs/   the nine-motif kit — Conduit, Node, Pool, Caustic, Seam,
+            Meniscus, Card (Vessel), Ledger, Droplet + motifs.css
   ui/       Button, Eyebrow, Field, Icon, StatNumber
   motion/   SmoothScrollProvider, Reveal, RevealGroup, Magnetic, CursorGlow,
             useInView, useSectionProgress, velocity, hooks
@@ -142,7 +163,9 @@ bundle. They are retained deliberately in case case studies return.
 
 ## Verification
 
-One command runs the whole gate — 24 checks, in dependency order:
+One command runs the whole gate — **27 pass/fail assertions** across 15 named
+steps, in dependency order (26 with `--skip-pixdiff`, 25 without `--since`;
+`gate.sh`'s header carries the arithmetic):
 
 ```bash
 npm run gate -- --since <ref>
@@ -151,7 +174,13 @@ npm run gate -- --since <ref>
 `scripts/qa/gate.sh` covers tsc, the design-token/JS-wiring contract, build +
 BUILD_ID assertion, route health across 13 routes, an a11y + layout sweep
 (13 pages × 4 viewports), motion, WebGL, cascade conflicts, keyboard,
-reduced-motion, a composited-animation audit over 5 routes, and a pixel diff.
+reduced-motion, a composited-animation audit over 7 routes, and a pixel diff.
+The audit contributes two assertions per route (disallowed animations, and TBT).
+
+**The harness needs a global `WebSocket`.** That is Node 22+; on Node 20/21
+`lib/cdp.mjs` re-execs itself with `--experimental-websocket`. Without that,
+all seven CDP-driven steps fail before Chrome even launches, and the output
+looks exactly like seven real regressions.
 Individual scripts are documented in `scripts/qa/README.md`; they drive
 headless Chrome over CDP and have **no npm dependencies**.
 

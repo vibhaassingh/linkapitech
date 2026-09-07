@@ -33,8 +33,9 @@ import { cn } from "@/lib/cn";
  *    arriving at the hub every 0.6s rather than ten at once (Part I's "ten
  *    pulsing conduits feel busy" mitigation). motifs.css hides the pulse
  *    below 1024 and under reduced motion, so no gating is needed here.
- *    `.eco-wire` itself STAYS in globals.css — /connected-banking and
- *    /industries still use it (Phase 9 retires it).
+ *    `.eco-wire` itself is GONE from globals.css (Phase 10) — Phase 9a took
+ *    its last two call sites, /connected-banking's diagram and /industries'
+ *    Rails, and `ecoWire` came off gate.sh's allowlist with it.
  * 2. Chips: `.liq liq-light liq-1 liq-flat rounded-pill`. `.liq-flat` is the
  *    §A7 escape hatch and is load-bearing twice over: ten blurred chips in one
  *    1440px viewport would be 10 of the desktop budget of 8, AND this section

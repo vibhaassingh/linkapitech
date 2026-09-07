@@ -1653,22 +1653,18 @@ html {
     transform: rotate(360deg);
   }
 }
-/* Ecosystem constellation. `.eco-wire` is the legacy dash-flow (still used by
-   /connected-banking's diagram and /industries' Rails — Phase 9 retires it;
-   the Ecosystem section itself moved to the motif kit's `.conduit-pulse` in
-   Phase 7). `.eco-halo` replaces the old `.eco-hub` box-shadow pulse, which
-   animated box-shadow — an off-compositor property: the halo is a radial
-   violet disc behind the hub whose OPACITY breathes (Node-glow style), so it
-   stays on the compositor. The constellation renders ≥1024 only. */
-.eco-wire {
-  animation: ecoWire 3.4s linear infinite;
-  animation-delay: var(--wire-delay, 0s);
-}
-@keyframes ecoWire {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
+/* Ecosystem constellation. `.eco-halo` replaces the old `.eco-hub` box-shadow
+   pulse, which animated box-shadow — an off-compositor property: the halo is a
+   radial violet disc behind the hub whose OPACITY breathes (Node-glow style),
+   so it stays on the compositor. The constellation renders ≥1024 only.
+
+   `.eco-wire` and `@keyframes ecoWire` are GONE (V4 Phase 10). The legacy
+   dash-flow lost its last call sites in Phase 9a — Ecosystem moved to the
+   motif kit's `.conduit-pulse` in Phase 7, then /connected-banking's diagram
+   and /industries' Rails followed — and it was kept two phases longer only
+   because retiring `ecoWire` from `gate.sh`'s ALLOWED_ANIM is a gate change
+   and `contract.py` fails on orphan CLASSES, not on dead RULES. Both are
+   retired together here; `conduitPulse` is now the sole allowlist entry. */
 .eco-halo {
   background: radial-gradient(circle, var(--violet-a24), transparent 70%);
   animation: ecoHalo 5s ease-in-out infinite;
