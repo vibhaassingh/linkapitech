@@ -7,6 +7,50 @@
 // should import from here.
 import { spawn } from "node:child_process";
 
+// ---------------------------------------------------------------- WebSocket
+// `WebSocket` is only a GLOBAL from Node 22. On Node 20/21 it exists behind
+// `--experimental-websocket`, and that flag can only be set at process start —
+// so a missing global cannot be fixed from in here. Instead we re-exec this
+// same entry point once, with the flag, and propagate its exit code.
+//
+// This is a chokepoint fix on purpose: all eight probes import this module, so
+// one guard covers `bash scripts/qa/gate.sh` and every `npm run qa:*` alike.
+// It is runtime-detected rather than flag-always, so it disappears on Node 22+
+// and keeps working if a later Node drops the flag.
+//
+// Why it is here at all: the machine's node went 22 -> 20.20.2 between V4
+// phase 9a and 9b, and the seven CDP-driven gate steps started dying with a
+// bare `ReferenceError: WebSocket is not defined` from line 1 of the driver —
+// BEFORE Chrome launched or a single page loaded. gate.sh reported seven hard
+// failures that looked exactly like seven real regressions across the a11y
+// sweep, motion, WebGL, cascade, layout and keyboard checks. It cost a full
+// gate run to tell "the site is broken" apart from "the harness cannot start".
+if (typeof globalThis.WebSocket === "undefined") {
+  if (process.env.QA_WS_REEXEC === "1") {
+    // The flag did not help: this Node has no WebSocket we can reach. Fail
+    // LOUD and actionable rather than throwing a bare ReferenceError 70 lines
+    // later, where it reads as a bug in the page under test.
+    throw new Error(
+      `The QA harness needs a global WebSocket and this Node has none.\n` +
+        `  node: ${process.version} at ${process.execPath}\n` +
+        `Use Node 22+, or a Node whose --experimental-websocket works.`
+    );
+  }
+  const { spawnSync } = await import("node:child_process");
+  const r = spawnSync(
+    process.execPath,
+    [
+      "--experimental-websocket",
+      ...process.execArgv,
+      process.argv[1],
+      ...process.argv.slice(2),
+    ],
+    { stdio: "inherit", env: { ...process.env, QA_WS_REEXEC: "1" } }
+  );
+  // Signal death must not read as a pass: spawnSync leaves status null then.
+  process.exit(r.status ?? 1);
+}
+
 const CHROME =
   process.env.CHROME_BIN ??
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
