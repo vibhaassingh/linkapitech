@@ -11,6 +11,7 @@ import { Conduit, Droplet, Node, Seam } from "@/components/motifs";
 import { CtaBand } from "@/components/sections/CtaBand";
 import { PluginMockup } from "@/components/sections/plugin/PluginMockup";
 import { PluginFaq } from "@/components/sections/plugin/PluginFaq";
+import { PluginHeroField } from "@/components/sections/plugin/PluginHeroField";
 import {
   FeatureGrid,
   ValueGrid,
@@ -92,7 +93,9 @@ export default function BankPluginPage() {
           }}
         />
 
-        <div className="relative mx-auto w-full max-w-[1240px] px-6 pb-16 pt-[136px] text-center md:px-10 md:pb-20 md:pt-[156px]">
+        <PluginHeroField />
+
+        <div className="relative z-[1] mx-auto w-full max-w-[1240px] px-6 pb-16 pt-[136px] text-center md:px-10 md:pb-20 md:pt-[156px]">
           <Reveal>
             <Lockup />
           </Reveal>
@@ -106,8 +109,15 @@ export default function BankPluginPage() {
             </Droplet>
           </Reveal>
 
-          <h1 className="display-1 mx-auto mt-6 max-w-[17ch] text-ink">
-            {PLUGIN.headline.lead}{" "}
+          {/* Two lines from md, by construction: the break is forced between
+              the two halves and the measure is wide enough (26ch ≈ 1050px at
+              display-1's 67px) that neither half can wrap on its own until
+              the viewport is narrower than the copy — below md it flows
+              naturally. The old 17ch measure produced a three-line stack
+              with "inside" orphaned onto line two. */}
+          <h1 className="display-1 mx-auto mt-6 max-w-[26ch] text-ink">
+            {PLUGIN.headline.lead}
+            <br className="hidden md:block" />{" "}
             <span className="accent-word">{PLUGIN.headline.accent}</span>
           </h1>
           <p className="body-lg mx-auto mt-6 max-w-[60ch] text-ink-2">
@@ -129,7 +139,7 @@ export default function BankPluginPage() {
           </Reveal>
 
           <Reveal delay={200} className="mt-14 md:mt-16">
-            <PluginMockup className="max-w-[1040px]" />
+            <PluginMockup chips className="max-w-[1040px]" />
           </Reveal>
 
           <Reveal delay={260}>
@@ -149,7 +159,7 @@ export default function BankPluginPage() {
       <StepBand steps={PLUGIN_STEPS} />
 
       {/* ───────────── Bank landing pages + ERP marks ───────────── */}
-      <section id="portals" className="section-pad bg-canvas">
+      <section id="portals" className="section-pad scroll-mt-[128px] bg-canvas">
         <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
           <Reveal className="mx-auto max-w-[44rem] text-center">
             <span className="eyebrow-capsule mb-6 inline-flex">
@@ -173,7 +183,9 @@ export default function BankPluginPage() {
             {BANK_PLUGIN_PAGES.map((p) => (
               <div
                 key={p.slug}
-                className="flex h-full flex-col rounded-xl border border-line-soft bg-surface p-7 shadow-card"
+                /* A quiet lift on hover — transform + shadow transitions
+                   only, the same pair Button already animates on hover. */
+                className="flex h-full flex-col rounded-xl border border-line-soft bg-surface p-7 shadow-card transition-[transform,box-shadow] duration-ui ease-out-expo hover:-translate-y-1 hover:shadow-float"
               >
                 <div className="grid h-12 w-[140px] place-items-start">
                   <Image
@@ -263,7 +275,7 @@ export default function BankPluginPage() {
       {/* ───────────────────── FAQ + support ───────────────────── */}
       <section
         id="faq"
-        className="section-pad border-t border-line-soft bg-surface"
+        className="section-pad scroll-mt-[128px] border-t border-line-soft bg-surface"
       >
         <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-12 px-6 md:px-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>

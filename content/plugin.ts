@@ -29,7 +29,7 @@ export const PLUGIN = {
    * on Tally". Split two-tone for the design shell; the words are the portal's.
    * TODO: client to confirm — the tightened phrasing.
    */
-  headline: { lead: "Smart, powerful banking,", accent: "inside your Tally." },
+  headline: { lead: "Smart, powerful banking", accent: "inside your Tally." },
   /** Portal 2026-08, grammar closed up. */
   lead: "A next-generation banking solution that brings the banking experience onto your accounting platform. Auto reconciliation, vendor payments, account statements and balance checks — all within your ERP. It unifies banking with accounting, making the everyday lives of businesses seamless and simple.",
   cta: { label: "Book a demo", href: "/contact" },

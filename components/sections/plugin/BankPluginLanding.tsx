@@ -9,9 +9,10 @@ import { Reveal } from "@/components/motion/Reveal";
 import { RevealGroup } from "@/components/motion/RevealGroup";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { Droplet, Seam } from "@/components/motifs";
+import { Caustic, Droplet, Pool, Seam } from "@/components/motifs";
 import { PluginMockup } from "@/components/sections/plugin/PluginMockup";
 import { PluginFaq } from "@/components/sections/plugin/PluginFaq";
+import { PluginHeroField } from "@/components/sections/plugin/PluginHeroField";
 import {
   FeatureGrid,
   ValueGrid,
@@ -101,7 +102,12 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
 
         {/* No `pt-[136px]` here, unlike every (site) route: PluginHeader is
             sticky and in flow, so it already occupies that space. */}
-        <div className="relative mx-auto w-full max-w-[1240px] px-6 pb-16 pt-16 text-center md:px-10 md:pb-20 md:pt-20">
+        {/* The bank pages have a sticky in-flow header, so the ripple's
+            top offset (tuned for the hub's 136/156px clearance) is pulled up
+            to sit behind the bank mark instead. */}
+        <PluginHeroField className="[&>div:first-of-type]:top-[-4px] md:[&>div:first-of-type]:top-[12px]" />
+
+        <div className="relative z-[1] mx-auto w-full max-w-[1240px] px-6 pb-16 pt-16 text-center md:px-10 md:pb-20 md:pt-20">
           {/* The bank mark, on its own plate. Reproduced as an identifier of
               whose customers this page is for — not as a partnership claim
               (CONTENT-TODO §1). */}
@@ -119,9 +125,14 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
             </div>
           </Reveal>
 
-          <h1 className="display-1 mx-auto mt-8 max-w-[19ch] text-ink">
-            {PLUGIN.name} for{" "}
-            <span className="accent-word">{page.bank}.</span>
+          {/* The break is forced after the product name so all three pages
+              read "The Bank Plugin / for <Bank>." A short name (HSBC) would
+              otherwise pull "Plugin for HSBC." onto line two and strand
+              "The Bank" alone on line one. */}
+          <h1 className="display-1 mx-auto mt-8 max-w-[22ch] text-ink">
+            {PLUGIN.name}
+            <br className="hidden md:block" />{" "}
+            for <span className="accent-word">{page.bank}.</span>
           </h1>
           <p className="body-lg mx-auto mt-6 max-w-[60ch] text-ink-2">
             {page.intro}
@@ -136,7 +147,10 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
                 className="text-[13.5px] font-semibold text-violet-text"
               >
                 {page.price}
-                <span className="pl-2 font-normal text-ink-3">
+                {/* `text-violet-text`, not `--ink-3`: on `.liq-light.liq-1`
+                    ink-3 composites to 4.17:1 and the ink-on-glass rule
+                    fails it; violet-text clears 7.20:1 there (PageHero). */}
+                <span className="pl-2 font-normal text-violet-text">
                   {/* TODO: client to confirm — the Axis portal's published
                       price; confirm the billing period it covers. */}
                   per Tally licence
@@ -177,7 +191,7 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
           </Reveal>
 
           <Reveal delay={200} className="mt-14 md:mt-16">
-            <PluginMockup className="max-w-[1040px]" />
+            <PluginMockup chips className="max-w-[1040px]" />
           </Reveal>
 
           <Reveal delay={260}>
@@ -197,7 +211,7 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
       />
 
       {/* ─────────────────── Support (per bank) ─────────────────── */}
-      <section id="support" className="section-pad bg-canvas">
+      <section id="support" className="section-pad scroll-mt-[128px] bg-canvas">
         <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-12 px-6 md:px-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
           <div>
             <Reveal>
@@ -311,7 +325,7 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
             {others.map((o) => (
               <div
                 key={o.slug}
-                className="flex h-full flex-col rounded-xl border border-line-soft bg-canvas p-7"
+                className="flex h-full flex-col rounded-xl border border-line-soft bg-canvas p-7 transition-[transform,box-shadow] duration-ui ease-out-expo hover:-translate-y-1 hover:shadow-card"
               >
                 <div className="grid h-11 w-[140px] place-items-start">
                   <Image
@@ -380,7 +394,25 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
         >
           <Seam />
         </div>
-        <div className="relative mx-auto w-full max-w-[1240px] px-6 text-center md:px-10">
+        {/* Ambient motion from the motif kit, mirroring CtaBand: one Caustic
+            drifting at the far left edge (its core kept off the centred
+            column), and a Pool the buttons stand in. Both are the site's own
+            scroll-driven, composited, reduced-motion-safe primitives. The
+            price line below is `--ink-inv`, not `-2`, for the reason CtaBand
+            documents: at 390px the left disc reaches the column and
+            `--ink-inv-2` over a Caustic core composites under AA. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+        >
+          <Caustic
+            x="calc(6% - 240px)"
+            y="calc(30% - 240px)"
+            size="480px"
+            drift="near"
+          />
+        </span>
+        <div className="relative z-[1] mx-auto w-full max-w-[1240px] px-6 text-center md:px-10">
           <Droplet className="liq-flat text-[12px] font-semibold uppercase tracking-eyebrow text-ink-inv">
             Get started
           </Droplet>
@@ -388,11 +420,21 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
             Put your {page.shortName} account inside Tally.
           </h2>
           {page.price && (
-            <p className="mt-5 text-[15px] text-ink-inv-2">
+            <p className="mt-5 text-[15px] text-ink-inv">
               {page.price} per Tally licence.
             </p>
           )}
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+          <div className="relative mt-9">
+            {/* Pool FIRST in DOM order so it paints under the in-flow buttons
+                (it is positioned with no z-index) — StatBand's and CtaBand's
+                trap. Bottom-anchored so wrapping buttons never move it. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-[-72px] left-[20%] h-[260px] w-[60%]"
+            >
+              <Pool />
+            </span>
+          <div className="relative z-[1] flex flex-wrap items-center justify-center gap-3">
             <Button href={page.portal.url} variant="light">
               Register on the {page.shortName} portal
             </Button>
@@ -403,6 +445,7 @@ export function BankPluginLanding({ page }: { page: BankPluginPage }) {
             >
               Talk to support
             </Button>
+          </div>
           </div>
         </div>
       </section>

@@ -94,18 +94,26 @@ export function PluginHeader({
             No media-query JS, no menu state — just wrapping. */}
         <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3 md:flex-nowrap md:gap-x-6 md:px-10">
           {/* Brand: LinkAPI lockup + the bank's mark, hairline between. */}
+          {/* Below sm the LinkAPI WORDMARK text hides and only the glyph
+              stays (`[&>span]:hidden` reaches Logo's text span), so glyph +
+              divider + bank mark + Register share one row: with the full
+              wordmark the Register button wrapped onto its own line and the
+              header stood 189px tall on a 390px phone. The link's name is
+              its aria-label, so nothing is lost to assistive tech, and the
+              strip above still says "LinkAPI Tech" in words. */}
           <a
             href={homeUrl}
             aria-label={`LinkAPI Tech — ${SITE.domain}`}
             className="shrink-0 rounded-sm text-ink"
           >
-            <Logo />
+            <Logo className="[&>span]:hidden sm:[&>span]:inline" />
           </a>
-          <span
-            aria-hidden="true"
-            className="hidden h-8 w-px shrink-0 bg-line sm:block"
-          />
-          <span className="hidden h-8 w-[96px] shrink-0 place-items-center sm:grid">
+          <span aria-hidden="true" className="h-8 w-px shrink-0 bg-line" />
+          {/* Shown at EVERY width, at one size. Hiding it below sm left a
+              0×0 <img> with a natural size in the DOM, which the geometric
+              layout sweep reports as a collapsed image — and with the
+              wordmark text gone on a phone there is room for the full 96px. */}
+          <span className="grid h-8 w-[96px] shrink-0 place-items-center">
             <Image
               src={page.logo}
               alt={`${page.bank} logo`}

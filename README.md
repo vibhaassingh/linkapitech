@@ -275,6 +275,30 @@ product mockup, flat `bg-surface` plates instead of glass clusters, one dark
 band, and **no scroll-driven Conduits or Caustics**. Consequences worth
 knowing before editing it:
 
+* **The hero's illustrations are one hoisted stylesheet and one rule.**
+  `PluginHeroField` (four faint line-art glyphs — ledger scan, bank→ERP
+  transfer, breathing bars, drifting ₹ — plus a ripple behind the plug) and
+  the mockup's floating chips and "Processing" blink all take their
+  keyframes from `components/sections/plugin/plugin-motion.tsx`, emitted
+  once per page via React's `href`/`precedence`. Every keyframe is
+  **transform/opacity only** (the composited audit fails the route
+  otherwise) and **rests on its 100% frame**, because the global
+  reduced-motion block collapses every loop to one instant iteration — so a
+  travelling dot and an expanding ring end INVISIBLE rather than frozen
+  mid-flight. The field is `hidden` below `lg` and anchored to the hero's
+  edges, and each glyph's parallax (`.scrub-drift`) sits on a wrapper while
+  its own animation sits inside it: two transform owners never share an
+  element. The same sheet carries the **one-shot reveals** further down the
+  page (`pf-fill`, `pf-pop`): they key off the `[data-inview]` attribute
+  Reveal/RevealGroup already set, so the reconciliation bar fills, the
+  status ticks light and the value discs pop exactly as their cards fade
+  up, with no JS of their own, and hold their end state. The dark band's
+  Conduit runs through the step cards' **icon row** (48px from the card
+  top) — a first cut at 46% sliced between title and body.
+* **Anchor targets carry `scroll-mt-[128px]`.** Both plugin headers cover
+  the top of the viewport — the sticky bar is ~110px, the hub's fixed pill
+  ends at 84px — so a nav anchor without scroll margin lands a section's
+  heading underneath the header. 128px clears both.
 * **The hub keeps the site chrome; the bank pages do not.** `/bank-plugin`
   is a normal `(site)` page with the pill nav and the footer curtain. Moving
   a section between it and a bank page means moving it across route groups.

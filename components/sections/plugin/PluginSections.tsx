@@ -1,6 +1,8 @@
+import type { CSSProperties } from "react";
 import { Reveal } from "@/components/motion/Reveal";
 import { RevealGroup } from "@/components/motion/RevealGroup";
-import { Droplet, Node, Seam } from "@/components/motifs";
+import { Conduit, Droplet, Node, Seam } from "@/components/motifs";
+import { PluginMotionStyles } from "./plugin-motion";
 import { Icon } from "@/components/ui/Icon";
 import { StatusPill } from "./PluginMockup";
 import {
@@ -48,12 +50,18 @@ export function HighlightPills({
         className,
       )}
     >
-      {items.map((h) => (
+      {items.map((h, i) => (
         <li
           key={h}
           className="inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-4 py-2 text-[13.5px] font-medium text-ink-2"
         >
-          <Check />
+          {/* Ticks pop in one after another once the row is revealed. */}
+          <span
+            className="pf-pop inline-flex"
+            style={{ "--pf-i": i, "--pf-base": "80ms" } as CSSProperties}
+          >
+            <Check />
+          </span>
           {h}
         </li>
       ))}
@@ -64,7 +72,8 @@ export function HighlightPills({
 /** "Features of the plugin" — four cards, each over a code-drawn vignette. */
 export function FeatureGrid({ lead }: { lead?: string }) {
   return (
-    <section id="features" className="section-pad bg-canvas">
+    <section id="features" className="section-pad scroll-mt-[128px] bg-canvas">
+      <PluginMotionStyles />
       <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <Reveal className="mx-auto max-w-[44rem] text-center">
           <span className="eyebrow-capsule mb-6 inline-flex">
@@ -116,7 +125,7 @@ export function ValueGrid({ heading }: { heading?: string }) {
   return (
     <section
       id="why"
-      className="section-pad border-y border-line-soft bg-surface"
+      className="section-pad scroll-mt-[128px] border-y border-line-soft bg-surface"
     >
       <div className="mx-auto w-full max-w-[1240px] px-6 md:px-10">
         <Reveal className="max-w-[52rem]">
@@ -138,13 +147,15 @@ export function ValueGrid({ heading }: { heading?: string }) {
           {PLUGIN_VALUES.map((v) => (
             <div
               key={v.title}
-              className="flex h-full flex-col rounded-lg border border-line-soft bg-canvas p-6"
+              /* `icon-draw` arms the site's stroke-redraw on hover/focus
+                 (components/ui/Icon.tsx); the disc pops in with its card. */
+              className="icon-draw flex h-full flex-col rounded-lg border border-line-soft bg-canvas p-6"
             >
               <span
-                className="grid h-11 w-11 place-items-center rounded-full bg-plum-600 text-ink-inv"
+                className="pf-pop grid h-11 w-11 place-items-center rounded-full bg-plum-600 text-ink-inv"
                 aria-hidden="true"
               >
-                <Icon name={v.icon} size={19} />
+                <Icon name={v.icon} size={19} draw />
               </span>
               <p className="mt-5 text-[15px] font-semibold leading-snug text-ink">
                 {v.title}
@@ -176,7 +187,7 @@ export function StepBand({
     <section
       id="how-it-works"
       data-surface="dark"
-      className="section-dark band-b section-pad"
+      className="section-dark band-b section-pad scroll-mt-[128px]"
     >
       <div
         aria-hidden="true"
@@ -200,9 +211,26 @@ export function StepBand({
           </p>
         </Reveal>
 
+        {/* The stage: one Conduit — the money — runs the container width
+            behind the four steps at lg, seen crisp in the gaps and softened
+            through the cards' fill (the WhatWeDo manifold, without its --sp
+            driver: `flow="loop"` is self-contained). It runs THROUGH THE
+            ICON ROW — each card's Node centre is p-7 (28px) + half a 44px
+            Node = 50px below the card top — so the flow reads as passing
+            through every step's node, and never crosses a line of copy (a
+            first cut at 46% sliced between title and body). The RevealGroup
+            sits above it (z-[1]); the band is `hidden lg:block` because the
+            stacked mobile grid has no gaps for it to show through. */}
+        <div className="relative mt-14">
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-[48px] z-0 hidden lg:block"
+          >
+            <Conduit flow="loop" />
+          </div>
         <RevealGroup
           as="ol"
-          className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+          className="relative z-[1] grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
           step={110}
         >
           {steps.map((s) => (
@@ -215,16 +243,21 @@ export function StepBand({
               <p className="mt-2 text-[15px] leading-relaxed text-ink-inv-2">
                 {s.body}
               </p>
-              {/* Watermark numeral, clipped by the card like WhatWeDo's. */}
+              {/* Watermark numeral. Sits INSIDE the card's reserved bottom
+                  padding (bottom-2, leading-none) rather than bleeding past
+                  the edge: the a11y sweep's text-spill rule measures a text
+                  box against its container, and the earlier `-bottom-3`
+                  overhung it by 8px on all four cards. */}
               <span
                 aria-hidden="true"
-                className="ghost-num pointer-events-none absolute -bottom-3 right-5 select-none text-[64px]"
+                className="ghost-num pointer-events-none absolute bottom-2 right-5 select-none text-[64px] leading-none"
               >
                 {s.num}
               </span>
             </div>
           ))}
         </RevealGroup>
+        </div>
 
         {showCapabilities && (
           <Reveal delay={120} className="mt-16 text-center">
@@ -324,8 +357,10 @@ export function FeatureVignette({ kind }: { kind: Vignette }) {
             </span>
           </div>
           <div className="mt-3 h-2.5 overflow-hidden rounded-pill bg-lavender-200">
+            {/* Fills to its width on reveal — a transform, so the layout
+                width is set once and never animated. */}
             <span
-              className="block h-full rounded-pill bg-plum-600"
+              className="pf-fill block h-full rounded-pill bg-plum-600"
               style={{
                 width: `${(m.reconcile.matched / m.reconcile.total) * 100}%`,
               }}
@@ -356,13 +391,17 @@ export function FeatureVignette({ kind }: { kind: Vignette }) {
 
       {kind === "status" && (
         <ol className="relative flex items-start justify-between gap-2 px-1 pt-1">
-          <span className="absolute left-4 right-4 top-[15px] h-px bg-lavender-300" />
+          {/* The wire draws left→right, then each status lights in turn. */}
+          <span className="pf-fill absolute left-4 right-4 top-[15px] h-px bg-lavender-300" />
           {m.timeline.map((t, i, arr) => (
             <li
               key={t}
               className="relative flex flex-1 flex-col items-center gap-2 text-center"
             >
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-plum-600 text-ink-inv">
+              <span
+                className="pf-pop grid h-7 w-7 place-items-center rounded-full bg-plum-600 text-ink-inv"
+                style={{ "--pf-i": i, "--pf-base": "520ms" } as CSSProperties}
+              >
                 <Check inverse />
               </span>
               <span
