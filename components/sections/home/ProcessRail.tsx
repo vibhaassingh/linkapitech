@@ -123,6 +123,16 @@ function litStyle(i: number, segments: number): CSSProperties {
  * the sp↔`contain` mapping above depend on how many lines the lead wraps to;
  * inside the stage, the section is exactly pad + 260vh + pad.
  *
+ * §A8 — `.pin-step` IS A BACKDROP ROOT, so the step Nodes are `liq-flat`.
+ * All three pin keyframes animate opacity and run with `fill-mode: both`, so
+ * from the compositor's point of view the `<li>` always has an animated
+ * opacity — which restricts the backdrop of everything inside it. Any `.liq`
+ * descendant's `backdrop-filter` therefore samples nothing, silently: fill,
+ * rim, shadow and every AA number are unchanged and only the blur is gone.
+ * The four step Nodes declare `liq-flat` rather than pretend otherwise (see
+ * the call site). Anything glass added inside `.pin-stage` later must do the
+ * same, or move outside the animated element.
+ *
  * Reduced motion, per effect: `.sheet-enter`, `.sheet-shadow` and `.pin-step`
  * — disabled by name in globals.css's reduced-motion block, which also
  * un-pins `.pin`/`.pin-stage`. Rail fill / node lighting / terminal typing —
@@ -310,7 +320,30 @@ export function ProcessRail() {
                         className="flex gap-5"
                       >
                         {/* Step marker: a standalone Node (`node liq liq-1`,
-                            44px). The kit's own `.node-glow` is the DIM rest
+                            44px).
+
+                            `liq-flat` IS REQUIRED, and §A8 is why (V4 Phase 8
+                            review, resolved in Phase 9b). The `.pin-step` <li>
+                            two levels up runs `pinStep`/`pinStepFirst`/
+                            `pinStepLast`, all of which animate OPACITY, with
+                            `animation-fill-mode: both` — so at ≥1024, where
+                            the pin exists AND where `.liq-1` is the only place
+                            it frosts, the step is permanently an animated-
+                            opacity element and therefore a BACKDROP ROOT. The
+                            Node's `backdrop-filter` inside it samples an empty
+                            backdrop: the frost is not merely dimmed for the
+                            two ends of each step's range, it never renders at
+                            all, and NOTHING reports that — the fill, the rim
+                            ring, the shadow and every AA number are identical
+                            either way. So the choice was between a blur the
+                            compositor was already throwing away and an honest
+                            declaration that there is none; the flat material
+                            (fill + rim + shadow) is what these discs have
+                            actually been rendering since Phase 7. It also
+                            hands §A7 four layers back: this section's desktop
+                            count goes 5 → 1.
+
+                            The kit's own `.node-glow` is the DIM rest
                             state (.35); a SECOND `.node-glow` carries
                             `litStyle`'s `--lit` as its inline opacity, so the
                             scrubbed lighting composites over the rest glow.
@@ -325,7 +358,7 @@ export function ProcessRail() {
                             with no extra rule. */}
                         <Node
                           size={44}
-                          className="z-[1] text-[13px] font-semibold text-ink-inv"
+                          className="liq-flat z-[1] text-[13px] font-semibold text-ink-inv"
                           icon={
                             <>
                               <span

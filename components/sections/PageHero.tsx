@@ -20,9 +20,11 @@ interface PageHeroProps {
   /**
    * Whether `visual` is wrapped in a Vessel plate (`.liq liq-3` on dark /
    * `.liq liq-light` on light, radius 24, `p-6`). TRUE for a DIAGRAM — the
-   * plate is the glass the schematic is etched into. FALSE for a raster
-   * illustration, which carries its own frame and must pass through unwrapped
-   * (`/services`' `hub-isometric.webp`).
+   * plate is the glass the schematic is etched into. FALSE for a visual that
+   * carries its own frame and must pass through unwrapped — originally a
+   * raster illustration, and since Phase 9b `/services`' SVG manifold and
+   * `/banks/[slug]`'s ConnectionStack, both of which already have a border
+   * and their own shadow. No raster hero remains on the site.
    */
   visualFrame?: boolean;
   /**

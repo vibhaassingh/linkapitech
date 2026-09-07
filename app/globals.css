@@ -42,7 +42,7 @@
   --ink-inv: #f7f3f9;
   /**
    * Secondary text on plum. Calibrated against the DARKEST thing it lands on,
-   * which is not a plum flat but a GLASS TIER over plum: .glass on the
+   * which is not a plum flat but a GLASS TIER over plum: tier 2 on the
    * connected-banking diagram composites to rgb(102,67,110), much lighter than
    * plum-700, and there the previous #cdbbd4 measured 4.495:1 — under AA by a
    * hair, and invisible until the contrast walk learned to composite glass over
@@ -152,7 +152,8 @@
     radial-gradient(80% 90% at 92% 15%, rgba(142, 36, 170, 0.14), transparent 55%),
     linear-gradient(180deg, var(--canvas-2), var(--canvas));
 
-  /* Liquid glass — tier 2 is the historic `.glass`, kept as the default names */
+  /* Liquid glass — tier 2 is the historic `.glass`, kept as the default names.
+     THE NUMBERS ARE THE AA CALIBRATION and --liq-* aliases them; never fork. */
   --glass-bg: rgba(255, 255, 255, 0.07);
   --glass-bg-strong: rgba(255, 255, 255, 0.11);
   --glass-line: rgba(255, 255, 255, 0.16);
@@ -619,8 +620,8 @@
    - the grain is on ::AFTER, deliberately: `.ambient-violet` — the other
      section-level ambience class — owns ::before, and the two are meant to
      compose on a dark band. The trade is that .section-dark must not be
-     combined with a ::after class (`.glass`/`.glass-3`'s wet edge,
-     `.pulse-dot`) on the SAME element; nest a wrapper for that.
+     combined with a ::after class (`.liq`'s specular, `.pulse-dot`) on the
+     SAME element; nest a wrapper for that.
    Scrollbars inside the band go plum-tinted; `scrollbar-color` inherits, so a
    nested overflow container is covered, and `scrollbar-width` is left alone so
    `.no-scrollbar` (defined later) still wins where it is applied. */
@@ -684,118 +685,42 @@
 }
 
 /* ============================================================
-   Liquid glass vocabulary
-   ============================================================ */
-.glass {
-  position: relative;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-line);
-  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
-}
-/* ---- Glass tiers ----------------------------------------------------------
-   .glass-1 / -2 / -3 are the named depth steps; `.glass` and `.glass-strong`
-   remain working aliases of tiers 2 and 3 so ~30 files of existing markup keep
-   rendering. Two deliberate differences from `.glass`:
-   - the tiers do NOT set `position`, so a tier class is safe on an element that
-     is `absolute` (the PartnerProgram chips) — same reasoning as `.grad-tile`;
-   - consequently the wet edge is a background LAYER (--glass-edge), not
-     `::after`, which also leaves ::after free for `.sheen`/other decorations.
-   Longhand border properties (not the `border` shorthand) so a call site can
-   still override just the colour.
-   `.glass-strong` gains the tier-3 border and blur it always implied but never
-   had — standalone `.glass-strong` elements previously got a fill only. */
-.glass-1,
-.glass-2,
-.glass-3,
-.glass-strong {
-  background-color: var(--glass-2-bg);
-  background-image: var(--glass-edge);
-  border-width: 1px;
-  border-style: solid;
-  border-color: var(--glass-2-line);
-  backdrop-filter: blur(var(--glass-2-blur)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--glass-2-blur)) saturate(1.4);
-}
-.glass-1 {
-  background-color: var(--glass-1-bg);
-  border-color: var(--glass-1-line);
-  backdrop-filter: blur(var(--glass-1-blur)) saturate(1.25);
-  -webkit-backdrop-filter: blur(var(--glass-1-blur)) saturate(1.25);
-}
-.glass-3,
-.glass-strong {
-  background-color: var(--glass-3-bg);
-  border-color: var(--glass-3-line);
-  backdrop-filter: blur(var(--glass-3-blur)) saturate(1.5);
-  -webkit-backdrop-filter: blur(var(--glass-3-blur)) saturate(1.5);
-}
-/* Inner top highlight — the "wet edge". */
-.glass::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    170deg,
-    rgba(255, 255, 255, 0.14),
-    transparent 24%
-  );
-}
-/* No-backdrop-filter fallback: denser fill so text stays readable. */
-@supports not (backdrop-filter: blur(1px)) {
-  .glass {
-    background: rgba(66, 23, 76, 0.72);
-  }
-  .glass-1,
-  .glass-2,
-  .glass-3,
-  .glass-strong {
-    background-color: rgba(66, 23, 76, 0.72);
-  }
-}
+   RETIRED: the legacy `.glass*` / `.sheen` vocabulary (V4 Phase 9b)
 
-/* Specular sweep on hover — a 120° sheen that glides across. */
-.sheen {
-  position: relative;
-  overflow: hidden;
-}
-.sheen::before {
-  content: "";
-  position: absolute;
-  inset: -60% auto;
-  top: -60%;
-  bottom: -60%;
-  left: -75%;
-  width: 50%;
-  transform: rotate(18deg) translateX(0);
-  background: linear-gradient(
-    100deg,
-    transparent,
-    rgba(255, 255, 255, 0.14) 45%,
-    rgba(255, 255, 255, 0.28) 50%,
-    rgba(255, 255, 255, 0.14) 55%,
-    transparent
-  );
-  opacity: 0;
-  transition: opacity 200ms ease;
-  pointer-events: none;
-  z-index: 1;
-}
-.sheen:hover::before,
-.sheen:focus-visible::before {
-  opacity: 1;
-  animation: sheenSweep 900ms var(--ease-out-expo);
-}
-@keyframes sheenSweep {
-  from {
-    transform: rotate(18deg) translateX(-40%);
-  }
-  to {
-    transform: rotate(18deg) translateX(420%);
-  }
-}
+   `.glass`, `.glass-1/-2/-3` and `.glass-strong` no longer have bodies of
+   their own — they are ALIASES, added to the `.liq` recipe's own selector
+   lists below (`:is(.glass, .glass-1, .glass-2, .glass-3, .glass-strong)`), so
+   the legacy names and the V4 material are literally the same code and can
+   never drift apart. `.glass`/`.glass-2` → tier 2, `.glass-1` → tier 1,
+   `.glass-3`/`.glass-strong` → tier 3, exactly the mapping §A4 specifies.
+   They are kept rather than deleted because `scripts/qa/contract.py`'s
+   original B0 class contract lists `glass-1/2/3`; Phase 10 may drop the names
+   and that contract entry together, alongside `.eco-wire`.
+
+   As of Phase 9b **no `.tsx` renders any of them** — /about's Commitment
+   cards, /services' PartnerProgram and /solutions' solid card were the last
+   three call sites.
+
+   `.sheen` IS GONE, not aliased, and the reason is that it has no honest
+   successor:
+     • `.liq-spec` paints `radial-gradient(… var(--_spec) …)` and `--_spec` is
+       set only by `.liq`/`.liq-light`, so on the non-glass gradient cards
+       `.sheen` used to ride it would paint NOTHING — a silent no-op.
+     • `.liq-sweep` has `.sheen::before`'s geometry (Part D iv says so) but is
+       scroll-driven, desktop-only, and forces `--ink-inv` on every run inside
+       the element (qa.mjs's ink-on-glass rule), which a `grad-fill` card whose
+       body must stay `--ink-on-violet-2` cannot satisfy.
+   So a hover sheen is not part of the V4 vocabulary at all: glass hovers with
+   `.liq-spec`/`.liq-spec-full`, scrolls with `.liq-sweep`, and a solid card
+   hovers with `.spotlight` (light) or a Pool + lift (violet). `@keyframes
+   sheenSweep` went with it, and `.sheen::before` came off the reduced-motion
+   `display: none` list.
+
+   The `--glass-*` TOKENS all stay: they are the AA-calibrated source the
+   `--liq-*` fills alias (§A2 — "never fork the numbers"), `--glass-line` /
+   `--glass-bg` dress `.section-dark .eyebrow-capsule`, and `--glass-3-line` is
+   named directly by ConduitPath.
+   ============================================================ */
 
 /* ============================================================
    Liquid glass material — `.liq` (REDESIGN-V4 Part A).
@@ -829,8 +754,8 @@
 
    PSEUDO-ELEMENT BUDGET. `.liq::before` = rim, `.liq::after` = specular.
    .liq therefore never shares an element with another pseudo owner:
-   .section-dark (::after grain), .ambient-violet (::before), .glass (::after),
-   .sheen (::before), .spotlight (::before), .pulse-dot, .link-draw. Nest a
+   .section-dark (::after grain), .ambient-violet (::before),
+   .spotlight (::before), .pulse-dot, .link-draw. Nest a
    wrapper instead. Motifs (components/motifs) are real elements for the same
    reason.
 
@@ -857,17 +782,35 @@
    ============================================================ */
 
 /* Only `position` lives in the components layer, so a Tailwind `absolute` on
-   the call site still wins (the same reason .glass-1/2/3 set no position). */
+   the call site still wins. */
 /* Tailwind v3 hoists this into its @tailwind components slot, which makes it
    subject to content purging: `.liq` survives only because `liq` appears in
    components/motifs/*.tsx. Keep at least one motif using it. */
 @layer components {
-  .liq {
+  /* EVERY alias needs this, the tier names included. Historically they did
+     not: the tiers were pseudo-element-free (their wet edge was a background
+     LAYER, not `::after`) precisely so a tier class stayed safe on an element
+     that is `absolute` — the retired PartnerProgram chips were. That stopped
+     being true when they became aliases of `.liq`, because the rim ring below
+     gives all five names an `::before` at `position: absolute; inset: 0`: an
+     unpositioned host resolves that ring against the nearest positioned
+     ANCESTOR, painting a full-size chromatic ring across an unrelated box —
+     strictly worse than the wet edge it replaced.
+     Being in `@layer components` is what keeps the original guarantee: a
+     Tailwind `absolute` on the call site is in the utilities layer and still
+     wins, exactly as it does over `.liq`'s own `position` (§A2). */
+  .liq,
+  .glass,
+  .glass-1,
+  .glass-2,
+  .glass-3,
+  .glass-strong {
     position: relative;
   }
 }
 
-.liq {
+.liq,
+:is(.glass, .glass-1, .glass-2, .glass-3, .glass-strong) {
   --_fill: var(--liq-2-fill);
   --_blur: var(--liq-2-blur);
   --_sat: 1.4;
@@ -885,13 +828,15 @@
 }
 /* Tier modifiers re-assign fill / blur / saturation only. Tier 1 also thins
    the rim: a 1.25px ring on a 44px chip reads as a border, not an edge. */
-.liq-1 {
+.liq-1,
+.glass-1 {
   --_fill: var(--liq-1-fill);
   --_blur: var(--liq-1-blur);
   --_sat: 1.25;
   --liq-rim-w: 1px;
 }
-.liq-3 {
+.liq-3,
+:is(.glass-3, .glass-strong) {
   --_fill: var(--liq-3-fill);
   --_blur: var(--liq-3-blur);
   --_sat: 1.5;
@@ -901,7 +846,8 @@
    XOR/excluded against the border-box layer leaves only the band between
    them, so the ring never sits under a glyph — invisible to the contrast walk
    honestly, not as a loophole. */
-.liq::before {
+.liq::before,
+:is(.glass, .glass-1, .glass-2, .glass-3, .glass-strong)::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1038,9 +984,10 @@
 }
 
 /* No-backdrop-filter fallback: denser fills so text stays readable — the same
-   plum the .glass fallback above uses, and a near-opaque white for light. */
+   plum the legacy aliases now share, and a near-opaque white for light. */
 @supports not (backdrop-filter: blur(1px)) {
-  .liq {
+  .liq,
+  :is(.glass, .glass-1, .glass-2, .glass-3, .glass-strong) {
     background-color: rgba(66, 23, 76, 0.72);
   }
   .liq-light {
@@ -1050,8 +997,11 @@
 
 /* Mobile downgrade (§A7: ≤ 4 blur layers on a phone). */
 @media (max-width: 1023px) {
-  /* Tier-1 chips are too small for blur to read. */
-  .liq.liq-1 {
+  /* Tier-1 chips are too small for blur to read. `.glass-1` is listed beside
+     it because the alias is a SINGLE class — (0,1,0) against `.liq.liq-1`'s
+     (0,2,0) — so it needs its own entry to reach the same downgrade. */
+  .liq.liq-1,
+  .glass-1 {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -1062,7 +1012,8 @@
     -webkit-backdrop-filter: none;
   }
   .liq-3,
-  .liq-light.liq-3 {
+  .liq-light.liq-3,
+  :is(.glass-3, .glass-strong) {
     --_blur: 18px;
   }  /* .liq-light.liq-3 is (0,2,0) and would out-specify the cap */
 }
@@ -1432,9 +1383,11 @@ html {
   }
 
   @media (min-width: 1024px) {
-    /* Part D (iv): .liq-sweep — a scroll-driven specular band with .sheen's
-       geometry, driven by view() instead of hover (.sheen retires where this
-       is adopted). The band is the element's ::after, so .liq-sweep is
+    /* Part D (iv): .liq-sweep — a scroll-driven specular band with the RETIRED
+       .sheen's geometry, driven by view() instead of hover. (.sheen itself is
+       gone as of Phase 9b — see the "RETIRED" block above; this is the only
+       thing that inherited its look.) The band is the element's ::after, so
+       .liq-sweep is
        EXCLUSIVE with .liq-spec / .liq-spec-full. It is unmasked and passes
        under text, hence --ink-inv surfaces only (§A6). `contain: paint` clips
        the rotated band; transform is the only animated property. */
@@ -1996,7 +1949,7 @@ html {
 }
 
 /* Underline that draws left→right on hover/focus. Uses currentColor so it
-   works on any ink, and ::after so it composes with .sheen (::before). Sets
+   works on any ink, and ::after so it composes with a ::before decoration. Sets
    `position: relative`, so do not put it on an element that must be
    `absolute`. */
 .link-draw {
@@ -2184,7 +2137,6 @@ html {
   .cursor-glow,
   .ambient-violet::before,
   .spotlight::before,
-  .sheen::before,
   .liq-spec::after,
   .liq-spec-full::after,
   .liq-sweep::after {

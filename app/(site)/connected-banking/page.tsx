@@ -95,6 +95,18 @@ export default function ConnectedBankingPage() {
               element, so `scaleY(var(--fill))` below is the only driver and
               there is nothing to collide with (Part J Phase 7).
 
+              `light` is REQUIRED here and was missing until Phase 9b. This
+              section is `bg-canvas`; a non-`light` Conduit fills its track
+              with `--glass-1-bg` (white at .05) and rings it with
+              `--glass-1-line` (white at .16) and a white .12 top line — three
+              whites on #faf8fc, i.e. no visible channel at all, so the rail
+              read as a violet bar floating in space with nothing for it to
+              fill. `.conduit-light` is the `--lavender-200` track with the
+              `--line-soft` hairline the light rows use everywhere else
+              (WhyUs' spine, ErpBand's underline, /services' OfferTimeline).
+              Nothing in the gate can see a motif that paints its own
+              background invisibly.
+
               `grid` on the wrapper is load-bearing — `.conduit-v` is
               `height: auto`, so a block child would collapse to 0. The 6px
               track is centred on the 16px Nodes: `left-[5px]` puts its centre
@@ -107,7 +119,7 @@ export default function ConnectedBankingPage() {
               aria-hidden="true"
               className="pointer-events-none absolute bottom-6 left-[5px] top-6 grid w-1.5 lg:left-1/2 lg:-ml-[3px]"
             >
-              <Conduit orientation="v" flow="custom">
+              <Conduit light orientation="v" flow="custom">
                 <span
                   style={railFillStyle()}
                   className="absolute inset-0 origin-top rounded-[inherit] bg-[linear-gradient(180deg,var(--lavender-400),var(--violet-500))] opacity-90"
@@ -530,9 +542,15 @@ function Endpoint({ icon, label }: { icon: IconName; label: string }) {
 function ConduitRun() {
   return (
     <span className="mt-[18px] flex min-w-0 flex-1 flex-col gap-2">
-      <Conduit flow="loop" />
+      {/* `light` for the same reason the capabilities rail needs it, and here
+          the near-white ground is PageHero's own: this diagram is passed as
+          `visual` with no `visualFrame={false}`, so it renders inside the
+          hero's `.liq liq-light` plate. A default track is white .05 fill +
+          white .16 ring on that plate — no channel at all, and the travelling
+          band reads as a floating dash rather than as liquid in a pipe. */}
+      <Conduit light flow="loop" />
       <span className="block -scale-x-100">
-        <Conduit flow="loop" />
+        <Conduit light flow="loop" />
       </span>
     </span>
   );

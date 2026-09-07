@@ -7,13 +7,14 @@
 # --since) · build + BUILD_ID · production server · route health · a11y +
 # layout sweep (qa.mjs) · motion · WebGL/magnetic · cascade · GEOMETRIC LAYOUT
 # (layout.mjs — wired in at V4 phase 7) · keyboard · reduced motion ·
-# composited-animation audit × 5 routes · pixel diff.
+# composited-animation audit × 7 routes · pixel diff.
 #
-# 15 named steps → 23 pass/fail assertions with --since and pixdiff (the
+# 15 named steps → 27 pass/fail assertions with --since and pixdiff (the
 # composited audit contributes TWO per route: disallowed animations, and TBT),
-# 22 with --skip-pixdiff, 21 without --since. One more than before phase 7,
-# which is the layout sweep. README.md's headline "24 checks" predates this
-# accounting; reconciling it is Phase 10's docs pass.
+# 26 with --skip-pixdiff, 25 without --since. Phase 7 added the layout sweep;
+# phase 9b took the composited audit from 5 routes to 7 (+4 assertions).
+# README.md's headline "24 checks" predates this accounting; reconciling it is
+# Phase 10's docs pass.
 #
 # Every step here encodes a failure this project actually hit:
 #
@@ -178,7 +179,16 @@ if node scripts/qa/kbd2.mjs; then ok "reduced-motion clean"; else bad "reduced-m
 step "composited-animation audit over key routes (authoritative: runs GPU-composited)"
 ALLOWED_ANIM="ecoWire,conduitPulse"
 LH_FAIL=0
-for r in / /services /connected-banking /contact /banks/axis; do
+# /about and /solutions joined the list in phase 9b, because the phase-7
+# failure was precisely a route-coverage gap: a chrome transition that `/` could
+# never expose (its hero is dark at scroll 0) fired on every LIGHT-hero inner
+# page and went unseen until three audited routes happened to catch it. /about
+# is the second route ever to render `HeroLens` (so lensCausticSway and
+# lensGlintFloat run somewhere other than `/`) and the first to put a mid-page
+# `.section-dark` inset under the pill observer; /solutions adds a `.sheet-enter`
+# dark band, a drifting Caustic and the Ledger's live backdrop-filter. Both were
+# argued safe in comments and verified by nothing.
+for r in / /about /services /solutions /connected-banking /contact /banks/axis; do
   LH="/tmp/gate-lh$(echo "$r" | tr '/' '-').json"
   if ! npx lighthouse "$BASE$r" --only-categories=performance --form-factor=mobile \
        --screenEmulation.mobile --throttling-method=simulate --quiet \

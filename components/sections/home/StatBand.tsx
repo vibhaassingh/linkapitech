@@ -24,11 +24,19 @@ import { MARQUEE_STATS, LIVE_PILL } from "@/content/stats";
  * `data-inview` on each tile's wrapper) and rests full, so no-JS and reduced
  * motion show the settled pool.
  *
- * INK. Numerals `--ink-inv`, affixes (`odo-fix`: the ₹, the commas, the unit)
- * `--lavender-400`, and the LABELS `--ink-inv` — not the secondary ink: they
- * overlap the Pool, and text over a Pool is `--ink-inv` only (§A6). The
- * Droplets are `.liq liq-1` over band C, where `--ink-inv-2` is allowed, so
- * their labels keep the secondary ink and only the values are `--ink-inv`.
+ * INK. Every run in this section is `--ink-inv`. The tile numerals and LABELS
+ * are, because the labels overlap the Pool and text over a Pool is `--ink-inv`
+ * only (§A6). The Droplet labels are too, as of Phase 9b: §A6 allows
+ * `--ink-inv-2` on tier 1 over band C on the flat composite (4.87), but the
+ * Caustic core takes it to 4.27 and the walk cannot see a sibling overlay —
+ * see the Droplet call site. The affixes (`odo-fix`: the ₹, the commas, the
+ * unit) stay `--lavender-400`: on tier 2 over band C they are 4.42 flat, 3.90
+ * with the core and 3.95 with the core AND the Pool basin, all of which are
+ * under the 4.5 body floor and all of which are fine, because `.stat-num` is
+ * `font-weight: 700` at 21px (390) to 41.6px (1440) — LARGE text, whose floor
+ * is 3:1. That is why the walk passes them, and it is a rule that does not
+ * transfer: `--lavender-400` is never a body-copy colour on glass (Phase 9a
+ * measured 4.36 on tier 2 over band A).
  *
  * Odometer discipline from before still holds: each digit column is a fixed
  * 1em window and only the affixes sit in proportional boxes, so nothing here
@@ -107,10 +115,24 @@ export function StatBand() {
           delay={160}
           className="mt-10 flex flex-wrap items-center justify-center gap-3"
         >
+          {/* The Droplet label is `--ink-inv`, NOT `--ink-inv-2` — the Caustic
+              is why (V4 Phase 6 review, fixed in Phase 9b). The disc is a
+              SIBLING overlay, so the contrast walk composites band + glass and
+              is blind to it; hand-computed on the walk's own model,
+              `--ink-inv-2` on tier 1 over band C is 4.87 flat and 4.27 with a
+              full `--violet-a24` core beneath it. That disc is centred at
+              (50%, 72%), which is exactly this row's neighbourhood, and its
+              gradient only reaches zero at 70% of its 280px radius — so
+              "move it off the copy" means clearing a 196px circle from a
+              wrapping flex row whose position changes with every breakpoint.
+              `--ink-inv` measures 7.92 flat and 6.95 over a full core, and the
+              value/label distinction survives on weight (semibold vs regular),
+              which is how the TILES have read since Phase 6 for the same
+              reason — they overlap a Pool. */}
           {LIVE_PILL.map((p) => (
             <Droplet
               key={p.label}
-              className="px-4 py-2 text-[14px] text-ink-inv-2"
+              className="px-4 py-2 text-[14px] text-ink-inv"
             >
               <span>
                 <strong className="font-semibold text-ink-inv">{p.value}</strong>{" "}

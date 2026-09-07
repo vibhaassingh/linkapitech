@@ -237,14 +237,27 @@
 }
 /* Rise with the reveal; the RESTING state is full, so reduced motion shows the
    settled pool (useInView flips data-inview immediately). +120ms so it lands
-   after the digits do. */
+   after the digits do.
+
+   THE DELAY IS RELATIVE TO ITS OWN CARD, not to the group (V4 Phase 8 review,
+   fixed in Phase 9b). `RevealGroup` staggers its children by writing
+   `--reveal-delay: base + i * step` on each wrapper, and globals.css spends it
+   as the wrapper's own `transition-delay` — but a bare `120ms` here ignored it
+   entirely, so all four StatBand pools rose together 120ms after `data-inview`
+   while their tiles arrived 90ms apart. The last pool led its own card by
+   270ms and the basin was already full when the tile was still fading in.
+   Custom properties inherit, so `var(--reveal-delay)` resolves to the stagger
+   of whichever `[data-reveal]` this pool is inside; the `0ms` fallback keeps a
+   lone `<Reveal>` (or a Pool with no reveal ancestor at all) at the original
+   +120ms. Both properties carry it, or the fade and the rise desync. */
 [data-reveal]:not([data-inview]) .pool {
   transform: scaleY(0);
   opacity: 0;
 }
 [data-inview] .pool {
-  transition: transform var(--dur-spring-smooth) var(--spring-smooth) 120ms,
-    opacity 400ms var(--ease-out-expo) 120ms;
+  transition: transform var(--dur-spring-smooth) var(--spring-smooth)
+      calc(var(--reveal-delay, 0ms) + 120ms),
+    opacity 400ms var(--ease-out-expo) calc(var(--reveal-delay, 0ms) + 120ms);
 }
 
 /* ------------------------------------------------------------

@@ -115,7 +115,47 @@ export function ContactForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit, () => setShake((n) => n + 1))}
-      className="relative rounded-lg border border-line-soft bg-surface p-7 shadow-card md:p-9"
+      /*
+        The form IS the Vessel (REDESIGN-V4 Part G, Phase 9b): `.liq liq-light`
+        rather than a bordered white card, and NOT a card nested inside one —
+        that is the construction /industries' `Shell` retired in Phase 9a.
+
+        Three classes came off and none of them can come back:
+          `border border-line-soft`  the rim ring IS the border (§A2, Phase 8
+                                     took the flat border off every light
+                                     Vessel).
+          `shadow-card`              `--liq-light-shadow` IS the elevation.
+          `bg-surface`               `.liq` sets `background-color` after
+                                     Tailwind's utilities, so a `bg-*` utility
+                                     on a `.liq` is a silent no-op (Part J
+                                     Phase 2).
+        `relative` is redundant — `.liq` declares it in @layer components — but
+        harmless and kept so the honeypot's `absolute` still reads locally.
+
+        `liq-flat`, and it is free: /contact's first section is a flat
+        `--surface` (#ffffff), where a Gaussian blur of a constant field is
+        that constant and `saturate(1.15)` on white is achromatic — provably
+        zero pixels of difference (Part J Phase 8). It is also the budget:
+        this is the SIXTH Vessel on that route (five in the detail rail, this
+        form) and there is a Droplet besides, so leaving the frost on would
+        have put those seven plus the pill at 8 of §A7's desktop 8 at 1440,
+        and — the Droplet excepted, `.liq.liq-1` having no blur below 1024 —
+        7 of the phone 4 at 390. Every one of them is `liq-flat`, which is why
+        the page's only backdrop-filtered layer is the pill nav.
+
+        NO `.liq-spec` / `.liq-live` here: this is a form, and a pointer
+        highlight sweeping under live input fields (or a 4px lift while
+        someone is typing) is decoration in the wrong place.
+
+        INK. §A6's 4.56 for `--ink-3` on light tier 2 is the calibration
+        figure; the real host is .70 white over `--surface`, which composites
+        back to #ffffff, so Field.tsx's `--ink-3` labels measure 5.41:1 (the
+        figure Card.tsx records for light tier 2). The rest of this form on
+        that same white: `--ink` 16.83, `--ink-2` 9.27, `--error` 6.54,
+        `--success-text` 5.14. The inputs are opaque `bg-canvas`, so their
+        `--ink` text (15.95:1) never touches the glass at all.
+      */
+      className="liq liq-light liq-flat relative rounded-lg p-7 md:p-9"
       noValidate
     >
       <h2 className="heading-3 text-ink">Book a Demo</h2>
@@ -196,7 +236,7 @@ export function ContactForm() {
           {status === "ok" && (
             /* --success-text, not --success: the fill colour measures 3.0:1 on
                this white card and only the darkened variant clears AA at 4.5:1
-               for text this size. */
+               for text this size — 5.14:1 on the Vessel's #ffffff composite. */
             <span className="inline-flex items-center gap-2 font-medium text-[color:var(--success-text)]">
               <SentTick />
               Sent — we&rsquo;ll be in touch.

@@ -111,9 +111,27 @@ interface HeroLensProps {
    * client markup match byte for byte.
    */
   idPrefix?: string;
+  /**
+   * `compact` — Part G's "compact static lens" for /about's Our Story Vessel:
+   * the SVG composition alone, with NO chips and NO WebGL layer.
+   *
+   * Both omissions are required rather than cosmetic. The chips are three
+   * `.liq liq-1 liq-refract` Nodes carrying the hero's own aria-labels
+   * ("Real-time payments", …) — copy that belongs to the hero's claim, not to
+   * a decorative card beside a company story — and three more blur layers
+   * against §A7. `<HeroField>` would boot a SECOND three.js scene and a second
+   * WebGL context on a route whose visual is ambient decoration; it is also
+   * what sets `data-live` on `.hero-lens`, so without it the `[data-poster]`
+   * groups never fade and the SVG simply IS the picture, which is the "static"
+   * half of the spec.
+   *
+   * The default is `false`, so `/`'s Hero renders byte-for-byte what it did
+   * before this prop existed.
+   */
+  compact?: boolean;
 }
 
-export function HeroLens({ idPrefix = "hl" }: HeroLensProps) {
+export function HeroLens({ idPrefix = "hl", compact = false }: HeroLensProps) {
   return (
     <div className="hero-lens relative mx-auto aspect-[5/4] w-full max-w-[560px]">
       {/* Poster plate — the trailing parallax plane. SVG + canvas, one transform. */}
@@ -255,8 +273,10 @@ export function HeroLens({ idPrefix = "hl" }: HeroLensProps) {
           </g>
         </svg>
 
-        {/* 5. WebGL — above the poster, below the chips. Additive. */}
-        <HeroField />
+        {/* 5. WebGL — above the poster, below the chips. Additive.
+            Omitted by `compact` (see the prop's note): a second scene, a second
+            WebGL context, and the `data-live` flip that fades the poster out. */}
+        {!compact && <HeroField />}
       </div>
 
       {/* 6. Glass chips — the leading parallax plane. Three nested transforms,
@@ -265,36 +285,39 @@ export function HeroLens({ idPrefix = "hl" }: HeroLensProps) {
           pointer tilt ([data-tilt] on the Node). The Node is `.liq liq-1` and
           must NOT carry .liq-live: it owns transform on its element and is
           exclusive with [data-tilt]. Positions are the CHIPS centres, offset by
-          half the disc, so the centre sits on the viewBox point at any size. */}
-      {CHIPS.map((c) => {
-        const m = CHIP_META[c.id];
-        return (
-          <div
-            key={c.id}
-            className="scrub-drift absolute"
-            style={
-              {
-                left: `calc(${pct(c.cx, VIEW.w)} - ${CHIP_SIZE / 2}px)`,
-                top: `calc(${pct(c.cy, VIEW.h)} - ${CHIP_SIZE / 2}px)`,
-                "--drift-range": m.drift,
-              } as CSSProperties
-            }
-          >
+          half the disc, so the centre sits on the viewBox point at any size.
+          Omitted by `compact`: their labels are the hero's own claims and each
+          is a fourth/fifth/sixth blur layer (see the prop's note). */}
+      {!compact &&
+        CHIPS.map((c) => {
+          const m = CHIP_META[c.id];
+          return (
             <div
-              className="chip-float"
-              style={{ "--float-delay": m.delay } as CSSProperties}
+              key={c.id}
+              className="scrub-drift absolute"
+              style={
+                {
+                  left: `calc(${pct(c.cx, VIEW.w)} - ${CHIP_SIZE / 2}px)`,
+                  top: `calc(${pct(c.cy, VIEW.h)} - ${CHIP_SIZE / 2}px)`,
+                  "--drift-range": m.drift,
+                } as CSSProperties
+              }
             >
-              <Node
-                size={CHIP_SIZE}
-                tilt
-                label={m.label}
-                className="liq-refract text-ink-inv"
-                icon={<Icon name={m.icon} size={22} />}
-              />
+              <div
+                className="chip-float"
+                style={{ "--float-delay": m.delay } as CSSProperties}
+              >
+                <Node
+                  size={CHIP_SIZE}
+                  tilt
+                  label={m.label}
+                  className="liq-refract text-ink-inv"
+                  icon={<Icon name={m.icon} size={22} />}
+                />
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   );
 }

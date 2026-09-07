@@ -43,6 +43,20 @@ CSS_FILES = [
 ]
 
 # The contract, as handed to the seven section agents.
+#
+# `glass-1/2/3` are RETIRED NAMES as of V4 Phase 9b and are kept here
+# deliberately. They no longer have bodies of their own: globals.css adds them
+# to the `.liq` recipe's selector lists as `:is(.glass, .glass-1, .glass-2,
+# .glass-3, .glass-strong)`, so `defined` still resolves (the substring is in a
+# live selector, not only in a comment — strip_css_comments below would
+# otherwise hide it) while the two vocabularies are literally one piece of
+# code. `used_by_components` prints False for all three, which is correct and
+# not a failure: the class/token lists guard against ORPHANS, not dead rules,
+# and Phase 9b removed the last three call sites (/about's Commitment cards,
+# /services' PartnerProgram, /solutions' solid card). Phase 10 may drop the
+# names and these entries together, alongside `.eco-wire`.
+# `.sheen` was never on this list and is now deleted outright — it has no
+# honest `.liq` successor (see the RETIRED block in globals.css).
 CLASSES = [
     "sheet-enter", "hero-recede", "scrub-drift", "scrub-fade-side",
     "orb-hand-off", "card-depth", "glass-1", "glass-2", "glass-3",
@@ -140,6 +154,30 @@ CLASSES = [
     # app/layout.tsx imports, so listing them would be an orphan by
     # construction — the same standing as `--lit-at` and `--marquee-d`.
     "liq-3", "card-icon-light", "conduit-loop",
+    # V4 Phase 9b — the six remaining inner pages (/about, /services,
+    # /solutions, /banks, /banks/[slug], /contact) and the `.glass*` → `.liq*`
+    # retirement. The phase wires no NEW material class: every surface it needs
+    # (`liq-light`, `liq-flat`, `liq-live`, `liq-spec`, `liq-static-mobile`,
+    # `liq-inset`, `card-icon-light`, `node-light`, `pool`/`pool-light`,
+    # `conduit-light`/`-loop`/`-scroll`/`-v`/`-pulse`, `ledger`) was already
+    # listed by phases 6–9a and simply gains call sites. One entry is added:
+    #   spotlight  §A4's non-glass decoration, and the successor role this
+    #              phase leans on — `.spotlight` must NEVER share an element
+    #              with `.liq-light` (both want a pseudo, and `.liq` owns
+    #              ::before for the rim and ::after for the specular), so the
+    #              solid `bg-tint` cards take it and the glass cards take
+    #              `.liq-spec`. It predates this list (CoreServices has wired
+    #              it since V3) and was simply never carried; listing it adds
+    #              the orphan assertion for a class three files now depend on.
+    #              Its own `.spotlight > * { position: relative; z-index: 1 }`
+    #              rule is (0,1,0) and emitted after @tailwind utilities, so it
+    #              out-ranks an `absolute` utility on a direct child — which is
+    #              why a `.spotlight` card cannot host a child positioned by a
+    #              Tailwind utility without an extra nesting level (Part J
+    #              Phase 9b; `.pool`'s own `absolute` comes from motifs.css,
+    #              imported after globals.css, so it would win that tie —
+    #              nothing renders that pairing either way).
+    "spotlight",
 ]
 TOKENS = [
     "--spring-snappy", "--spring-smooth", "--spring-gentle",

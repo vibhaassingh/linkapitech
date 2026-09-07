@@ -49,4 +49,4 @@ Ordered by risk, highest first.
 ## Not blocking, but worth knowing
 
 - `content/cases.ts` and `content/benefits.ts` are **archived** — no route imports them, so they are tree-shaken out of every bundle. Retained per the retire-and-redirect decision (2026-08-12) in case case studies return. `/work`, `/work/:slug` and `/clients` now 308 to `/industries` and `/about`.
-- The isometric hero illustration on `/services` is a raster extracted from the Figma PDF at ~1374px. It is sharp at the size it renders, but a source render or vector from the designer would be better on large high-DPR displays.
+- The isometric hero illustration on `/services` (`public/illus/hub-isometric.webp`, 41KB, a raster extracted from the Figma PDF at ~1374px) **no longer has a call site** — V4 Phase 9a replaced it with the SVG service manifold, and no raster hero remains anywhere on the site. The asset is retained rather than deleted so the client can confirm the manifold reads as well as the illustration did; delete it in Phase 10 if they sign off, and the "a source render or vector from the designer would be better" note retires with it.

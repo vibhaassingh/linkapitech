@@ -7,14 +7,32 @@ import { SectionHeader } from "./SectionHeader";
 import { SectionProgress } from "./SectionProgress";
 
 /**
- * Section progress (0 → 1) at which each Node's glow ramp is CENTRED. These
- * are where the Conduit band's brightest point crosses the three card centres:
- * `.conduit-scroll` moves the 38%-wide band by `-100% + sp × 360%` of its own
- * width, so its centre (≈ 52% along the band) sits at track fraction
- * 0.38·(3.6·sp − 1) + 0.20 — equal to the card centres 1/6, 1/2 and 5/6 at
- * sp ≈ 0.25, 0.50 and 0.74. A Node lights exactly as the flow reaches it.
+ * Section progress (0 → 1) at which card `i` of `n`'s Node glow ramp is
+ * CENTRED. `.conduit-scroll` moves the 38%-wide band by `-100% + sp × 360%` of
+ * its own width, so its centre (≈ 52% along the band) sits at track fraction
+ * `f = 0.38·(3.6·sp − 1) + 0.20`. Inverting that at card centre
+ * `f = (i + 0.5) / n` gives the sp at which the flow arrives:
+ *
+ *     sp = (((i + 0.5)/n − 0.20) / 0.38 + 1) / 3.6
+ *
+ * DERIVED, NOT TABULATED, and that is a fix rather than a tidy-up: this was a
+ * hardcoded three-element array indexed by `WHAT_WE_DO`'s length, so a fourth
+ * content entry — a one-line edit in `content/home.ts`, by someone who has no
+ * reason to open this file — made `LIT_AT[3].toFixed(2)` throw and took the
+ * whole homepage down at render. Nothing typechecked it (TS gives `number[]`
+ * an unchecked index) and no gate step covers a content shape that does not
+ * exist yet.
+ *
+ * At n = 3 this yields 0.2534 / 0.4971 / 0.7407 → "0.25" / "0.50" / "0.74".
+ * Cards 1 and 2 are byte-identical to the array they replace; card 3 moves
+ * 0.75 → 0.74, i.e. the array was the outlier — the doc comment above it has
+ * said "sp ≈ 0.25, 0.50 and 0.74" since Phase 6 and the true value is 0.7407.
+ * The consequence is one hundredth of section progress, about a fifth of
+ * `.node-flow`'s own ±0.04 ramp, in the direction that puts the glow back on
+ * the band it is supposed to be tracking.
  */
-const LIT_AT = [0.25, 0.5, 0.75];
+const litAt = (i: number, n: number) =>
+  (((i + 0.5) / n - 0.2) / 0.38 + 1) / 3.6;
 
 /**
  * "What We Do" — the MANIFOLD (REDESIGN-V4 Part E §4): one Conduit runs the
@@ -33,9 +51,11 @@ const LIT_AT = [0.25, 0.5, 0.75];
  * reduced motion re-lights every Node by name in the motifs RM block.
  *
  * Cards are tier-2 `.liq liq-spec` (pointer specular masked to the padding
- * frame; `--liq-pad` 40px = the lg padding). Title `--ink-inv`, body
- * `--ink-inv-2` — tier 2 over band A composites to 4.52:1, the calibrated
- * minimum (§A6). The Node is `inset` (veil fill, no second blur) so the blur
+ * frame; `--liq-pad` 40px = the lg padding). Title AND body are `--ink-inv`:
+ * tier 2 over band A composites to 4.52:1 for `--ink-inv-2`, the calibrated
+ * minimum (§A6) — and this section's Caustic sits behind the third card,
+ * which takes it to 4.00. See the call site for the arithmetic and for why
+ * moving the disc is not an available fix. The Node is `inset` (veil fill, no second blur) so the blur
  * count stays at 3 cards + pill. The `num` is a `ghost-num` watermark bottom-
  * right in its OWN `scrub-drift drift-far` wrapper: `.ghost-num` already
  * transitions its own `transform` on reveal (globals.css), and two transform
@@ -115,12 +135,34 @@ export function WhatWeDo() {
                   size={48}
                   icon={<Icon name={p.icon} size={22} />}
                   className="node-flow"
-                  style={{ "--lit-at": LIT_AT[i].toFixed(2) } as CSSProperties}
+                  style={
+                    {
+                      "--lit-at": litAt(i, WHAT_WE_DO.length).toFixed(2),
+                    } as CSSProperties
+                  }
                 />
 
                 <div className="relative z-[1]">
                   <h3 className="heading-3 mt-6 text-ink-inv">{p.title}</h3>
-                  <p className="mt-3 text-[15px] leading-relaxed text-ink-inv-2">
+                  {/* BODY IS `--ink-inv`, NOT `--ink-inv-2` — the Caustic is
+                      why (V4 Phase 6 review, fixed in Phase 9b). A `.caustic`
+                      is a SIBLING overlay, so the contrast walk composites the
+                      band and the glass and never sees it; hand-computed on
+                      the walk's own model, `--ink-inv-2` on tier 2 over band A
+                      is 4.52 flat and 4.00 with a full `--violet-a24` core
+                      beneath — a real AA failure that reports green.
+                      Geometry cannot fix it: tier 2's headroom is 0.02, so the
+                      largest core alpha this ink survives is 0.0104, i.e. the
+                      disc's gradient must be at LITERAL zero over every run,
+                      which means its whole 70%-radius influence circle clears
+                      every card at every breakpoint. Below lg the three cards
+                      stack full-bleed and the disc lands on whichever one sits
+                      at 42% of a much taller section, so no placement can
+                      promise that — /industries' dark mocks hit the identical
+                      wall in Phase 9a and took the identical exit. `--ink-inv`
+                      measures 7.36 flat and 6.51 over a full core; hierarchy
+                      comes from `heading-3` vs 15px regular instead. */}
+                  <p className="mt-3 text-[15px] leading-relaxed text-ink-inv">
                     {p.body}
                   </p>
                 </div>
